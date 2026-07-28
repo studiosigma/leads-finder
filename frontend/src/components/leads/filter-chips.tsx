@@ -27,7 +27,7 @@ export const FilterChips = ({ activeFilter, onFilterChange, counts }: FilterChip
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 font-sans">
       {chips.map((chip) => {
         const Icon = chip.icon;
         const isActive = activeFilter === chip.id;
@@ -36,17 +36,17 @@ export const FilterChips = ({ activeFilter, onFilterChange, counts }: FilterChip
           <button
             key={chip.id}
             onClick={() => onFilterChange(chip.id)}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border ${
               isActive
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                ? 'bg-[#4a6382] text-white border-[#4a6382] shadow-xs'
+                : 'bg-white border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <Icon size={14} className={isActive ? 'text-white' : 'text-zinc-400'} />
+            <Icon size={14} className={isActive ? 'text-white' : 'text-slate-400'} />
             <span>{chip.label}</span>
             <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                isActive ? 'bg-blue-700 text-white' : 'bg-zinc-100 text-zinc-500'
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
               }`}
             >
               {chip.count}
