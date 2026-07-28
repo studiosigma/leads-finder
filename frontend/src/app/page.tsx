@@ -9,7 +9,7 @@ import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
-import { Plus, SlidersHorizontal, LayoutGrid, Table, Search as SearchIcon } from 'lucide-react';
+import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -20,7 +20,6 @@ interface Step {
 export default function Home() {
   const [leads, setLeads] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [activeFilter, setActiveFilter] = useState<FilterChipType>('ALL');
@@ -54,7 +53,6 @@ export default function Home() {
   const handleSearch = async (query: string) => {
     setIsSearching(true);
     setCurrentQuery(query);
-    setShowSearchModal(false);
 
     setSearchSteps([
       { id: '1', label: 'Initiating Scraper Engine...', status: 'active' },
@@ -174,34 +172,18 @@ export default function Home() {
       
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Leads</h1>
-        
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowSearchModal(!showSearchModal)}
-            className="px-3.5 py-2 bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-2 border border-slate-300/60"
-          >
-            <SlidersHorizontal size={14} /> Sint Leads
-          </button>
-          
-          <button
-            onClick={() => setShowSearchModal(true)}
-            className="px-4 py-2 bg-[#4a6382] hover:bg-[#3b5175] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
-          >
-            <Plus size={16} /> Find Leads
-          </button>
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Leads</h1>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Discover, scrape, and extract verified B2B leads in real-time.
+          </p>
         </div>
       </div>
 
-      {/* Search Bar Collapsible */}
-      {showSearchModal && (
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-lg space-y-3 animate-in fade-in duration-150">
-          <p className="text-xs font-bold text-slate-700 flex items-center gap-2">
-            <SearchIcon size={14} className="text-slate-500" /> Enter Business Keywords / Location
-          </p>
-          <SearchBar onSearch={handleSearch} />
-        </div>
-      )}
+      {/* Prominent Integrated Search Bar */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
+        <SearchBar onSearch={handleSearch} />
+      </div>
 
       {/* Progress Tracker */}
       {isSearching && (
@@ -210,7 +192,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Filter Chips Toolbar */}
+      {/* Filter Chips & View Toggle Bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-2">
         <FilterChips
           activeFilter={activeFilter}
