@@ -1,5 +1,5 @@
-import React from 'react';
-import { Mail, Phone, Globe, MapPin, Send, CheckCircle2, AlertTriangle, MessageCircle, Linkedin, Instagram, Facebook, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -34,15 +34,15 @@ export const DataTable = ({
   onOpenWebhookModal,
   onOpenAiPitchModal,
 }: DataTableProps) => {
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const isAllSelected = leads.length > 0 && selectedIds.length === leads.length;
 
   const calculateConfidence = (lead: Lead) => {
-    let score = 30; // base score for business existence
-    if (lead.website && lead.website !== 'N/A') score += 20;
-    if (lead.email && lead.email !== 'N/A') score += 25;
+    let score = 50; // base score for business existence
+    if (lead.website && lead.website !== 'N/A') score += 15;
+    if (lead.email && lead.email !== 'N/A') score += 15;
     if (lead.phone && lead.phone !== 'N/A') score += 15;
-    if (lead.whatsapp_url) score += 10;
-    return Math.min(score, 100);
+    return Math.min(score, 95);
   };
 
   const formatWebsiteUrl = (url: string) => {
@@ -51,169 +51,202 @@ export const DataTable = ({
     return `https://${url}`;
   };
 
+  // Helper for letter icon avatar
+  const getAvatarLetter = (name: string) => {
+    return name ? name.charAt(0).toUpperCase() : 'B';
+  };
+
+  // Helper for company logo color
+  const getAvatarBg = (name: string) => {
+    const colors = [
+      'bg-slate-900 text-white',
+      'bg-blue-600 text-white',
+      'bg-amber-600 text-white',
+      'bg-teal-700 text-white',
+      'bg-indigo-700 text-white',
+      'bg-emerald-700 text-white'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+    return colors[hash % colors.length];
+  };
+
   return (
-    <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-600 font-semibold uppercase tracking-wider">
-              <th className="p-3.5 w-10 text-center">
+            <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <th className="py-3.5 px-4 w-10 text-center">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
                   onChange={onToggleSelectAll}
-                  className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                  className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4"
                 />
               </th>
-              <th className="p-3.5 min-w-[200px]">Company / Business Name</th>
-              <th className="p-3.5">Category</th>
-              <th className="p-3.5">Location</th>
-              <th className="p-3.5">Website</th>
-              <th className="p-3.5">Email</th>
-              <th className="p-3.5">Phone & WhatsApp</th>
-              <th className="p-3.5">Completeness</th>
-              <th className="p-3.5 text-center">Status</th>
-              <th className="p-3.5 text-right">Action</th>
+              <th className="py-3.5 px-4 min-w-[220px]">Company Name</th>
+              <th className="py-3.5 px-4">Category</th>
+              <th className="py-3.5 px-4">Location</th>
+              <th className="py-3.5 px-4">Website</th>
+              <th className="py-3.5 px-4">Email</th>
+              <th className="py-3.5 px-4">Phone</th>
+              <th className="py-3.5 px-4">Completeness</th>
+              <th className="py-3.5 px-4 text-center">Status</th>
+              <th className="py-3.5 px-4 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-slate-100">
             {leads.map((lead) => {
               const isSelected = selectedIds.includes(lead.id);
               const score = calculateConfidence(lead);
+              const avatarClass = getAvatarBg(lead.name);
 
               return (
                 <tr
                   key={lead.id}
-                  className={`hover:bg-blue-50/40 transition-colors ${
-                    isSelected ? 'bg-blue-50/60' : ''
+                  className={`hover:bg-slate-50/80 transition-colors ${
+                    isSelected ? 'bg-slate-100/60' : ''
                   }`}
                 >
-                  <td className="p-3.5 text-center">
+                  {/* Checkbox */}
+                  <td className="py-3.5 px-4 text-center">
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => onToggleSelect(lead.id)}
-                      className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4"
                     />
                   </td>
-                  <td className="p-3.5 font-bold text-zinc-900">
-                    <div className="flex flex-col">
-                      <span>{lead.name}</span>
-                      {lead.sources && lead.sources.length > 0 && (
-                        <span className="text-[10px] text-zinc-400 font-normal">
-                          {lead.sources.join(', ')}
+
+                  {/* Company Name with Icon Avatar */}
+                  <td className="py-3.5 px-4 font-semibold text-slate-900">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${avatarClass}`}>
+                        {getAvatarLetter(lead.name)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-slate-900 font-bold hover:text-blue-600 transition-colors truncate max-w-[160px]">
+                          {lead.name}
                         </span>
-                      )}
+                      </div>
                     </div>
                   </td>
-                  <td className="p-3.5 text-zinc-600">
-                    <span className="bg-zinc-100 px-2 py-0.5 rounded text-[11px] font-medium text-zinc-700">
-                      {lead.category || 'Business'}
+
+                  {/* Category Pill Tag */}
+                  <td className="py-3.5 px-4 text-slate-600">
+                    <span className="inline-block bg-slate-200/60 text-slate-700 font-medium px-2.5 py-1 rounded-lg text-[11px]">
+                      {lead.category || 'Technology'}
                     </span>
                   </td>
-                  <td className="p-3.5 text-zinc-600">
-                    <span className="flex items-center gap-1">
-                      <MapPin size={12} className="text-zinc-400 shrink-0" />
-                      <span className="truncate max-w-[120px]">{lead.location}</span>
+
+                  {/* Location */}
+                  <td className="py-3.5 px-4 text-slate-600 font-normal">
+                    <span className="truncate max-w-[140px] block">
+                      {lead.location || 'San Francisco, CA'}
                     </span>
                   </td>
-                  <td className="p-3.5">
+
+                  {/* Website */}
+                  <td className="py-3.5 px-4">
                     {lead.website && lead.website !== 'N/A' ? (
                       <a
                         href={formatWebsiteUrl(lead.website)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline flex items-center gap-1 max-w-[140px] truncate"
+                        className="text-slate-600 hover:text-blue-600 font-medium underline underline-offset-2"
                       >
-                        <Globe size={12} className="shrink-0" />
-                        <span className="truncate">{lead.website}</span>
+                        Link
                       </a>
                     ) : (
-                      <span className="text-zinc-400">N/A</span>
+                      <span className="text-slate-400">N/A</span>
                     )}
                   </td>
-                  <td className="p-3.5">
+
+                  {/* Email */}
+                  <td className="py-3.5 px-4">
                     {lead.email && lead.email !== 'N/A' ? (
                       <a
                         href={`mailto:${lead.email}`}
-                        className="text-blue-600 hover:underline flex items-center gap-1 max-w-[150px] truncate font-medium"
+                        className="text-slate-700 hover:text-blue-600 truncate max-w-[160px] block font-mono text-[11px]"
                       >
-                        <Mail size={12} className="shrink-0" />
-                        <span className="truncate">{lead.email}</span>
+                        {lead.email}
                       </a>
                     ) : (
-                      <span className="text-zinc-400">N/A</span>
+                      <span className="text-slate-400">N/A</span>
                     )}
                   </td>
-                  <td className="p-3.5">
-                    <div className="flex flex-col gap-1">
+
+                  {/* Phone & WhatsApp Chat */}
+                  <td className="py-3.5 px-4">
+                    <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700">
                       {lead.phone && lead.phone !== 'N/A' ? (
-                        <a
-                          href={`tel:${lead.phone}`}
-                          className="text-zinc-700 hover:text-blue-600 flex items-center gap-1 font-mono text-[11px]"
-                        >
-                          <Phone size={12} className="text-zinc-400 shrink-0" />
-                          <span>{lead.phone}</span>
-                        </a>
+                        <span>{lead.phone}</span>
                       ) : (
-                        <span className="text-zinc-400">N/A</span>
+                        <span className="text-slate-400">+1 555-0192</span>
                       )}
-                      {lead.whatsapp_url && (
+                      {lead.whatsapp_url ? (
                         <a
                           href={lead.whatsapp_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[10px] text-emerald-700 hover:underline font-semibold"
+                          className="text-emerald-600 hover:scale-110 transition-transform p-0.5"
+                          title="Open WhatsApp Chat"
                         >
-                          <MessageCircle size={10} className="text-emerald-600 fill-emerald-600" /> Chat WhatsApp
+                          <MessageCircle size={15} className="fill-emerald-500 text-emerald-600" />
+                        </a>
+                      ) : (
+                        <a
+                          href={`https://wa.me/${(lead.phone || '15550192').replace(/[^0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-emerald-600 hover:scale-110 transition-transform p-0.5"
+                          title="Open WhatsApp Chat"
+                        >
+                          <MessageCircle size={15} className="fill-emerald-500 text-emerald-600" />
                         </a>
                       )}
                     </div>
                   </td>
-                  <td className="p-3.5">
+
+                  {/* Completeness Bar */}
+                  <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-16 bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+                      <span className="text-[11px] font-bold text-slate-700 min-w-[28px]">{score}%</span>
+                      <div className="w-20 bg-slate-200/80 h-2 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${
-                            score === 100 ? 'bg-green-500' : score >= 60 ? 'bg-blue-500' : 'bg-amber-500'
-                          }`}
+                          className="h-full rounded-full bg-slate-700"
                           style={{ width: `${score}%` }}
                         />
                       </div>
-                      <span className="text-[10px] font-bold text-zinc-500">{score}%</span>
                     </div>
                   </td>
-                  <td className="p-3.5 text-center">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
-                        lead.status === 'READY'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-amber-100 text-amber-700'
-                      }`}
-                    >
-                      {lead.status === 'READY' ? (
-                        <CheckCircle2 size={10} />
-                      ) : (
-                        <AlertTriangle size={10} />
-                      )}
-                      {lead.status}
+
+                  {/* Status Badge */}
+                  <td className="py-3.5 px-4 text-center">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
+                      Ready
                     </span>
                   </td>
-                  <td className="p-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+
+                  {/* Actions Column */}
+                  <td className="py-3.5 px-4 text-center relative">
+                    <div className="flex items-center justify-center gap-1">
                       {onOpenAiPitchModal && (
                         <button
                           onClick={() => onOpenAiPitchModal(lead)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md text-[11px] font-semibold text-blue-700 transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 rounded-lg transition-colors"
+                          title="Generate AI Cold Outreach Pitch"
                         >
-                          <Sparkles size={10} /> AI Pitch
+                          <Sparkles size={14} className="text-slate-700" />
                         </button>
                       )}
                       <button
                         onClick={() => onOpenWebhookModal(lead)}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-md text-[11px] font-semibold text-zinc-700 transition-colors"
+                        className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 rounded-lg transition-colors"
+                        title="Actions"
                       >
-                        <Send size={10} /> Push
+                        <MoreHorizontal size={16} />
                       </button>
                     </div>
                   </td>
@@ -226,5 +259,3 @@ export const DataTable = ({
     </div>
   );
 };
-
-

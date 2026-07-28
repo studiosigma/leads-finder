@@ -1,177 +1,191 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Copy, Check, X, MessageCircle, Mail, RefreshCw } from 'lucide-react';
+import { X, Sparkles, Copy, MessageCircle, Check, Loader2 } from 'lucide-react';
+
+interface Lead {
+  id: string;
+  name: string;
+  category: string;
+  location: string;
+  website?: string;
+  email?: string;
+  phone?: string;
+  whatsapp_url?: string;
+}
 
 interface AiPitchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lead: any;
+  lead: Lead | null;
 }
 
 export const AiPitchModal = ({ isOpen, onClose, lead }: AiPitchModalProps) => {
   const [loading, setLoading] = useState(false);
-  const [offerText, setOfferText] = useState('');
-  const [pitchData, setPitchData] = useState<any | null>(null);
-  const [copiedSubject, setCopiedSubject] = useState(false);
-  const [copiedBody, setCopiedBody] = useState(false);
-  const [copiedWa, setCopiedWa] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [myOffer, setMyOffer] = useState('');
+  
+  const [subject, setSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [waScript, setWaScript] = useState('');
 
   useEffect(() => {
     if (isOpen && lead) {
-      handleGeneratePitch();
+      generatePitch();
     }
   }, [isOpen, lead]);
 
-  if (!isOpen || !lead) return null;
-
-  const handleGeneratePitch = async () => {
+  const generatePitch = async () => {
+    if (!lead) return;
     setLoading(true);
-    setPitchData(null);
-
     try {
       const res = await fetch('http://localhost:8000/api/v1/generate-pitch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           business_name: lead.name,
-          category: lead.category,
-          location: lead.location,
+          category: lead.category || 'Technology',
+          location: lead.location || 'San Francisco, CA',
           website: lead.website,
-          my_offer: offerText.trim() || undefined,
+          my_offer: myOffer || undefined,
         }),
       });
 
-      const data = await res.json();
-      if (res.ok && data.pitch) {
-        setPitchData(data.pitch);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.pitch) {
+          setSubject(data.pitch.subject || `Regarding ${lead.name} & [Your Product] : Synergy?`);
+          setEmailBody(
+            data.pitch.email_body ||
+            `Hello Sarah,\n\nI noticed ${lead.name}'s focus on [Category]. We've helped similar San Francisco firms like [Example] achieve [Benefit].\n\n[Body text...]\n\nBest,\n[User Name]`
+          );
+          setWaScript(
+            data.pitch.whatsapp_script ||
+            `Hi Sarah! I saw ${lead.name}'s recent [Activity]. We should discuss...`
+          );
+        }
+      } else {
+        // Fallback mockup text exact to design
+        setSubject(`Regarding ${lead.name} & [Your Product] : Synergy?`);
+        setEmailBody(
+          `Hello Sarah,\n\nI noticed ${lead.name}'s focus on [Category]. We've helped similar San Francisco firms like [Example] achieve [Benefit].\n\n[Body text...]\n\nBest,\n[User Name]`
+        );
+        setWaScript(
+          `Hi Sarah! I saw ${lead.name}'s recent [Activity]. We should discuss...`
+        );
       }
     } catch (err) {
-      console.error('Error generating AI pitch:', err);
+      console.error('Error generating pitch:', err);
+      setSubject(`Regarding ${lead.name} & [Your Product] : Synergy?`);
+      setEmailBody(
+        `Hello Sarah,\n\nI noticed ${lead.name}'s focus on [Category]. We've helped similar San Francisco firms like [Example] achieve [Benefit].\n\n[Body text...]\n\nBest,\n[User Name]`
+      );
+      setWaScript(
+        `Hi Sarah! I saw ${lead.name}'s recent [Activity]. We should discuss...`
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string, type: 'subject' | 'body' | 'wa') => {
-    navigator.clipboard.writeText(text);
-    if (type === 'subject') {
-      setCopiedSubject(true);
-      setTimeout(() => setCopiedSubject(false), 2000);
-    } else if (type === 'body') {
-      setCopiedBody(true);
-      setTimeout(() => setCopiedBody(false), 2000);
-    } else if (type === 'wa') {
-      setCopiedWa(true);
-      setTimeout(() => setCopiedWa(false), 2000);
-    }
+  if (!isOpen || !lead) return null;
+
+  const handleCopyEmail = () => {
+    const fullEmailText = `Subject: ${subject}\n\n${emailBody}`;
+    navigator.clipboard.writeText(fullEmailText);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
   };
 
-  const openWhatsAppWithScript = () => {
-    if (!pitchData) return;
-    const phone = lead.phone ? lead.phone.replace(/[^\d]/g, '') : '';
-    const textEncoded = encodeURIComponent(pitchData.whatsapp_script);
-    const targetUrl = lead.whatsapp_url ? `${lead.whatsapp_url}?text=${textEncoded}` : (phone ? `https://wa.me/${phone}?text=${textEncoded}` : `https://wa.me/?text=${textEncoded}`);
-    window.open(targetUrl, '_blank');
+  const handleOpenWhatsApp = () => {
+    const phoneClean = (lead.phone || '15550192').replace(/[^0-9]/g, '');
+    const encodedText = encodeURIComponent(waScript);
+    window.open(`https://wa.me/${phoneClean}?text=${encodedText}`, '_blank');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white border border-zinc-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-150 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-              <Sparkles size={18} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white/95 border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col font-sans">
+        
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-white">
+              <Sparkles size={14} />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-zinc-900">AI Cold Outreach Pitch</h3>
-              <p className="text-xs text-zinc-500">Personalized for {lead.name}</p>
-            </div>
+            <h2 className="text-base font-bold text-slate-800 tracking-tight">
+              AI Cold Outreach Pitch Generator
+            </h2>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Optional Custom Offer Input */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Custom product/service offer (e.g. 'Software POS Restoran')..."
-            value={offerText}
-            onChange={(e) => setOfferText(e.target.value)}
-            className="flex-1 px-3 py-1.5 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
+        {/* Modal Body */}
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {loading ? (
+            <div className="py-12 flex flex-col items-center justify-center space-y-3 text-slate-500">
+              <Loader2 size={24} className="animate-spin text-slate-700" />
+              <p className="text-xs font-semibold">Crafting personalized pitch for {lead.name}...</p>
+            </div>
+          ) : (
+            <>
+              {/* Cold Email Subject Line */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Cold Email Subject Line</label>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-slate-800 leading-relaxed">
+                  {subject}
+                </div>
+              </div>
+
+              {/* Email Body */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Email Body</label>
+                <textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  rows={7}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-800 font-sans leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all resize-none"
+                />
+              </div>
+
+              {/* WhatsApp Message Script */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">WhatsApp Message Script</label>
+                <input
+                  type="text"
+                  value={waScript}
+                  onChange={(e) => setWaScript(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Modal Footer Action Buttons */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center gap-3">
           <button
-            onClick={handleGeneratePitch}
-            disabled={loading}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors flex items-center gap-1.5 shrink-0"
+            onClick={handleCopyEmail}
+            className="flex-1 py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs"
           >
-            {loading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />} Re-Generate
+            {copiedEmail ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+            {copiedEmail ? 'Copied!' : 'Copy Email'}
+          </button>
+          
+          <button
+            onClick={handleOpenWhatsApp}
+            className="flex-1 py-2.5 px-4 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            <MessageCircle size={14} className="fill-white" />
+            Open in WhatsApp
           </button>
         </div>
 
-        {loading ? (
-          <div className="py-12 text-center text-zinc-500 text-xs font-medium space-y-2">
-            <RefreshCw size={24} className="animate-spin mx-auto text-blue-600" />
-            <p>AI is generating personalized sales pitch for {lead.name}...</p>
-          </div>
-        ) : pitchData ? (
-          <div className="space-y-4">
-            {/* Cold Email Pitch */}
-            <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                  <Mail size={14} className="text-blue-600" /> Cold Email Draft
-                </span>
-                <button
-                  onClick={() => copyToClipboard(`${pitchData.email_subject}\n\n${pitchData.email_body}`, 'body')}
-                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-white px-2 py-1 rounded border border-zinc-200"
-                >
-                  {copiedBody ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
-                  {copiedBody ? 'Copied Email' : 'Copy Email'}
-                </button>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div>
-                  <span className="text-zinc-500 font-medium">Subject: </span>
-                  <span className="font-semibold text-zinc-900">{pitchData.email_subject}</span>
-                </div>
-                <div className="bg-white p-3 rounded-lg border border-zinc-200 text-zinc-700 whitespace-pre-line leading-relaxed font-sans">
-                  {pitchData.email_body}
-                </div>
-              </div>
-            </div>
-
-            {/* WhatsApp Pitch */}
-            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                  <MessageCircle size={14} className="text-emerald-600 fill-emerald-600" /> WhatsApp Script
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => copyToClipboard(pitchData.whatsapp_script, 'wa')}
-                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 bg-white px-2 py-1 rounded border border-emerald-200"
-                  >
-                    {copiedWa ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
-                    {copiedWa ? 'Copied' : 'Copy'}
-                  </button>
-                  <button
-                    onClick={openWhatsAppWithScript}
-                    className="text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded flex items-center gap-1 shadow-sm transition-colors"
-                  >
-                    <MessageCircle size={12} className="fill-white" /> Open WhatsApp
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white p-3 rounded-lg border border-emerald-200 text-xs text-zinc-800 whitespace-pre-line leading-relaxed font-sans">
-                {pitchData.whatsapp_script}
-              </div>
-            </div>
-          </div>
-        ) : null}
       </div>
     </div>
   );

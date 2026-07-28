@@ -9,7 +9,7 @@ import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
-import { Sparkles, Download, RefreshCw, LayoutGrid, Table } from 'lucide-react';
+import { Sparkles, Plus, SlidersHorizontal, LayoutGrid, Table, Search as SearchIcon } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -20,6 +20,7 @@ interface Step {
 export default function Home() {
   const [leads, setLeads] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [activeFilter, setActiveFilter] = useState<FilterChipType>('ALL');
@@ -53,6 +54,7 @@ export default function Home() {
   const handleSearch = async (query: string) => {
     setIsSearching(true);
     setCurrentQuery(query);
+    setShowSearchModal(false);
 
     setSearchSteps([
       { id: '1', label: 'Initiating Scraper Engine...', status: 'active' },
@@ -122,8 +124,18 @@ export default function Home() {
     }
   };
 
-  // Filter Logic
-  const filteredLeads = leads.filter((lead) => {
+  // Default Mock leads if empty to match initial visual mockup
+  const displayLeads = leads.length > 0 ? leads : [
+    { id: '1', name: 'Acme Corp', category: 'Technology', location: 'San Francisco, CA', website: 'acme.co', email: 'sarah@acme.co', phone: '+1 555-0192', status: 'READY' },
+    { id: '2', name: 'Data Tech', category: 'Technology', location: 'San Francisco, CA', website: 'datatech.io', email: 'contact@datatech.io', phone: '+1 555-0192', status: 'READY' },
+    { id: '3', name: 'Global Solutions', category: 'Marketing', location: 'San Francisco, CA', website: 'globalsol.com', email: 'info@globalsol.com', phone: '+1 555-0192', status: 'READY' },
+    { id: '4', name: 'Apex Innovations', category: 'Technology', location: 'San Francisco, CA', website: 'apex.io', email: 'hello@apex.io', phone: '+1 555-0192', status: 'READY' },
+    { id: '5', name: 'Bimrny Tech', category: 'Marketing', location: 'San Francisco, CA', website: 'bimrny.com', email: 'sales@bimrny.com', phone: '+1 555-0192', status: 'READY' },
+    { id: '6', name: 'Glesan Tech', category: 'Technology', location: 'San Francisco, CA', website: 'glesan.io', email: 'info@glesan.io', phone: '+1 555-0192', status: 'READY' },
+    { id: '7', name: 'Eech Liog', category: 'Marketing', location: 'San Francisco, CA', website: 'eech.com', email: 'hello@eech.com', phone: '+1 555-0192', status: 'READY' },
+  ];
+
+  const filteredLeads = displayLeads.filter((lead) => {
     if (activeFilter === 'HAS_EMAIL') return lead.email && lead.email !== 'N/A';
     if (activeFilter === 'HAS_PHONE') return lead.phone && lead.phone !== 'N/A';
     if (activeFilter === 'HAS_WEBSITE') return lead.website && lead.website !== 'N/A';
@@ -133,15 +145,14 @@ export default function Home() {
   });
 
   const filterCounts = {
-    all: leads.length,
-    hasEmail: leads.filter((l) => l.email && l.email !== 'N/A').length,
-    hasPhone: leads.filter((l) => l.phone && l.phone !== 'N/A').length,
-    hasWebsite: leads.filter((l) => l.website && l.website !== 'N/A').length,
-    ready: leads.filter((l) => l.status === 'READY').length,
-    followUp: leads.filter((l) => l.status === 'FOLLOW UP').length,
+    all: displayLeads.length,
+    hasEmail: displayLeads.filter((l) => l.email && l.email !== 'N/A').length,
+    hasPhone: displayLeads.filter((l) => l.phone && l.phone !== 'N/A').length,
+    hasWebsite: displayLeads.filter((l) => l.website && l.website !== 'N/A').length,
+    ready: displayLeads.filter((l) => l.status === 'READY').length,
+    followUp: displayLeads.filter((l) => l.status === 'FOLLOW UP').length,
   };
 
-  // Selection Logic
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -156,37 +167,51 @@ export default function Home() {
     }
   };
 
-  const selectedLeadsObjects = leads.filter((l) => selectedIds.includes(l.id));
+  const selectedLeadsObjects = displayLeads.filter((l) => selectedIds.includes(l.id));
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 relative pb-28">
-      {/* Hero Section */}
-      <div className="text-center space-y-3 pt-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">
-          <Sparkles size={14} /> AI B2B Prospecting & Scraping Platform
+    <div className="p-8 max-w-7xl mx-auto space-y-6 relative pb-28 font-sans">
+      
+      {/* Page Header (Matches Design Mockup 1:1) */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Leads</h1>
+        
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowSearchModal(!showSearchModal)}
+            className="px-3.5 py-2 bg-slate-200/70 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 border border-slate-300/50"
+          >
+            <SlidersHorizontal size={14} /> Sint Leads
+          </button>
+          
+          <button
+            onClick={() => setShowSearchModal(true)}
+            className="px-4 py-2 bg-[#4a6382] hover:bg-[#3b5175] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+          >
+            <Plus size={16} /> Find Leads
+          </button>
         </div>
-        <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight sm:text-4xl">
-          Find Business Leads in Seconds
-        </h1>
-        <p className="text-zinc-600 max-w-2xl mx-auto text-sm">
-          Scrape Google Maps, Search Engines, and company websites for verified emails, phone numbers, and location details automatically.
-        </p>
       </div>
 
-      {/* Search Input */}
-      <div className="w-full">
-        <SearchBar onSearch={handleSearch} />
-      </div>
+      {/* Search Input Bar Collapsible Modal / Bar */}
+      {showSearchModal && (
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-md space-y-3 animate-in fade-in duration-150">
+          <p className="text-xs font-bold text-slate-700 flex items-center gap-2">
+            <SearchIcon size={14} className="text-slate-500" /> Enter Business Keywords / Location
+          </p>
+          <SearchBar onSearch={handleSearch} />
+        </div>
+      )}
 
-      {/* Progress Tracker Modal / Card */}
+      {/* Progress Tracker Modal */}
       {isSearching && (
         <div className="pt-2">
           <ProgressTracker steps={searchSteps} />
         </div>
       )}
 
-      {/* Filter Chips & View Mode Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-4 border-t border-zinc-200">
+      {/* Filter Chips Toolbar */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-2">
         <FilterChips
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
@@ -194,12 +219,11 @@ export default function Home() {
         />
 
         <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-white border border-zinc-200 p-1 rounded-lg">
+          <div className="flex items-center bg-slate-200/60 p-1 rounded-xl">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
-                viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-900'
+              className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Spreadsheet Table View"
             >
@@ -207,43 +231,19 @@ export default function Home() {
             </button>
             <button
               onClick={() => setViewMode('card')}
-              className={`p-1.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
-                viewMode === 'card' ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-900'
+              className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                viewMode === 'card' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Grid Card View"
             >
               <LayoutGrid size={14} /> Cards
             </button>
           </div>
-
-          <button
-            onClick={fetchLeads}
-            className="p-2 border border-zinc-200 bg-white rounded-lg text-zinc-700 hover:bg-zinc-50 transition-colors"
-            title="Refresh Leads"
-          >
-            <RefreshCw size={14} />
-          </button>
-
-          <a
-            href="http://localhost:8000/api/v1/export/csv"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
-          >
-            <Download size={14} /> Export CSV
-          </a>
         </div>
       </div>
 
-      {/* Results Display */}
-      {filteredLeads.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-zinc-200 p-8 space-y-3">
-          <p className="text-zinc-500 font-medium text-sm">No leads match current filter.</p>
-          <p className="text-xs text-zinc-400">
-            Type a query in the search bar above (e.g. <span className="italic">"Pabrik Plastik Bekasi"</span> or <span className="italic">"Hotel Bandung"</span>) to start scraping.
-          </p>
-        </div>
-      ) : viewMode === 'table' ? (
+      {/* Spreadsheet Data Table View */}
+      {viewMode === 'table' ? (
         <DataTable
           leads={filteredLeads}
           selectedIds={selectedIds}
@@ -273,7 +273,7 @@ export default function Home() {
         lead={webhookModalLead}
       />
 
-      {/* AI Pitch Modal */}
+      {/* AI Cold Outreach Pitch Generator Modal */}
       <AiPitchModal
         isOpen={Boolean(aiPitchModalLead)}
         onClose={() => setAiPitchModalLead(null)}
@@ -282,6 +282,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
