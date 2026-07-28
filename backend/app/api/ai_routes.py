@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from ..services.ai_pitch import AIPitchGenerator
+from app.services.ai_pitch import AIPitchGenerator
+
 
 router = APIRouter()
 pitch_generator = AIPitchGenerator()

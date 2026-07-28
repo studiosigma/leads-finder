@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from ..services.queue.celery_app import celery_app
+from app.services.queue.celery_app import celery_app
 from celery.result import AsyncResult
-from ...core.db import get_all_leads
+from app.core.db import get_all_leads
+
 
 router = APIRouter()
 

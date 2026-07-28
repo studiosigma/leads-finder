@@ -1,9 +1,10 @@
-from ..queue.celery_app import celery_app
+from app.services.queue.celery_app import celery_app
 from .google_maps import GoogleMapsScraper
 from .google_search import GoogleSearchScraper
 from .website_crawler import WebsiteCrawler
-from ..pipeline.cleaner import DataCleaner
-from ...core.db import save_lead
+from app.services.pipeline.cleaner import DataCleaner
+from app.core.db import save_lead
+
 
 @celery_app.task(name="app.services.scrapers.tasks.run_search")
 def run_search(query: str, limit: int = 10):

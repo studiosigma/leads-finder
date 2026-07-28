@@ -2,7 +2,8 @@ import requests
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-from ...core.db import get_all_leads
+from app.core.db import get_all_leads
+
 
 router = APIRouter()
 

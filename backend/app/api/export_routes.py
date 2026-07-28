@@ -1,7 +1,8 @@
 import csv
 import io
 from fastapi import APIRouter, Response
-from ...core.db import get_all_leads
+from app.core.db import get_all_leads
+
 
 router = APIRouter()
 
