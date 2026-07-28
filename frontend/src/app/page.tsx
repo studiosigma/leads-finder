@@ -9,7 +9,7 @@ import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
-import { Sparkles, Plus, SlidersHorizontal, LayoutGrid, Table, Search as SearchIcon } from 'lucide-react';
+import { Plus, SlidersHorizontal, LayoutGrid, Table, Search as SearchIcon } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -124,7 +124,7 @@ export default function Home() {
     }
   };
 
-  // Default Mock leads if empty to match initial visual mockup
+  // Mock leads if empty to display high-density table
   const displayLeads = leads.length > 0 ? leads : [
     { id: '1', name: 'Acme Corp', category: 'Technology', location: 'San Francisco, CA', website: 'acme.co', email: 'sarah@acme.co', phone: '+1 555-0192', status: 'READY' },
     { id: '2', name: 'Data Tech', category: 'Technology', location: 'San Francisco, CA', website: 'datatech.io', email: 'contact@datatech.io', phone: '+1 555-0192', status: 'READY' },
@@ -170,16 +170,16 @@ export default function Home() {
   const selectedLeadsObjects = displayLeads.filter((l) => selectedIds.includes(l.id));
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6 relative pb-28 font-sans">
+    <div className="w-full min-h-screen bg-[#f1f5f9] p-8 space-y-6 relative pb-28 font-sans">
       
-      {/* Page Header (Matches Design Mockup 1:1) */}
+      {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Leads</h1>
         
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowSearchModal(!showSearchModal)}
-            className="px-3.5 py-2 bg-slate-200/70 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 border border-slate-300/50"
+            className="px-3.5 py-2 bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-2 border border-slate-300/60"
           >
             <SlidersHorizontal size={14} /> Sint Leads
           </button>
@@ -193,9 +193,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Search Input Bar Collapsible Modal / Bar */}
+      {/* Search Bar Collapsible */}
       {showSearchModal && (
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-md space-y-3 animate-in fade-in duration-150">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-lg space-y-3 animate-in fade-in duration-150">
           <p className="text-xs font-bold text-slate-700 flex items-center gap-2">
             <SearchIcon size={14} className="text-slate-500" /> Enter Business Keywords / Location
           </p>
@@ -203,7 +203,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Progress Tracker Modal */}
+      {/* Progress Tracker */}
       {isSearching && (
         <div className="pt-2">
           <ProgressTracker steps={searchSteps} />
@@ -219,10 +219,10 @@ export default function Home() {
         />
 
         <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-          <div className="flex items-center bg-slate-200/60 p-1 rounded-xl">
+          <div className="flex items-center bg-slate-200/70 p-1 rounded-xl">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+              className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
                 viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Spreadsheet Table View"
@@ -231,7 +231,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => setViewMode('card')}
-              className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+              className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
                 viewMode === 'card' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Grid Card View"
@@ -273,7 +273,7 @@ export default function Home() {
         lead={webhookModalLead}
       />
 
-      {/* AI Cold Outreach Pitch Generator Modal */}
+      {/* AI Pitch Modal */}
       <AiPitchModal
         isOpen={Boolean(aiPitchModalLead)}
         onClose={() => setAiPitchModalLead(null)}
