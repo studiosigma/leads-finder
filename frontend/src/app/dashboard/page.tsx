@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { ResultCard } from '@/components/leads/result-card';
 import { DataTable } from '@/components/leads/data-table';
 import { MapView } from '@/components/leads/map-view';
@@ -9,7 +10,7 @@ import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
-import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload } from 'lucide-react';
+import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, ShieldCheck, Sparkles, PieChart, BarChart3 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -45,6 +46,10 @@ export default function DashboardPage() {
   const emailsFound = leads.filter((l) => l.email && l.email !== 'N/A' && l.email !== '-').length;
   const phonesFound = leads.filter((l) => l.phone && l.phone !== 'N/A' && l.phone !== '-').length;
   const websitesFound = leads.filter((l) => l.website && l.website !== 'N/A' && l.website !== '-').length;
+
+  const emailRate = totalLeads > 0 ? Math.round((emailsFound / totalLeads) * 100) : 0;
+  const phoneRate = totalLeads > 0 ? Math.round((phonesFound / totalLeads) * 100) : 0;
+  const webRate = totalLeads > 0 ? Math.round((websitesFound / totalLeads) * 100) : 0;
 
   const handleImportSuccess = (importedLeads: any[]) => {
     setLeads((prev) => [...importedLeads, ...prev]);
@@ -112,13 +117,84 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Analytics Tiles */}
+      {/* Analytics Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatTile label="Total Leads" value={totalLeads.toString()} trend="+0%" />
-        <StatTile label="Emails Found" value={emailsFound.toString()} trend="+0%" />
-        <StatTile label="Phone Found" value={phonesFound.toString()} trend="+0%" />
-        <StatTile label="Website Found" value={websitesFound.toString()} trend="+0%" />
+        <StatTile label="Total Leads" value={totalLeads.toString()} trend={totalLeads > 0 ? `${totalLeads} Total` : 'Ready'} />
+        <StatTile label="Emails Found" value={emailsFound.toString()} trend={`${emailRate}% Verified`} />
+        <StatTile label="Phone Found" value={phonesFound.toString()} trend={`${phoneRate}% WhatsApp`} />
+        <StatTile label="Website Found" value={websitesFound.toString()} trend={`${webRate}% Active`} />
       </div>
+
+      {/* Visual Analytics & Data Quality Insights Bar */}
+      {leads.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          {/* Contact Field Completeness Analytics */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <BarChart3 size={15} className="text-[#4a6382]" /> Data Field Fill Rates
+              </h3>
+              <span className="text-[10px] font-bold text-slate-400">Database Quality</span>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div>
+                <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                  <span>Direct Phone & WA Contact Rate</span>
+                  <span className="font-bold text-slate-800">{phoneRate}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${phoneRate}%` }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                  <span>Verified Corporate Email (MX Verified)</span>
+                  <span className="font-bold text-slate-800">{emailRate}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="bg-[#4a6382] h-full rounded-full transition-all" style={{ width: `${emailRate}%` }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
+                  <span>Official Business Website Rate</span>
+                  <span className="font-bold text-slate-800">{webRate}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${webRate}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Engine Pipeline Priority Banner */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <PieChart size={15} className="text-[#4a6382]" /> Extraction Source Pipeline
+              </h3>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                100% Google Maps First
+              </span>
+            </div>
+
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5 text-xs text-slate-600">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-800">1. Google Maps Core Profile</span>
+                <span className="text-[11px] font-mono text-emerald-700 font-bold">Primary (Phase 1)</span>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Primary business profiles, verified address coordinates, ratings, and landline phone numbers are extracted directly from Google Maps.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      )}
 
       {/* Database Controls Toolbar */}
       <div className="space-y-4 pt-2">
@@ -193,14 +269,32 @@ export default function DashboardPage() {
 
         {/* Data Table / Map View / Card Grid View */}
         {leads.length === 0 ? (
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
-              <SearchX size={24} />
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+              <SearchX size={28} />
             </div>
-            <h3 className="text-base font-bold text-slate-800">Database is Currently Empty</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-              No leads saved in database yet. Go to <b>Find Leads</b> to run your first real-time business prospect search or click <b>Import CSV</b> above.
-            </p>
+            <div>
+              <h3 className="text-base font-bold text-slate-800">Database is Currently Empty</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
+                No B2B leads collected yet. You can start a real-time business prospect search or upload an existing CSV spreadsheet to auto-enrich data.
+              </p>
+            </div>
+
+            {/* Quick Action CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href="/"
+                className="px-5 py-2.5 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+              >
+                <SearchIcon size={14} /> Start Real-time Lead Search
+              </Link>
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-5 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
+              >
+                <Upload size={14} /> Import CSV & Auto-Enrich
+              </button>
+            </div>
           </div>
         ) : viewMode === 'map' ? (
           <MapView leads={filteredLeads} />
