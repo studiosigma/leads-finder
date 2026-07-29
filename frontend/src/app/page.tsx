@@ -61,6 +61,30 @@ export default function Home() {
     };
   }, []);
 
+  const saveSessionToHistory = (queryStr: string, leadBatch: any[]) => {
+    if (!leadBatch || leadBatch.length === 0) return;
+    try {
+      const now = new Date();
+      const timeFormatted = now.toISOString().replace('T', ' ').substring(0, 16);
+      const newSession = {
+        id: `session-${Date.now()}`,
+        query: queryStr,
+        timestamp: timeFormatted,
+        lead_count: leadBatch.length,
+        location: leadBatch[0]?.location || 'Indonesia',
+        sources: ['Google Maps First', 'Website Deep Crawl', 'Google Search'],
+        status: 'COMPLETED',
+        leads: leadBatch
+      };
+
+      const existingSessions = JSON.parse(localStorage.getItem('lfe_scraping_sessions') || '[]');
+      const updated = [newSession, ...existingSessions.filter((s: any) => s.query !== queryStr)];
+      localStorage.setItem('lfe_scraping_sessions', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Error saving scraping session history:', e);
+    }
+  };
+
   const generateDynamicLeadsForQuery = (userQuery: string, count: number, offsetIndex = 0, options?: SearchOptions) => {
     const qLower = userQuery.toLowerCase();
     
@@ -232,12 +256,17 @@ export default function Home() {
       // Continuous Infinite Search Mode: Stream +5 new leads every 2.5 seconds until Stop is clicked
       const firstBatch = generateDynamicLeadsForQuery(query, 5, 0, options);
       setLeads(firstBatch);
+      saveSessionToHistory(query, firstBatch);
 
       let leadCounter = 5;
       streamIntervalRef.current = setInterval(() => {
         leadCounter += 4;
         const nextBatch = generateDynamicLeadsForQuery(query, 4, leadCounter, options);
-        setLeads((prev) => [...nextBatch, ...prev]);
+        setLeads((prev) => {
+          const updated = [...nextBatch, ...prev];
+          saveSessionToHistory(query, updated);
+          return updated;
+        });
 
         setSearchSteps([
           { id: '1', label: 'Phase 1: Google Maps Directory Stream Active', status: 'completed' },
@@ -261,6 +290,7 @@ export default function Home() {
       setTimeout(() => {
         const batchLeads = generateDynamicLeadsForQuery(query, targetLimit || 10, 0, options);
         setLeads(batchLeads);
+        saveSessionToHistory(query, batchLeads);
 
         setSearchSteps([
           { id: '1', label: 'Phase 1: Google Maps Core Profiles Extracted', status: 'completed' },
@@ -281,6 +311,8 @@ export default function Home() {
       streamIntervalRef.current = null;
     }
 
+    saveSessionToHistory(currentQuery || 'Custom Search', leads);
+
     setSearchSteps([
       { id: '1', label: 'Phase 1: Google Maps Core Directory Extracted', status: 'completed' },
       { id: '2', label: 'Phase 2: Deep Website Crawl Complete', status: 'completed' },
@@ -294,6 +326,7 @@ export default function Home() {
 
   const handleImportSuccess = (importedLeads: any[]) => {
     setLeads((prev) => [...importedLeads, ...prev]);
+    saveSessionToHistory('CSV Import Batch', importedLeads);
     setSearchNotice(`Successfully imported & enriched ${importedLeads.length} leads from CSV file!`);
   };
 

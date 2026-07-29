@@ -11,11 +11,13 @@ import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
 import { AnalyticsCharts } from '@/components/dashboard/analytics-charts';
-import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, ShieldCheck, Sparkles, PieChart, BarChart3 } from 'lucide-react';
+import { ScrapingHistoryTable, ScrapingSession } from '@/components/dashboard/scraping-history-table';
+import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'leads' | 'history'>('leads');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [viewMode, setViewMode] = useState<'card' | 'table' | 'map'>('table');
@@ -23,6 +25,10 @@ export default function DashboardPage() {
   const [webhookModalLead, setWebhookModalLead] = useState<any | null>(null);
   const [aiPitchModalLead, setAiPitchModalLead] = useState<any | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // Scraping Sessions State
+  const [sessions, setSessions] = useState<ScrapingSession[]>([]);
+  const [activeSessionFilter, setActiveSessionFilter] = useState<ScrapingSession | null>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -40,8 +46,39 @@ export default function DashboardPage() {
         setLoading(false);
       }
     }
+
+    // Load Sessions from localStorage
+    try {
+      const savedSessions = JSON.parse(localStorage.getItem('lfe_scraping_sessions') || '[]');
+      setSessions(savedSessions);
+    } catch (e) {
+      console.error('Error loading sessions:', e);
+    }
+
     fetchLeads();
   }, []);
+
+  const handleDeleteSession = (sessionId: string) => {
+    const updated = sessions.filter((s) => s.id !== sessionId);
+    setSessions(updated);
+    localStorage.setItem('lfe_scraping_sessions', JSON.stringify(updated));
+    if (activeSessionFilter?.id === sessionId) {
+      setActiveSessionFilter(null);
+    }
+  };
+
+  const handleInspectSession = (sess: ScrapingSession) => {
+    setActiveSessionFilter(sess);
+    setActiveTab('leads');
+    if (sess.leads && sess.leads.length > 0) {
+      // Merge session leads into leads list if not present
+      setLeads((prev) => {
+        const existingIds = new Set(prev.map((l) => l.id));
+        const newLeads = sess.leads!.filter((l) => !existingIds.has(l.id));
+        return [...newLeads, ...prev];
+      });
+    }
+  };
 
   const totalLeads = leads.length;
   const emailsFound = leads.filter((l) => l.email && l.email !== 'N/A' && l.email !== '-').length;
@@ -56,7 +93,11 @@ export default function DashboardPage() {
     setLeads((prev) => [...importedLeads, ...prev]);
   };
 
-  const filteredLeads = leads.filter((lead) => {
+  const displayLeads = activeSessionFilter && activeSessionFilter.leads && activeSessionFilter.leads.length > 0
+    ? activeSessionFilter.leads
+    : leads;
+
+  const filteredLeads = displayLeads.filter((lead) => {
     const matchesStatus =
       statusFilter === 'ALL' || lead.status === statusFilter;
     const matchesSearch =
@@ -95,7 +136,7 @@ export default function DashboardPage() {
             <Database className="text-slate-700" size={24} /> Leads Database & Analytics
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Real-time metric overview and central database for collected B2B leads.
+            Real-time metric overview, central database, and scraping history logs.
           </p>
         </div>
         
@@ -129,196 +170,173 @@ export default function DashboardPage() {
       {/* Visual Pie & Bar Chart Analytics */}
       <AnalyticsCharts leads={leads} />
 
-      {/* Visual Analytics & Data Quality Insights Bar */}
-      {leads.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          
-          {/* Contact Field Completeness Analytics */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <BarChart3 size={15} className="text-[#4a6382]" /> Data Field Fill Rates
-              </h3>
-              <span className="text-[10px] font-bold text-slate-400">Database Quality</span>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
-                  <span>Direct Phone & WA Contact Rate</span>
-                  <span className="font-bold text-slate-800">{phoneRate}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${phoneRate}%` }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
-                  <span>Verified Corporate Email (MX Verified)</span>
-                  <span className="font-bold text-slate-800">{emailRate}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-[#4a6382] h-full rounded-full transition-all" style={{ width: `${emailRate}%` }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
-                  <span>Official Business Website Rate</span>
-                  <span className="font-bold text-slate-800">{webRate}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${webRate}%` }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Engine Pipeline Priority Banner */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <PieChart size={15} className="text-[#4a6382]" /> Extraction Source Pipeline
-              </h3>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                100% Google Maps First
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5 text-xs text-slate-600">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-800">1. Google Maps Core Profile</span>
-                <span className="text-[11px] font-mono text-emerald-700 font-bold">Primary (Phase 1)</span>
-              </div>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
-                Primary business profiles, verified address coordinates, ratings, and landline phone numbers are extracted directly from Google Maps.
-              </p>
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* Database Controls Toolbar */}
-      <div className="space-y-4 pt-2">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h2 className="text-base font-bold text-slate-800">
-            Collected Leads ({filteredLeads.length})
-          </h2>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-slate-200/70 p-1 rounded-xl">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
-                  viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-                title="Spreadsheet Table View"
-              >
-                <Table size={14} /> Table
-              </button>
-              <button
-                onClick={() => setViewMode('card')}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
-                  viewMode === 'card' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-                title="Grid Card View"
-              >
-                <LayoutGrid size={14} /> Cards
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
-                  viewMode === 'map' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
-                title="Interactive Map View"
-              >
-                <MapPin size={14} /> Map
-              </button>
-            </div>
-
-            {/* Search Filter Input */}
-            <div className="relative flex-1 sm:w-64">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Filter by name or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex items-center gap-1 bg-white border border-slate-200/90 p-1 rounded-xl">
-              <Filter size={14} className="text-slate-400 ml-2" />
-              {(['ALL', 'READY', 'FOLLOW UP'] as const).map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                    statusFilter === st
-                      ? 'bg-[#4a6382] text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  {st}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Main View Tab Switcher: All Collected Leads vs Scraping History Logs */}
+      <div className="flex items-center justify-between border-b border-slate-200/80 pt-2 pb-1">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('leads')}
+            className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 ${
+              activeTab === 'leads'
+                ? 'bg-[#4a6382] text-white shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/90'
+            }`}
+          >
+            <Database size={14} /> All Collected Leads ({displayLeads.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 ${
+              activeTab === 'history'
+                ? 'bg-[#4a6382] text-white shadow-xs'
+                : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/90'
+            }`}
+          >
+            <Clock size={14} /> Scraping History Logs ({sessions.length} Sessions)
+          </button>
         </div>
 
-        {/* Data Table / Map View / Card Grid View */}
-        {leads.length === 0 ? (
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
-              <SearchX size={28} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-800">Database is Currently Empty</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
-                No B2B leads collected yet. You can start a real-time business prospect search or upload an existing CSV spreadsheet to auto-enrich data.
-              </p>
-            </div>
-
-            {/* Quick Action CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link
-                href="/"
-                className="px-5 py-2.5 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
-              >
-                <SearchIcon size={14} /> Start Real-time Lead Search
-              </Link>
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="px-5 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
-              >
-                <Upload size={14} /> Import CSV & Auto-Enrich
-              </button>
-            </div>
-          </div>
-        ) : viewMode === 'map' ? (
-          <MapView leads={filteredLeads} />
-        ) : viewMode === 'table' ? (
-          <DataTable
-            leads={filteredLeads}
-            selectedIds={selectedIds}
-            onToggleSelect={handleToggleSelect}
-            onToggleSelectAll={handleToggleSelectAll}
-            onOpenWebhookModal={setWebhookModalLead}
-            onOpenAiPitchModal={setAiPitchModalLead}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLeads.map((lead: any, idx: number) => (
-              <ResultCard key={lead.id || idx} lead={lead} />
-            ))}
+        {activeSessionFilter && (
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1 rounded-xl text-xs font-bold text-blue-900">
+            <span>Filter Session: "{activeSessionFilter.query}"</span>
+            <button
+              onClick={() => setActiveSessionFilter(null)}
+              className="text-blue-500 hover:text-blue-700 font-bold p-0.5"
+              title="Clear Session Filter"
+            >
+              <X size={14} />
+            </button>
           </div>
         )}
       </div>
+
+      {/* Tab Content Section */}
+      {activeTab === 'history' ? (
+        <ScrapingHistoryTable
+          sessions={sessions}
+          onSelectSession={handleInspectSession}
+          onDeleteSession={handleDeleteSession}
+        />
+      ) : (
+        /* Database Controls Toolbar */
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 className="text-base font-bold text-slate-800">
+              {activeSessionFilter ? `Session Leads: "${activeSessionFilter.query}"` : 'All Collected Leads'} ({filteredLeads.length})
+            </h2>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-slate-200/70 p-1 rounded-xl">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
+                    viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Spreadsheet Table View"
+                >
+                  <Table size={14} /> Table
+                </button>
+                <button
+                  onClick={() => setViewMode('card')}
+                  className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
+                    viewMode === 'card' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Grid Card View"
+                >
+                  <LayoutGrid size={14} /> Cards
+                </button>
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
+                    viewMode === 'map' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Interactive Map View"
+                >
+                  <MapPin size={14} /> Map
+                </button>
+              </div>
+
+              {/* Search Filter Input */}
+              <div className="relative flex-1 sm:w-64">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter by name or location..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3.5 py-2 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-1 bg-white border border-slate-200/90 p-1 rounded-xl">
+                <Filter size={14} className="text-slate-400 ml-2" />
+                {(['ALL', 'READY', 'FOLLOW UP'] as const).map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setStatusFilter(st)}
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
+                      statusFilter === st
+                        ? 'bg-[#4a6382] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Data Table / Map View / Card Grid View */}
+          {displayLeads.length === 0 ? (
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+                <SearchX size={28} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">Database is Currently Empty</h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
+                  No B2B leads collected yet. You can start a real-time business prospect search or upload an existing CSV spreadsheet to auto-enrich data.
+                </p>
+              </div>
+
+              {/* Quick Action CTAs */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <Link
+                  href="/"
+                  className="px-5 py-2.5 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+                >
+                  <SearchIcon size={14} /> Start Real-time Lead Search
+                </Link>
+                <button
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="px-5 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
+                >
+                  <Upload size={14} /> Import CSV & Auto-Enrich
+                </button>
+              </div>
+            </div>
+          ) : viewMode === 'map' ? (
+            <MapView leads={filteredLeads} />
+          ) : viewMode === 'table' ? (
+            <DataTable
+              leads={filteredLeads}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
+              onOpenWebhookModal={setWebhookModalLead}
+              onOpenAiPitchModal={setAiPitchModalLead}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredLeads.map((lead: any, idx: number) => (
+                <ResultCard key={lead.id || idx} lead={lead} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {selectedIds.length > 0 && (
         <BulkActionsBar
