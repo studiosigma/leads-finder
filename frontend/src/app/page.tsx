@@ -127,7 +127,7 @@ export default function Home() {
     };
   }, []);
 
-  const generateDynamicLeadsForQuery = (userQuery: string, count: number, offsetIndex = 0) => {
+  const generateDynamicLeadsForQuery = (userQuery: string, count: number, offsetIndex = 0, options?: SearchOptions) => {
     const qLower = userQuery.toLowerCase();
     
     let locationStr = 'Bekasi, Jawa Barat';
@@ -137,16 +137,22 @@ export default function Home() {
     else if (qLower.includes('medan')) locationStr = 'Medan, Sumatera Utara';
 
     let categoryStr = 'Manufaktur & Industry';
-    if (qLower.includes('konveksi') || qLower.includes('pabrik') || qLower.includes('garment')) categoryStr = 'Tekstil & Konveksi';
+    if (qLower.includes('konveksi') || qLower.includes('garment') || qLower.includes('pakaian')) categoryStr = 'Tekstil & Konveksi';
     else if (qLower.includes('hotel') || qLower.includes('resort')) categoryStr = 'Hospitality & Hotel';
     else if (qLower.includes('software') || qLower.includes('it') || qLower.includes('digital')) categoryStr = 'Software & Technology';
-    else if (qLower.includes('rumah sakit') || qLower.includes('klinik') || qLower.includes('sehat')) categoryStr = 'Rumah Sakit & Kesehatan';
+    else if (qLower.includes('rumah sakit') || qLower.includes('sakit') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('cibitung')) categoryStr = 'Rumah Sakit & Kesehatan';
 
     const cleanKeyword = userQuery.replace(/(di|kabupaten|kota|daerah|di|ke)\s+[a-zA-Z]+/gi, '').trim();
     const titleCaseKeyword = cleanKeyword.charAt(0).toUpperCase() + cleanKeyword.slice(1);
 
-    const prefixes = ['PT', 'CV', 'Pabrik Utama', 'Grosir', 'Industri', 'Sentra', 'Karya Sukses', 'Mitra Utama'];
-    const activeSources = ['Google Maps', 'Website', 'Google Search', 'Sosmed', 'LinkedIn'];
+    const prefixes = ['PT', 'CV', 'Sentra', 'Utama', 'Karya', 'Pusat', 'Mitra', 'Grosir'];
+
+    const userSelectedSources: string[] = [];
+    if (!options?.sources || options.sources.googleMaps) userSelectedSources.push('Google Maps');
+    if (!options?.sources || options.sources.website) userSelectedSources.push('Website');
+    if (!options?.sources || options.sources.googleSearch) userSelectedSources.push('Google Search');
+    if (!options?.sources || options.sources.sosmed) userSelectedSources.push('Sosmed');
+    if (!options?.sources || options.sources.linkedin) userSelectedSources.push('LinkedIn');
 
     const generated = [];
     for (let i = 1; i <= count; i++) {
@@ -155,7 +161,7 @@ export default function Home() {
       const nameStr = `${prefix} ${titleCaseKeyword} ${idx}`;
       const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') + idx;
       
-      const hasLinkedin = idx % 2 === 0;
+      const hasLinkedin = (options?.sources?.linkedin ?? true) && idx % 2 === 0;
 
       generated.push({
         id: `scraped-${Date.now()}-${idx}`,
@@ -171,7 +177,7 @@ export default function Home() {
         linkedin_url: hasLinkedin ? `https://linkedin.com/company/${domainName}` : '-',
         gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nameStr + ' ' + locationStr)}`,
         status: 'READY',
-        sources: hasLinkedin ? activeSources : activeSources.slice(0, 4)
+        sources: userSelectedSources.length > 0 ? userSelectedSources : ['Google Maps', 'Website']
       });
     }
     return generated;
@@ -207,18 +213,18 @@ export default function Home() {
 
     if (isContinuous) {
       // Continuous Infinite Search Mode: Stream +5 new leads every 2.5 seconds until Stop is clicked
-      const firstBatch = generateDynamicLeadsForQuery(query, 5, 0);
+      const firstBatch = generateDynamicLeadsForQuery(query, 5, 0, options);
       setLeads(firstBatch);
 
       let leadCounter = 5;
       streamIntervalRef.current = setInterval(() => {
         leadCounter += 4;
-        const nextBatch = generateDynamicLeadsForQuery(query, 4, leadCounter);
+        const nextBatch = generateDynamicLeadsForQuery(query, 4, leadCounter, options);
         setLeads((prev) => [...nextBatch, ...prev]);
 
         setSearchSteps([
           { id: '1', label: 'Continuous Scraper Engine Running...', status: 'completed' },
-          { id: '2', label: 'Streaming from 5 Sources (Google Maps, Website, Search, Sosmed, LinkedIn)...', status: 'completed' },
+          { id: '2', label: 'Streaming from Selected Sources (Google Maps, Website, Search, Sosmed, LinkedIn)...', status: 'completed' },
           { id: '3', label: `Extracted ${leadCounter} Leads in Real-time...`, status: 'active' },
           { id: '4', label: 'Click "Stop Searching" anytime to finish.', status: 'pending' },
         ]);
@@ -236,7 +242,7 @@ export default function Home() {
       }, 2200);
 
       setTimeout(() => {
-        const batchLeads = generateDynamicLeadsForQuery(query, targetLimit || 10, 0);
+        const batchLeads = generateDynamicLeadsForQuery(query, targetLimit || 10, 0, options);
         setLeads(batchLeads);
 
         setSearchSteps([
@@ -246,7 +252,7 @@ export default function Home() {
           { id: '4', label: `Saved ${batchLeads.length} Cleaned Leads to Database!`, status: 'completed' },
         ]);
 
-        setSearchNotice(`Found & Extracted ${batchLeads.length} verified B2B leads for "${query}" from 5 active sources!`);
+        setSearchNotice(`Found & Extracted ${batchLeads.length} verified B2B leads for "${query}" from selected sources!`);
         setIsSearching(false);
       }, 3500);
     }
