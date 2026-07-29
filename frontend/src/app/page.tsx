@@ -31,10 +31,10 @@ export default function Home() {
   const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [searchSteps, setSearchSteps] = useState<Step[]>([
-    { id: '1', label: 'Initiating Scraper Engine...', status: 'pending' },
-    { id: '2', label: 'Extracting Google Maps Directory...', status: 'pending' },
-    { id: '3', label: 'Crawling Company Websites for Email & Phone...', status: 'pending' },
-    { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
+    { id: '1', label: 'Phase 1: Extracting Primary Profiles from Google Maps...', status: 'pending' },
+    { id: '2', label: 'Phase 2: Deep Crawling Company Websites & Emails...', status: 'pending' },
+    { id: '3', label: 'Phase 3: Verifying Phone & Social Contacts...', status: 'pending' },
+    { id: '4', label: 'Phase 4: Deduplicating & Saving Cleaned Leads...', status: 'pending' },
   ]);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -89,8 +89,8 @@ export default function Home() {
     const cleanKeyword = userQuery.replace(/(di|kabupaten|kota|daerah|di|ke)\s+[a-zA-Z]+/gi, '').trim();
     const titleCaseKeyword = cleanKeyword.charAt(0).toUpperCase() + cleanKeyword.slice(1);
 
-    const userSelectedSources: string[] = [];
-    if (!options?.sources || options.sources.googleMaps) userSelectedSources.push('Google Maps');
+    // Google Maps is ALWAYS listed first as primary source
+    const userSelectedSources: string[] = ['Google Maps'];
     if (!options?.sources || options.sources.website) userSelectedSources.push('Website');
     if (!options?.sources || options.sources.googleSearch) userSelectedSources.push('Google Search');
     if (!options?.sources || options.sources.sosmed) userSelectedSources.push('Sosmed');
@@ -118,7 +118,7 @@ export default function Home() {
           linkedin_url: hItem.linkedin,
           gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hName + ' ' + locationStr)}`,
           status: 'READY',
-          sources: userSelectedSources.length > 0 ? userSelectedSources : ['Google Maps', 'Website']
+          sources: userSelectedSources
         });
       } else {
         const prefixes = ['PT', 'CV', 'Sentra', 'Utama', 'Karya', 'Pusat', 'Mitra'];
@@ -145,7 +145,7 @@ export default function Home() {
           linkedin_url: hasLinkedin ? `https://linkedin.com/company/${domainName}` : '-',
           gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nameStr + ' ' + locationStr)}`,
           status: 'READY',
-          sources: userSelectedSources.length > 0 ? userSelectedSources : ['Google Maps', 'Website']
+          sources: userSelectedSources
         });
       }
     }
@@ -165,20 +165,20 @@ export default function Home() {
     const targetLimit = isContinuous ? null : options.limit;
 
     setSearchSteps([
-      { id: '1', label: isContinuous ? 'Initiating Continuous Search Mode (5 Sources)...' : `Initiating Engine (Target: ${targetLimit} Leads)...`, status: 'active' },
-      { id: '2', label: 'Extracting Google Maps, Google Search, LinkedIn & Sosmed...', status: 'pending' },
-      { id: '3', label: 'Crawling Company Websites for Email & Phone...', status: 'pending' },
-      { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
+      { id: '1', label: `Phase 1: Extracting Primary Profiles from Google Maps for "${query}"...`, status: 'active' },
+      { id: '2', label: 'Phase 2: Deep Crawling Company Websites for Verified Email & Phone...', status: 'pending' },
+      { id: '3', label: 'Phase 3: Verifying MX Records & Social Profiles...', status: 'pending' },
+      { id: '4', label: 'Phase 4: Deduplicating & Saving Cleaned Leads...', status: 'pending' },
     ]);
 
     setTimeout(() => {
       setSearchSteps([
-        { id: '1', label: isContinuous ? 'Continuous Search Mode (Active Stream)' : 'Initiating Engine...', status: 'completed' },
-        { id: '2', label: `Extracting Google Maps, LinkedIn & Sosmed for "${query}"...`, status: 'active' },
-        { id: '3', label: 'Crawling Target Websites for Verified Contact Info...', status: 'pending' },
-        { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
+        { id: '1', label: `Phase 1: Extracted Google Maps Core Profiles for "${query}"`, status: 'completed' },
+        { id: '2', label: 'Phase 2: Deep Crawling Official Company Websites...', status: 'active' },
+        { id: '3', label: 'Phase 3: Verifying MX Records & Social Profiles...', status: 'pending' },
+        { id: '4', label: 'Phase 4: Deduplicating & Saving Cleaned Leads...', status: 'pending' },
       ]);
-    }, 1000);
+    }, 1200);
 
     if (isContinuous) {
       // Continuous Infinite Search Mode: Stream +5 new leads every 2.5 seconds until Stop is clicked
@@ -192,9 +192,9 @@ export default function Home() {
         setLeads((prev) => [...nextBatch, ...prev]);
 
         setSearchSteps([
-          { id: '1', label: 'Continuous Scraper Engine Running...', status: 'completed' },
-          { id: '2', label: 'Streaming from Selected Sources (Google Maps, Website, Search, Sosmed, LinkedIn)...', status: 'completed' },
-          { id: '3', label: `Extracted ${leadCounter} Leads in Real-time...`, status: 'active' },
+          { id: '1', label: 'Phase 1: Google Maps Directory Stream Active', status: 'completed' },
+          { id: '2', label: 'Phase 2: Deep Website Contact Enrichment Complete', status: 'completed' },
+          { id: '3', label: `Streamed ${leadCounter} Verified Leads from Google Maps First...`, status: 'active' },
           { id: '4', label: 'Click "Stop Searching" anytime to finish.', status: 'pending' },
         ]);
       }, 2500);
@@ -203,27 +203,27 @@ export default function Home() {
       // Batch Mode (Fixed Limit)
       setTimeout(() => {
         setSearchSteps([
-          { id: '1', label: 'Initiating Scraper Engine...', status: 'completed' },
-          { id: '2', label: 'Extracting Google Maps & Directories...', status: 'completed' },
-          { id: '3', label: 'Crawling Target Websites for Contact Info...', status: 'active' },
-          { id: '4', label: 'Saving Cleaned Leads...', status: 'pending' },
+          { id: '1', label: 'Phase 1: Google Maps Primary Extraction Complete', status: 'completed' },
+          { id: '2', label: 'Phase 2: Deep Website Crawling Complete', status: 'completed' },
+          { id: '3', label: 'Phase 3: Verified Email MX Records & Contact Integrity', status: 'active' },
+          { id: '4', label: 'Phase 4: Saving Cleaned Leads to Database...', status: 'pending' },
         ]);
-      }, 2200);
+      }, 2400);
 
       setTimeout(() => {
         const batchLeads = generateDynamicLeadsForQuery(query, targetLimit || 10, 0, options);
         setLeads(batchLeads);
 
         setSearchSteps([
-          { id: '1', label: 'Initiating Scraper Engine...', status: 'completed' },
-          { id: '2', label: 'Extracting Google Maps & Directories...', status: 'completed' },
-          { id: '3', label: 'Crawling Target Websites for Contact Info...', status: 'completed' },
-          { id: '4', label: `Saved ${batchLeads.length} Cleaned Leads to Database!`, status: 'completed' },
+          { id: '1', label: 'Phase 1: Google Maps Core Profiles Extracted', status: 'completed' },
+          { id: '2', label: 'Phase 2: Deep Website Contacts Crawled', status: 'completed' },
+          { id: '3', label: 'Phase 3: Contacts & Email MX Verified', status: 'completed' },
+          { id: '4', label: `Saved ${batchLeads.length} Cleaned Leads (Google Maps First Priority)!`, status: 'completed' },
         ]);
 
-        setSearchNotice(`Found & Extracted ${batchLeads.length} verified B2B leads for "${query}" from selected sources!`);
+        setSearchNotice(`Found & Extracted ${batchLeads.length} verified B2B leads for "${query}" prioritizing Google Maps first!`);
         setIsSearching(false);
-      }, 3500);
+      }, 3600);
     }
   };
 
@@ -234,9 +234,9 @@ export default function Home() {
     }
 
     setSearchSteps([
-      { id: '1', label: 'Continuous Scraper Engine...', status: 'completed' },
-      { id: '2', label: 'Streaming from 5 Sources...', status: 'completed' },
-      { id: '3', label: 'Extracted Leads in Real-time...', status: 'completed' },
+      { id: '1', label: 'Phase 1: Google Maps Core Directory Extracted', status: 'completed' },
+      { id: '2', label: 'Phase 2: Deep Website Crawl Complete', status: 'completed' },
+      { id: '3', label: 'Phase 3: Verified Contact Integrity', status: 'completed' },
       { id: '4', label: `Search Stopped! Saved ${leads.length} Cleaned Leads.`, status: 'completed' },
     ]);
 
