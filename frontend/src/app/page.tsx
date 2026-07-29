@@ -5,11 +5,13 @@ import { SearchBar, SearchOptions } from '@/components/leads/search-bar';
 import { ProgressTracker } from '@/components/leads/progress-tracker';
 import { ResultCard } from '@/components/leads/result-card';
 import { DataTable } from '@/components/leads/data-table';
+import { MapView } from '@/components/leads/map-view';
+import { ImportModal } from '@/components/leads/import-modal';
 import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
-import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX } from 'lucide-react';
+import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX, MapPin, Upload } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -22,11 +24,12 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
   const [searchNotice, setSearchNotice] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'map'>('table');
   const [activeFilter, setActiveFilter] = useState<FilterChipType>('ALL');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [webhookModalLead, setWebhookModalLead] = useState<any | null>(null);
   const [aiPitchModalLead, setAiPitchModalLead] = useState<any | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -244,6 +247,11 @@ export default function Home() {
     setIsSearching(false);
   };
 
+  const handleImportSuccess = (importedLeads: any[]) => {
+    setLeads((prev) => [...importedLeads, ...prev]);
+    setSearchNotice(`Successfully imported & enriched ${importedLeads.length} leads from CSV file!`);
+  };
+
   const filteredLeads = leads.filter((lead) => {
     if (activeFilter === 'HAS_EMAIL') return lead.email && lead.email !== 'N/A' && lead.email !== '-';
     if (activeFilter === 'HAS_PHONE') return lead.phone && lead.phone !== 'N/A' && lead.phone !== '-';
@@ -289,6 +297,13 @@ export default function Home() {
             Discover, scrape, and extract verified B2B leads in real-time.
           </p>
         </div>
+
+        <button
+          onClick={() => setIsImportModalOpen(true)}
+          className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200/90 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+        >
+          <Upload size={14} /> Import CSV & Enrich
+        </button>
       </div>
 
       {/* Prominent Integrated Search Bar */}
@@ -346,11 +361,20 @@ export default function Home() {
             >
               <LayoutGrid size={14} /> Cards
             </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
+                viewMode === 'map' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+              title="Interactive Map View"
+            >
+              <MapPin size={14} /> Map
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Spreadsheet Data Table View */}
+      {/* Spreadsheet Data Table View / Map View / Cards View */}
       {leads.length === 0 ? (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
@@ -361,6 +385,8 @@ export default function Home() {
             Ready for onboarding! Enter your target business search query above (e.g. <i>rumah sakit di cibitung</i> or <i>Hotel Bandung</i>) to start extracting verified B2B leads.
           </p>
         </div>
+      ) : viewMode === 'map' ? (
+        <MapView leads={filteredLeads} />
       ) : viewMode === 'table' ? (
         <DataTable
           leads={filteredLeads}
@@ -398,6 +424,13 @@ export default function Home() {
         isOpen={Boolean(aiPitchModalLead)}
         onClose={() => setAiPitchModalLead(null)}
         lead={aiPitchModalLead}
+      />
+
+      {/* Import CSV Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportSuccess={handleImportSuccess}
       />
     </div>
   );

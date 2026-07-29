@@ -3,21 +3,24 @@
 import React, { useEffect, useState } from 'react';
 import { ResultCard } from '@/components/leads/result-card';
 import { DataTable } from '@/components/leads/data-table';
+import { MapView } from '@/components/leads/map-view';
+import { ImportModal } from '@/components/leads/import-modal';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
-import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX } from 'lucide-react';
+import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'map'>('table');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [webhookModalLead, setWebhookModalLead] = useState<any | null>(null);
   const [aiPitchModalLead, setAiPitchModalLead] = useState<any | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -42,6 +45,10 @@ export default function DashboardPage() {
   const emailsFound = leads.filter((l) => l.email && l.email !== 'N/A' && l.email !== '-').length;
   const phonesFound = leads.filter((l) => l.phone && l.phone !== 'N/A' && l.phone !== '-').length;
   const websitesFound = leads.filter((l) => l.website && l.website !== 'N/A' && l.website !== '-').length;
+
+  const handleImportSuccess = (importedLeads: any[]) => {
+    setLeads((prev) => [...importedLeads, ...prev]);
+  };
 
   const filteredLeads = leads.filter((lead) => {
     const matchesStatus =
@@ -85,14 +92,24 @@ export default function DashboardPage() {
             Real-time metric overview and central database for collected B2B leads.
           </p>
         </div>
-        <a
-          href={`${API_BASE}/api/v1/export/csv`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#4a6382] hover:bg-[#3b5175] text-white text-xs font-bold rounded-xl transition-all shadow-xs self-start sm:self-auto"
-        >
-          <Download size={14} /> Export CSV
-        </a>
+        
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 border border-slate-200/90 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-xs"
+          >
+            <Upload size={14} /> Import CSV & Enrich
+          </button>
+          
+          <a
+            href={`${API_BASE}/api/v1/export/csv`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#4a6382] hover:bg-[#3b5175] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+          >
+            <Download size={14} /> Export CSV
+          </a>
+        </div>
       </div>
 
       {/* Analytics Tiles */}
@@ -131,6 +148,15 @@ export default function DashboardPage() {
               >
                 <LayoutGrid size={14} /> Cards
               </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
+                  viewMode === 'map' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                }`}
+                title="Interactive Map View"
+              >
+                <MapPin size={14} /> Map
+              </button>
             </div>
 
             {/* Search Filter Input */}
@@ -165,7 +191,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Data Table */}
+        {/* Data Table / Map View / Card Grid View */}
         {leads.length === 0 ? (
           <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
@@ -173,9 +199,11 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-base font-bold text-slate-800">Database is Currently Empty</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-              No leads saved in database yet. Go to <b>Find Leads</b> to run your first real-time business prospect search.
+              No leads saved in database yet. Go to <b>Find Leads</b> to run your first real-time business prospect search or click <b>Import CSV</b> above.
             </p>
           </div>
+        ) : viewMode === 'map' ? (
+          <MapView leads={filteredLeads} />
         ) : viewMode === 'table' ? (
           <DataTable
             leads={filteredLeads}
@@ -211,6 +239,12 @@ export default function DashboardPage() {
         isOpen={Boolean(aiPitchModalLead)}
         onClose={() => setAiPitchModalLead(null)}
         lead={aiPitchModalLead}
+      />
+
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportSuccess={handleImportSuccess}
       />
     </div>
   );
