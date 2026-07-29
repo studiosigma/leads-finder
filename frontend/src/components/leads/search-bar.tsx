@@ -118,19 +118,18 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 text-xs">
-            {/* 1. Max Leads Limit */}
+            {/* 1. Max Leads Limit Input Field */}
             <div className="space-y-1.5">
               <label className="font-semibold text-slate-700 block">Target Leads Quantity</label>
-              <select
-                value={options.limit}
-                onChange={(e) => setOptions({ ...options, limit: Number(e.target.value) })}
+              <input
+                type="number"
+                min={1}
+                max={500}
+                placeholder="Enter target quantity e.g. 50"
+                value={options.limit || ''}
+                onChange={(e) => setOptions({ ...options, limit: Math.max(1, Number(e.target.value)) })}
                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
-              >
-                <option value={10}>10 Leads (Fastest ~15s)</option>
-                <option value={25}>25 Leads (Standard ~30s)</option>
-                <option value={50}>50 Leads (Deep Search ~60s)</option>
-                <option value={100}>100 Leads (Maximum Batch)</option>
-              </select>
+              />
             </div>
 
             {/* 2. Rating & Review Threshold */}
