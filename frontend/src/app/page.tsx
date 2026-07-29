@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { SearchBar } from '@/components/leads/search-bar';
+import { SearchBar, SearchOptions } from '@/components/leads/search-bar';
 import { ProgressTracker } from '@/components/leads/progress-tracker';
 import { ResultCard } from '@/components/leads/result-card';
 import { DataTable } from '@/components/leads/data-table';
@@ -50,12 +50,13 @@ export default function Home() {
     fetchLeads();
   }, []);
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string, options?: SearchOptions) => {
     setIsSearching(true);
     setCurrentQuery(query);
+    const targetLimit = options?.limit || 10;
 
     setSearchSteps([
-      { id: '1', label: 'Initiating Scraper Engine...', status: 'active' },
+      { id: '1', label: `Initiating Engine (Target: ${targetLimit} Leads)...`, status: 'active' },
       { id: '2', label: 'Extracting Google Maps & Business Directory...', status: 'pending' },
       { id: '3', label: 'Crawling Company Websites for Email & Phone...', status: 'pending' },
       { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
@@ -65,7 +66,7 @@ export default function Home() {
       const res = await fetch('http://localhost:8000/api/v1/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: 10 }),
+        body: JSON.stringify({ query, limit: targetLimit }),
       });
 
       const data = await res.json();
@@ -73,7 +74,7 @@ export default function Home() {
 
       setSearchSteps([
         { id: '1', label: 'Initiating Scraper Engine...', status: 'completed' },
-        { id: '2', label: `Extracting Places for "${query}"...`, status: 'active' },
+        { id: '2', label: `Extracting ${targetLimit} Places for "${query}"...`, status: 'active' },
         { id: '3', label: 'Crawling Company Websites for Email & Phone...', status: 'pending' },
         { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
       ]);
