@@ -7,7 +7,7 @@ import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
-import { Search, Filter, Download, LayoutGrid, Table, Database } from 'lucide-react';
+import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -19,13 +19,15 @@ export default function DashboardPage() {
   const [webhookModalLead, setWebhookModalLead] = useState<any | null>(null);
   const [aiPitchModalLead, setAiPitchModalLead] = useState<any | null>(null);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   useEffect(() => {
     async function fetchLeads() {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/leads');
+        const response = await fetch(`${API_BASE}/api/v1/leads`);
         if (response.ok) {
           const data = await response.json();
-          setLeads(data && data.length > 0 ? data : []);
+          setLeads(data || []);
         }
       } catch (error) {
         console.error('Error fetching leads:', error);
@@ -36,25 +38,12 @@ export default function DashboardPage() {
     fetchLeads();
   }, []);
 
-  // Rich mock fallback if backend dataset is empty on client
-  const defaultLeads = [
-    { id: '1', name: 'Acme Corp', category: 'Technology', location: 'San Francisco, CA', website: 'acme.co', email: 'sarah@acme.co', phone: '+1 555-0192', status: 'READY' },
-    { id: '2', name: 'Data Tech', category: 'Technology', location: 'San Francisco, CA', website: 'datatech.io', email: 'contact@datatech.io', phone: '+1 555-0192', status: 'READY' },
-    { id: '3', name: 'Global Solutions', category: 'Marketing', location: 'San Francisco, CA', website: 'globalsol.com', email: 'info@globalsol.com', phone: '+1 555-0192', status: 'READY' },
-    { id: '4', name: 'Apex Innovations', category: 'Technology', location: 'San Francisco, CA', website: 'apex.io', email: 'hello@apex.io', phone: '+1 555-0192', status: 'READY' },
-    { id: '5', name: 'Bimrny Tech', category: 'Marketing', location: 'San Francisco, CA', website: 'bimrny.com', email: 'sales@bimrny.com', phone: '+1 555-0192', status: 'READY' },
-    { id: '6', name: 'Glesan Tech', category: 'Technology', location: 'San Francisco, CA', website: 'glesan.io', email: 'info@glesan.io', phone: '+1 555-0192', status: 'READY' },
-    { id: '7', name: 'Eech Liog', category: 'Marketing', location: 'San Francisco, CA', website: 'eech.com', email: 'hello@eech.com', phone: '+1 555-0192', status: 'READY' },
-  ];
+  const totalLeads = leads.length;
+  const emailsFound = leads.filter((l) => l.email && l.email !== 'N/A' && l.email !== '-').length;
+  const phonesFound = leads.filter((l) => l.phone && l.phone !== 'N/A' && l.phone !== '-').length;
+  const websitesFound = leads.filter((l) => l.website && l.website !== 'N/A' && l.website !== '-').length;
 
-  const displayLeads = leads.length > 0 ? leads : defaultLeads;
-
-  const totalLeads = displayLeads.length;
-  const emailsFound = displayLeads.filter((l) => l.email && l.email !== 'N/A').length;
-  const phonesFound = displayLeads.filter((l) => l.phone && l.phone !== 'N/A').length;
-  const websitesFound = displayLeads.filter((l) => l.website && l.website !== 'N/A').length;
-
-  const filteredLeads = displayLeads.filter((lead) => {
+  const filteredLeads = leads.filter((lead) => {
     const matchesStatus =
       statusFilter === 'ALL' || lead.status === statusFilter;
     const matchesSearch =
@@ -80,7 +69,7 @@ export default function DashboardPage() {
     }
   };
 
-  const selectedLeadsObjects = displayLeads.filter((l) => selectedIds.includes(l.id));
+  const selectedLeadsObjects = leads.filter((l) => selectedIds.includes(l.id));
 
   if (loading) return <div className="p-10 text-center text-slate-500 font-medium bg-[#f1f5f9] min-h-screen">Loading leads database...</div>;
 
@@ -97,7 +86,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <a
-          href="http://localhost:8000/api/v1/export/csv"
+          href={`${API_BASE}/api/v1/export/csv`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 bg-[#4a6382] hover:bg-[#3b5175] text-white text-xs font-bold rounded-xl transition-all shadow-xs self-start sm:self-auto"
@@ -108,10 +97,10 @@ export default function DashboardPage() {
 
       {/* Analytics Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatTile label="Total Leads" value={totalLeads.toString()} trend="+100%" />
-        <StatTile label="Emails Found" value={emailsFound.toString()} trend="+100%" />
-        <StatTile label="Phone Found" value={phonesFound.toString()} trend="+100%" />
-        <StatTile label="Website Found" value={websitesFound.toString()} trend="+100%" />
+        <StatTile label="Total Leads" value={totalLeads.toString()} trend="+0%" />
+        <StatTile label="Emails Found" value={emailsFound.toString()} trend="+0%" />
+        <StatTile label="Phone Found" value={phonesFound.toString()} trend="+0%" />
+        <StatTile label="Website Found" value={websitesFound.toString()} trend="+0%" />
       </div>
 
       {/* Database Controls Toolbar */}
@@ -177,7 +166,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Data Table */}
-        {viewMode === 'table' ? (
+        {leads.length === 0 ? (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+              <SearchX size={24} />
+            </div>
+            <h3 className="text-base font-bold text-slate-800">Database is Currently Empty</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+              No leads saved in database yet. Go to <b>Find Leads</b> to run your first real-time business prospect search.
+            </p>
+          </div>
+        ) : viewMode === 'table' ? (
           <DataTable
             leads={filteredLeads}
             selectedIds={selectedIds}
@@ -195,10 +194,12 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <BulkActionsBar
-        selectedLeads={selectedLeadsObjects}
-        onClearSelection={() => setSelectedIds([])}
-      />
+      {selectedIds.length > 0 && (
+        <BulkActionsBar
+          selectedLeads={selectedLeadsObjects}
+          onClearSelection={() => setSelectedIds([])}
+        />
+      )}
 
       <WebhookModal
         isOpen={Boolean(webhookModalLead)}

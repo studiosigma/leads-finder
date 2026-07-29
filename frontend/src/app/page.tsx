@@ -9,7 +9,7 @@ import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
-import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2 } from 'lucide-react';
+import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -17,75 +17,8 @@ interface Step {
   status: 'pending' | 'active' | 'completed';
 }
 
-const DEFAULT_INITIAL_LEADS = [
-  {
-    id: '1',
-    name: 'Rumah Sakit Mitra Plumbon Cibitung',
-    category: 'Rumah Sakit & Kesehatan',
-    location: 'Cibitung, Bekasi, Jawa Barat',
-    website: 'mitraplumboncibitung.com',
-    email: 'info@mitraplumboncibitung.com',
-    email_status: 'VALID',
-    email_score: 95,
-    phone: '+62 812-1817-2918',
-    whatsapp_url: 'https://wa.me/6281218172918',
-    linkedin_url: '-',
-    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Mitra+Plumbon+Cibitung',
-    status: 'READY',
-    sources: ['Google Maps', 'Website', 'Google Search']
-  },
-  {
-    id: '2',
-    name: 'Acme Corp Technology',
-    category: 'Technology & Software',
-    location: 'San Francisco, CA',
-    website: 'acme.co',
-    email: 'sarah@acme.co',
-    email_status: 'VALID',
-    email_score: 95,
-    phone: '+1 555-0192',
-    whatsapp_url: 'https://wa.me/15550192',
-    linkedin_url: 'https://linkedin.com/company/acme-corp',
-    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Acme+Corp+San+Francisco',
-    status: 'READY',
-    sources: ['Google Maps', 'Website', 'LinkedIn']
-  },
-  {
-    id: '3',
-    name: 'Data Tech Solutions',
-    category: 'Data & Analytics',
-    location: 'San Francisco, CA',
-    website: 'datatech.io',
-    email: 'contact@datatech.io',
-    email_status: 'VALID',
-    email_score: 95,
-    phone: '+1 555-0192',
-    whatsapp_url: 'https://wa.me/15550192',
-    linkedin_url: 'https://linkedin.com/company/datatech-io',
-    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Data+Tech+San+Francisco',
-    status: 'READY',
-    sources: ['Google Maps', 'Website', 'Google Search', 'LinkedIn']
-  },
-  {
-    id: '4',
-    name: 'Global Marketing Solutions',
-    category: 'Marketing & Digital',
-    location: 'Jakarta Selatan, DKI Jakarta',
-    website: 'globalsol.com',
-    email: 'info@globalsol.com',
-    email_status: 'VALID',
-    email_score: 95,
-    phone: '+62 813-8822-1990',
-    whatsapp_url: 'https://wa.me/6281388221990',
-    linkedin_url: '-',
-    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Global+Marketing+Solutions+Jakarta',
-    status: 'READY',
-    sources: ['Google Maps', 'Website', 'Sosmed']
-  },
-];
-
 export default function Home() {
-  const [leads, setLeads] = useState<any[]>(DEFAULT_INITIAL_LEADS);
+  const [leads, setLeads] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
   const [searchNotice, setSearchNotice] = useState<string | null>(null);
@@ -111,12 +44,10 @@ export default function Home() {
       const res = await fetch(`${API_BASE}/api/v1/leads`);
       if (res.ok) {
         const data = await res.json();
-        if (data && data.length > 0) {
-          setLeads(data);
-        }
+        setLeads(data || []);
       }
     } catch (err) {
-      console.error('Using active initial leads dataset:', err);
+      console.error('Error fetching leads:', err);
     }
   };
 
@@ -382,7 +313,17 @@ export default function Home() {
       </div>
 
       {/* Spreadsheet Data Table View */}
-      {viewMode === 'table' ? (
+      {leads.length === 0 ? (
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+            <SearchX size={24} />
+          </div>
+          <h3 className="text-base font-bold text-slate-800">No B2B Leads in Database Yet</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+            Ready for onboarding! Enter your target business search query above (e.g. <i>Pabrik Plastik Bekasi</i> or <i>Hotel Bandung</i>) to start extracting verified B2B leads.
+          </p>
+        </div>
+      ) : viewMode === 'table' ? (
         <DataTable
           leads={filteredLeads}
           selectedIds={selectedIds}
@@ -400,10 +341,12 @@ export default function Home() {
       )}
 
       {/* Bulk Actions Floating Bar */}
-      <BulkActionsBar
-        selectedLeads={selectedLeadsObjects}
-        onClearSelection={() => setSelectedIds([])}
-      />
+      {selectedIds.length > 0 && (
+        <BulkActionsBar
+          selectedLeads={selectedLeadsObjects}
+          onClearSelection={() => setSelectedIds([])}
+        />
+      )}
 
       {/* Webhook Modal */}
       <WebhookModal

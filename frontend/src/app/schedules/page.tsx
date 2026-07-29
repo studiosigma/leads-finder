@@ -1,31 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Plus, Trash2, Play, CheckCircle2, RefreshCw, Sparkles, Check } from 'lucide-react';
-
-const DEFAULT_SCHEDULES = [
-  { id: '1', query: 'Pabrik Plastik Bekasi', cron_expression: 'Every Monday at 09:00 AM', next_run: 'Next Monday 09:00 AM', status: 'ACTIVE' },
-  { id: '2', query: 'Hotel & Resort Bandung', cron_expression: 'First Day of Every Month', next_run: 'Aug 1, 09:00 AM', status: 'ACTIVE' },
-  { id: '3', query: 'Software House & IT Consultant Jakarta', cron_expression: 'Every Day at 09:00 AM', next_run: 'Tomorrow 09:00 AM', status: 'ACTIVE' },
-];
+import { Clock, Plus, Trash2, Play, CheckCircle2, RefreshCw, Sparkles, Check, SearchX } from 'lucide-react';
 
 export default function SchedulesPage() {
-  const [schedules, setSchedules] = useState<any[]>(DEFAULT_SCHEDULES);
+  const [schedules, setSchedules] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [cron, setCron] = useState('Every Monday at 09:00 AM');
   const [notification, setNotification] = useState<string | null>(null);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   const fetchSchedules = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/v1/schedules');
+      const res = await fetch(`${API_BASE}/api/v1/schedules`);
       if (res.ok) {
         const data = await res.json();
-        if (data.schedules && data.schedules.length > 0) {
+        if (data.schedules) {
           setSchedules(data.schedules);
         }
       }
     } catch (err) {
-      console.error('Using default schedules fallback:', err);
+      console.error('Error fetching schedules:', err);
     }
   };
 
@@ -50,13 +46,13 @@ export default function SchedulesPage() {
     setTimeout(() => setNotification(null), 3000);
 
     try {
-      await fetch('http://localhost:8000/api/v1/schedule', {
+      await fetch(`${API_BASE}/api/v1/schedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: newJob.query, cron_expression: newJob.cron_expression }),
       });
     } catch (err) {
-      console.error('Backend schedule creation fallback handled locally.');
+      console.error('Backend schedule creation handled locally.');
     }
   };
 
@@ -71,11 +67,11 @@ export default function SchedulesPage() {
     setTimeout(() => setNotification(null), 2000);
 
     try {
-      await fetch(`http://localhost:8000/api/v1/schedule/${id}`, {
+      await fetch(`${API_BASE}/api/v1/schedule/${id}`, {
         method: 'DELETE',
       });
     } catch (err) {
-      console.error('Backend schedule deletion fallback handled locally.');
+      console.error('Backend schedule deletion handled locally.');
     }
   };
 
@@ -134,49 +130,61 @@ export default function SchedulesPage() {
           <span className="text-[11px] font-normal text-slate-500">Autopilot Celery Cron Runner Engine</span>
         </div>
 
-        <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-              <th className="py-3.5 px-4">Keyword Target</th>
-              <th className="py-3.5 px-4">Frequency</th>
-              <th className="py-3.5 px-4">Next Scheduled Run</th>
-              <th className="py-3.5 px-4 text-center">Status</th>
-              <th className="py-3.5 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {schedules.map((s) => (
-              <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                <td className="py-3.5 px-4 font-bold text-slate-800">{s.query}</td>
-                <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">{s.cron_expression || 'Weekly'}</td>
-                <td className="py-3.5 px-4 text-slate-500 text-[11px] font-medium">{s.next_run || 'Next Monday 09:00 AM'}</td>
-                <td className="py-3.5 px-4 text-center">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                    <CheckCircle2 size={10} /> Active
-                  </span>
-                </td>
-                <td className="py-3.5 px-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => handleRunNow(s.query)}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1"
-                      title="Run Scraper Now"
-                    >
-                      <Play size={12} className="fill-slate-700 text-slate-700" /> Run Now
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSchedule(s.id)}
-                      className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete Job"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
+        {schedules.length === 0 ? (
+          <div className="p-12 text-center space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+              <Clock size={20} />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">No Recurring Jobs Configured</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Create your first automated scraping schedule above to periodically fetch new leads on autopilot.
+            </p>
+          </div>
+        ) : (
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <th className="py-3.5 px-4">Keyword Target</th>
+                <th className="py-3.5 px-4">Frequency</th>
+                <th className="py-3.5 px-4">Next Scheduled Run</th>
+                <th className="py-3.5 px-4 text-center">Status</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {schedules.map((s) => (
+                <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="py-3.5 px-4 font-bold text-slate-800">{s.query}</td>
+                  <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">{s.cron_expression || 'Weekly'}</td>
+                  <td className="py-3.5 px-4 text-slate-500 text-[11px] font-medium">{s.next_run || 'Next Monday 09:00 AM'}</td>
+                  <td className="py-3.5 px-4 text-center">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                      <CheckCircle2 size={10} /> Active
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleRunNow(s.query)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1"
+                        title="Run Scraper Now"
+                      >
+                        <Play size={12} className="fill-slate-700 text-slate-700" /> Run Now
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSchedule(s.id)}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Job"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
