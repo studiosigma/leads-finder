@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, Check, Sparkles, Star, MapPin, Ban, Share2 } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Check, Sparkles, Star, MapPin, Ban, Share2, Square, Loader2 } from 'lucide-react';
 
 export interface SearchOptions {
-  limit: number;
+  limit?: number | null; // null/empty means continuous search until stopped
   requireEmail: boolean;
   requirePhone: boolean;
   requireWebsite: boolean;
@@ -14,21 +14,27 @@ export interface SearchOptions {
   excludeKeywords: string;
   sources: {
     googleMaps: boolean;
-    openStreetMap: boolean;
-    websiteCrawler: boolean;
+    website: boolean;
+    googleSearch: boolean;
+    sosmed: boolean;
+    linkedin: boolean;
   };
 }
 
 interface SearchBarProps {
   onSearch: (query: string, options: SearchOptions) => void;
+  isSearching?: boolean;
+  onStopSearch?: () => void;
 }
 
-export const SearchBar = ({ onSearch }: SearchBarProps) => {
+export const SearchBar = ({ onSearch, isSearching = false, onStopSearch }: SearchBarProps) => {
   const [query, setQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const [rawLimit, setRawLimit] = useState<string>(''); // Default empty for continuous search
+
   const [options, setOptions] = useState<SearchOptions>({
-    limit: 10,
+    limit: null,
     requireEmail: false,
     requirePhone: false,
     requireWebsite: false,
@@ -38,25 +44,33 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
     excludeKeywords: '',
     sources: {
       googleMaps: true,
-      openStreetMap: true,
-      websiteCrawler: true,
+      website: true,
+      googleSearch: true,
+      sosmed: true,
+      linkedin: true,
     },
   });
 
-  const handleSearch = () => {
+  const handleSearchClick = () => {
+    if (isSearching) {
+      if (onStopSearch) onStopSearch();
+      return;
+    }
+
     if (query.trim()) {
-      onSearch(query.trim(), options);
+      const parsedLimit = rawLimit.trim() === '' ? null : Math.max(1, parseInt(rawLimit, 10));
+      onSearch(query.trim(), { ...options, limit: parsedLimit });
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSearch();
+      handleSearchClick();
     }
   };
 
   const isFilterActive =
-    options.limit !== 10 ||
+    rawLimit.trim() !== '' ||
     options.requireEmail ||
     options.requirePhone ||
     options.requireSocial ||
@@ -74,7 +88,8 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
 
         <input
           type="text"
-          className="w-full py-2.5 px-2 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+          disabled={isSearching}
+          className="w-full py-2.5 px-2 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none disabled:opacity-60"
           placeholder="What business are you looking for? (e.g. Pabrik Plastik Bekasi or Hotel Bandung)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -97,14 +112,24 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
           <ChevronDown size={12} className={`transition-transform duration-200 ${showAdvanced ? 'rotate-180' : ''}`} />
         </button>
 
-        {/* Primary Search Button */}
-        <button
-          onClick={handleSearch}
-          className="ml-1.5 bg-[#4a6382] hover:bg-[#3b5175] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 flex items-center gap-1.5"
-        >
-          <Search size={14} />
-          <span>Search</span>
-        </button>
+        {/* Primary Search / Stop Searching Button */}
+        {isSearching ? (
+          <button
+            onClick={handleSearchClick}
+            className="ml-1.5 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 flex items-center gap-1.5 animate-pulse"
+          >
+            <Square size={12} className="fill-white" />
+            <span>Stop Searching</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleSearchClick}
+            className="ml-1.5 bg-[#4a6382] hover:bg-[#3b5175] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 flex items-center gap-1.5"
+          >
+            <Search size={14} />
+            <span>Search</span>
+          </button>
+        )}
       </div>
 
       {/* Advanced Options Collapsible Panel */}
@@ -114,22 +139,25 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
             <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <Sparkles size={14} className="text-slate-600" /> Advanced Search & Precision Filters
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">Fine-tune scraper behavior & quality</span>
+            <span className="text-[11px] text-slate-400 font-medium">Fine-tune scraper behavior & target quantity</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 text-xs">
-            {/* 1. Max Leads Limit Input Field */}
+            {/* 1. Target Leads Quantity Input Field (Empty = Continuous Search) */}
             <div className="space-y-1.5">
               <label className="font-semibold text-slate-700 block">Target Leads Quantity</label>
               <input
                 type="number"
                 min={1}
-                max={500}
-                placeholder="Enter target quantity e.g. 50"
-                value={options.limit || ''}
-                onChange={(e) => setOptions({ ...options, limit: Math.max(1, Number(e.target.value)) })}
+                max={5000}
+                placeholder="Empty = Continuous search until Stop"
+                value={rawLimit}
+                onChange={(e) => setRawLimit(e.target.value)}
                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
+              <p className="text-[10px] text-slate-400">
+                Kosongkan untuk pencarian berjalan terus sampai tombol Stop diklik.
+              </p>
             </div>
 
             {/* 2. Rating & Review Threshold */}
@@ -206,34 +234,70 @@ export const SearchBar = ({ onSearch }: SearchBarProps) => {
               </div>
             </div>
 
-            {/* 6. Active Scraper Sources & Social Requirements */}
-            <div className="space-y-1.5">
-              <label className="font-semibold text-slate-700 flex items-center gap-1">
-                <Share2 size={13} className="text-slate-500" /> Social & Scraper Sources
+            {/* 6. Active Scraper Sources (5 Specific Checklist Items) */}
+            <div className="col-span-1 sm:col-span-2 md:col-span-3 space-y-2 pt-2 border-t border-slate-100">
+              <label className="font-bold text-slate-800 flex items-center gap-1">
+                <Share2 size={13} className="text-slate-600" /> Sumber Pencarian (5 Active Sources)
               </label>
-              <div className="space-y-1.5 pt-0.5">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold hover:text-slate-900 bg-slate-50 border border-slate-200/80 p-2 rounded-xl">
                   <input
                     type="checkbox"
-                    checked={options.requireSocial}
-                    onChange={(e) => setOptions({ ...options, requireSocial: e.target.checked })}
-                    className="rounded border-slate-300 text-[#4a6382] focus:ring-[#4a6382]"
-                  />
-                  <span>Must Have Social Profile (IG/LinkedIn)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900">
-                  <input
-                    type="checkbox"
-                    checked={options.sources.websiteCrawler}
+                    checked={options.sources.googleMaps}
                     onChange={(e) =>
-                      setOptions({
-                        ...options,
-                        sources: { ...options.sources, websiteCrawler: e.target.checked },
-                      })
+                      setOptions({ ...options, sources: { ...options.sources, googleMaps: e.target.checked } })
                     }
                     className="rounded border-slate-300 text-[#4a6382] focus:ring-[#4a6382]"
                   />
-                  <span>Website Deep Email Crawler</span>
+                  <span>1. Google Maps</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold hover:text-slate-900 bg-slate-50 border border-slate-200/80 p-2 rounded-xl">
+                  <input
+                    type="checkbox"
+                    checked={options.sources.website}
+                    onChange={(e) =>
+                      setOptions({ ...options, sources: { ...options.sources, website: e.target.checked } })
+                    }
+                    className="rounded border-slate-300 text-[#4a6382] focus:ring-[#4a6382]"
+                  />
+                  <span>2. Website</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold hover:text-slate-900 bg-slate-50 border border-slate-200/80 p-2 rounded-xl">
+                  <input
+                    type="checkbox"
+                    checked={options.sources.googleSearch}
+                    onChange={(e) =>
+                      setOptions({ ...options, sources: { ...options.sources, googleSearch: e.target.checked } })
+                    }
+                    className="rounded border-slate-300 text-[#4a6382] focus:ring-[#4a6382]"
+                  />
+                  <span>3. Google Search</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold hover:text-slate-900 bg-slate-50 border border-slate-200/80 p-2 rounded-xl">
+                  <input
+                    type="checkbox"
+                    checked={options.sources.sosmed}
+                    onChange={(e) =>
+                      setOptions({ ...options, sources: { ...options.sources, sosmed: e.target.checked } })
+                    }
+                    className="rounded border-slate-300 text-[#4a6382] focus:ring-[#4a6382]"
+                  />
+                  <span>4. Sosmed</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold hover:text-slate-900 bg-slate-50 border border-slate-200/80 p-2 rounded-xl">
+                  <input
+                    type="checkbox"
+                    checked={options.sources.linkedin}
+                    onChange={(e) =>
+                      setOptions({ ...options, sources: { ...options.sources, linkedin: e.target.checked } })
+                    }
+                    className="rounded border-slate-300 text-[#4a6382] focus:ring-[#4a6382]"
+                  />
+                  <span>5. LinkedIn</span>
                 </label>
               </div>
             </div>

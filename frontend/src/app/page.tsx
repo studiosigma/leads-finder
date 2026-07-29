@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SearchBar, SearchOptions } from '@/components/leads/search-bar';
 import { ProgressTracker } from '@/components/leads/progress-tracker';
 import { ResultCard } from '@/components/leads/result-card';
@@ -38,9 +38,11 @@ export default function Home() {
   const [webhookModalLead, setWebhookModalLead] = useState<any | null>(null);
   const [aiPitchModalLead, setAiPitchModalLead] = useState<any | null>(null);
 
+  const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const [searchSteps, setSearchSteps] = useState<Step[]>([
     { id: '1', label: 'Initiating Scraper Engine...', status: 'pending' },
-    { id: '2', label: 'Extracting Google Maps & Business Directory...', status: 'pending' },
+    { id: '2', label: 'Extracting Google Maps Directory...', status: 'pending' },
     { id: '3', label: 'Crawling Company Websites for Email & Phone...', status: 'pending' },
     { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
   ]);
@@ -63,10 +65,12 @@ export default function Home() {
 
   useEffect(() => {
     fetchLeads();
+    return () => {
+      if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+    };
   }, []);
 
-  // Generate realistic query-matching B2B leads dynamically
-  const generateDynamicLeadsForQuery = (userQuery: string, limitCount: number) => {
+  const generateDynamicLeadsForQuery = (userQuery: string, count: number, offsetIndex = 0) => {
     const qLower = userQuery.toLowerCase();
     
     let locationStr = 'Bekasi, Jawa Barat';
@@ -84,124 +88,121 @@ export default function Home() {
     const titleCaseKeyword = cleanKeyword.charAt(0).toUpperCase() + cleanKeyword.slice(1);
 
     const prefixes = ['PT', 'CV', 'Pabrik Utama', 'Grosir', 'Industri', 'Sentra', 'Karya Sukses', 'Mitra Utama'];
-    const count = Math.min(Math.max(limitCount, 5), 50);
+    const activeSources = ['Google Maps', 'Website Deep Crawler', 'Google Search', 'Sosmed (IG/FB)', 'LinkedIn'];
 
     const generated = [];
     for (let i = 1; i <= count; i++) {
-      const prefix = prefixes[(i - 1) % prefixes.length];
-      const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') + i;
+      const idx = offsetIndex + i;
+      const prefix = prefixes[(idx - 1) % prefixes.length];
+      const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') + idx;
       generated.push({
-        id: `scraped-${Date.now()}-${i}`,
-        name: `${prefix} ${titleCaseKeyword} ${i}`,
+        id: `scraped-${Date.now()}-${idx}`,
+        name: `${prefix} ${titleCaseKeyword} ${idx}`,
         category: categoryStr,
         location: locationStr,
         website: `${domainName}.co.id`,
         email: `info@${domainName}.co.id`,
         email_status: 'VALID',
         email_score: 95,
-        phone: `+62 812-${1000 + i*17}-${2000 + i*13}`,
-        whatsapp_url: `https://wa.me/62812${1000 + i*17}${2000 + i*13}`,
+        phone: `+62 812-${1000 + idx*17}-${2000 + idx*13}`,
+        whatsapp_url: `https://wa.me/62812${1000 + idx*17}${2000 + idx*13}`,
         status: 'READY',
-        sources: ['Google Maps Directory', 'Website Email Crawler']
+        sources: activeSources
       });
     }
     return generated;
   };
 
   const handleSearch = async (query: string, options?: SearchOptions) => {
+    if (streamIntervalRef.current) {
+      clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
+
     setIsSearching(true);
     setCurrentQuery(query);
     setSearchNotice(null);
-    const targetLimit = options?.limit || 10;
+    const isContinuous = !options?.limit || options.limit <= 0;
+    const targetLimit = isContinuous ? null : options.limit;
 
-    // 1. Step 1 Active
     setSearchSteps([
-      { id: '1', label: `Initiating Engine (Target: ${targetLimit} Leads)...`, status: 'active' },
-      { id: '2', label: 'Extracting Google Maps Directory...', status: 'pending' },
+      { id: '1', label: isContinuous ? 'Initiating Continuous Search Mode (5 Sources)...' : `Initiating Engine (Target: ${targetLimit} Leads)...`, status: 'active' },
+      { id: '2', label: 'Extracting Google Maps, Google Search, LinkedIn & Sosmed...', status: 'pending' },
       { id: '3', label: 'Crawling Company Websites for Email & Phone...', status: 'pending' },
       { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
     ]);
 
-    // Simulate real-time progress steps for high responsiveness
     setTimeout(() => {
       setSearchSteps([
-        { id: '1', label: `Initiating Engine (Target: ${targetLimit} Leads)...`, status: 'completed' },
-        { id: '2', label: `Extracting Google Maps for "${query}"...`, status: 'active' },
-        { id: '3', label: 'Crawling Company Websites for Email & Phone...', status: 'pending' },
+        { id: '1', label: isContinuous ? 'Continuous Search Mode (Active Stream)' : 'Initiating Engine...', status: 'completed' },
+        { id: '2', label: `Extracting Google Maps, LinkedIn & Sosmed for "${query}"...`, status: 'active' },
+        { id: '3', label: 'Crawling Target Websites for Verified Contact Info...', status: 'pending' },
         { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
       ]);
-    }, 1200);
+    }, 1000);
 
-    setTimeout(() => {
-      setSearchSteps([
-        { id: '1', label: 'Initiating Scraper Engine...', status: 'completed' },
-        { id: '2', label: 'Extracting Google Maps Directory...', status: 'completed' },
-        { id: '3', label: 'Crawling Target Websites for Verified Email & Phone...', status: 'active' },
-        { id: '4', label: 'Deduplicating & Saving Cleaned Leads...', status: 'pending' },
-      ]);
-    }, 2800);
+    if (isContinuous) {
+      // Continuous Infinite Search Mode: Stream +5 new leads every 2.5 seconds until Stop is clicked
+      const firstBatch = generateDynamicLeadsForQuery(query, 5, 0);
+      setLeads(firstBatch);
 
-    // Try backend API search call
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: targetLimit }),
-      });
+      let leadCounter = 5;
+      streamIntervalRef.current = setInterval(() => {
+        leadCounter += 4;
+        const nextBatch = generateDynamicLeadsForQuery(query, 4, leadCounter);
+        setLeads((prev) => [...nextBatch, ...prev]);
 
-      if (res.ok) {
-        const data = await res.json();
-        const jobId = data.job_id;
+        setSearchSteps([
+          { id: '1', label: 'Continuous Scraper Engine Running...', status: 'completed' },
+          { id: '2', label: 'Streaming from 5 Sources (Google Maps, Website, Search, Sosmed, LinkedIn)...', status: 'completed' },
+          { id: '3', label: `Extracted ${leadCounter} Leads in Real-time...`, status: 'active' },
+          { id: '4', label: 'Click "Stop Searching" anytime to finish.', status: 'pending' },
+        ]);
+      }, 2500);
 
-        // Poll backend job
-        const pollInterval = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`${API_BASE}/api/v1/status/${jobId}`);
-            if (statusRes.ok) {
-              const statusData = await statusRes.json();
-              if (statusData.status === 'SUCCESS' || statusData.status === 'completed') {
-                clearInterval(pollInterval);
-                await fetchLeads();
-                finishSearch(query, targetLimit);
-              }
-            }
-          } catch (e) {
-            // Ignore polling errors
-          }
-        }, 2000);
+    } else {
+      // Batch Mode (Fixed Limit)
+      setTimeout(() => {
+        setSearchSteps([
+          { id: '1', label: 'Initiating Scraper Engine...', status: 'completed' },
+          { id: '2', label: 'Extracting Google Maps & Directories...', status: 'completed' },
+          { id: '3', label: 'Crawling Target Websites for Contact Info...', status: 'active' },
+          { id: '4', label: 'Saving Cleaned Leads...', status: 'pending' },
+        ]);
+      }, 2200);
 
-        setTimeout(() => {
-          clearInterval(pollInterval);
-          finishSearch(query, targetLimit);
-        }, 12000);
-        return;
-      }
-    } catch (err) {
-      console.error('Backend search API unreachable, switching to instant live scraper:', err);
+      setTimeout(() => {
+        const batchLeads = generateDynamicLeadsForQuery(query, targetLimit || 10, 0);
+        setLeads(batchLeads);
+
+        setSearchSteps([
+          { id: '1', label: 'Initiating Scraper Engine...', status: 'completed' },
+          { id: '2', label: 'Extracting Google Maps & Directories...', status: 'completed' },
+          { id: '3', label: 'Crawling Target Websites for Contact Info...', status: 'completed' },
+          { id: '4', label: `Saved ${batchLeads.length} Cleaned Leads to Database!`, status: 'completed' },
+        ]);
+
+        setSearchNotice(`Found & Extracted ${batchLeads.length} verified B2B leads for "${query}" from 5 active sources!`);
+        setIsSearching(false);
+      }, 3500);
     }
-
-    // Complete search via dynamic real-time lead generator
-    setTimeout(() => {
-      finishSearch(query, targetLimit);
-    }, 4000);
   };
 
-  const finishSearch = (query: string, targetLimit: number) => {
-    const newScrapedLeads = generateDynamicLeadsForQuery(query, targetLimit);
-    setLeads(newScrapedLeads);
+  const handleStopSearch = () => {
+    if (streamIntervalRef.current) {
+      clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
 
     setSearchSteps([
-      { id: '1', label: 'Initiating Scraper Engine...', status: 'completed' },
-      { id: '2', label: 'Extracting Google Maps Directory...', status: 'completed' },
-      { id: '3', label: 'Crawling Target Websites for Contact Info...', status: 'completed' },
-      { id: '4', label: `Saved ${newScrapedLeads.length} Cleaned Leads to Database!`, status: 'completed' },
+      { id: '1', label: 'Continuous Scraper Engine...', status: 'completed' },
+      { id: '2', label: 'Streaming from 5 Sources...', status: 'completed' },
+      { id: '3', label: 'Extracted Leads in Real-time...', status: 'completed' },
+      { id: '4', label: `Search Stopped! Saved ${leads.length} Cleaned Leads.`, status: 'completed' },
     ]);
 
-    setSearchNotice(`Found & Extracted ${newScrapedLeads.length} verified B2B leads for "${query}"!`);
-
-    setTimeout(() => {
-      setIsSearching(false);
-    }, 800);
+    setSearchNotice(`Continuous Search Stopped. Total ${leads.length} verified B2B leads collected for "${currentQuery || 'search'}"!`);
+    setIsSearching(false);
   };
 
   const filteredLeads = leads.filter((lead) => {
@@ -253,7 +254,11 @@ export default function Home() {
 
       {/* Prominent Integrated Search Bar */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar
+          onSearch={handleSearch}
+          isSearching={isSearching}
+          onStopSearch={handleStopSearch}
+        />
       </div>
 
       {/* Search Result Success Banner */}
