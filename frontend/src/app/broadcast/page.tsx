@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Megaphone, MessageCircle, Mail, Send, CheckCircle2, Users, Tag, Sparkles, Loader2, Play, Pause, ShieldCheck, AlertCircle, SearchX } from 'lucide-react';
+import Link from 'next/link';
+import { Megaphone, MessageCircle, Mail, Send, CheckCircle2, Users, Tag, Sparkles, Loader2, Play, Pause, ShieldCheck, AlertCircle, SearchX, Search as SearchIcon, Wand2 } from 'lucide-react';
 
 export default function BroadcastPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -20,13 +21,24 @@ export default function BroadcastPage() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+  const demoLeads = [
+    { id: 'demo-1', name: 'RSUD Kabupaten Bekasi', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8832-1920', email: 'info@rsudkabbekasi.id', website: 'rsudkabbekasi.id' },
+    { id: 'demo-2', name: 'PT Gunung Raja Paksi Tbk', category: 'Manufaktur & Industry', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8983-0000', email: 'info@gunungrajapaksi.com', website: 'gunungrajapaksi.com' },
+    { id: 'demo-3', name: 'RS Hermina Grand Wisata', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8265-1212', email: 'callcenter@herminahospitals.com', website: 'herminahospitals.com' },
+    { id: 'demo-4', name: 'PT Hitachi Sakti Indonesia', category: 'Manufaktur & Industry', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8832-1200', email: 'sales@hitachi.co.id', website: 'hitachi.co.id' },
+    { id: 'demo-5', name: 'RS Mitra Plumbon Cibitung', category: 'Rumah Sakit & Kesehatan', location: 'Cibitung, Bekasi', phone: '+62 21-8983-2011', email: 'info@mitraplumboncibitung.com', website: 'mitraplumboncibitung.com' },
+  ];
+
   useEffect(() => {
     async function fetchLeads() {
       try {
         const res = await fetch(`${API_BASE}/api/v1/leads`);
         if (res.ok) {
           const data = await res.json();
-          setLeads(data || []);
+          if (data && data.length > 0) {
+            setLeads(data);
+            return;
+          }
         }
       } catch (err) {
         console.error('Error fetching broadcast leads:', err);
@@ -34,6 +46,10 @@ export default function BroadcastPage() {
     }
     fetchLeads();
   }, []);
+
+  const handleLoadDemoLeads = () => {
+    setLeads(demoLeads);
+  };
 
   const targetLeads = leads.filter((l) => {
     if (audienceFilter === 'HAS_PHONE') return l.phone && l.phone !== 'N/A' && l.phone !== '-';
@@ -81,7 +97,7 @@ export default function BroadcastPage() {
       setCurrentSendingLead(targetLeads[step].name);
       step++;
       setBroadcastProgress(Math.round((step / total) * 100));
-    }, 2000);
+    }, 1800);
   };
 
   return (
@@ -107,14 +123,32 @@ export default function BroadcastPage() {
       )}
 
       {leads.length === 0 ? (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
-            <SearchX size={24} />
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+            <SearchX size={28} />
           </div>
-          <h3 className="text-base font-bold text-slate-800">No Target Leads Available for Broadcast Campaign</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Please extract leads first using <b>Find Leads</b> to populate your central database. Once leads are saved, you can launch automated WhatsApp & Cold Email campaigns here!
-          </p>
+          <div>
+            <h3 className="text-base font-bold text-slate-800">No Target Leads Available for Broadcast Campaign</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
+              Extract leads first using <b>Find Leads</b> or test with sample audience below to simulate automated WhatsApp & Cold Email campaigns immediately!
+            </p>
+          </div>
+
+          {/* Quick Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/"
+              className="px-5 py-2.5 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+            >
+              <SearchIcon size={14} /> Search Real-time Leads
+            </Link>
+            <button
+              onClick={handleLoadDemoLeads}
+              className="px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
+            >
+              <Wand2 size={14} className="text-emerald-600" /> Try Demo with Sample Audience
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
