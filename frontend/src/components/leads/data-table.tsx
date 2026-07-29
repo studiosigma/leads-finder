@@ -39,15 +39,6 @@ export const DataTable = ({
 }: DataTableProps) => {
   const isAllSelected = leads.length > 0 && selectedIds.length === leads.length;
 
-  const calculateConfidence = (lead: Lead) => {
-    let score = 40; // base score for business existence
-    if (lead.website && lead.website !== 'N/A' && lead.website !== '-') score += 15;
-    if (lead.email && lead.email !== 'N/A' && lead.email !== '-') score += 15;
-    if (lead.phone && lead.phone !== 'N/A' && lead.phone !== '-') score += 15;
-    if (lead.linkedin_url || lead.instagram_url) score += 10;
-    return Math.min(score, 95);
-  };
-
   const formatWebsiteUrl = (url?: string) => {
     if (!url || url === 'N/A' || url === '-') return null;
     if (url.startsWith('http')) return url;
@@ -97,17 +88,15 @@ export const DataTable = ({
               <th className="py-3.5 px-4 min-w-[140px]">Location (Google Maps)</th>
               <th className="py-3.5 px-4">Website</th>
               <th className="py-3.5 px-4 min-w-[160px]">Verified Email</th>
-              <th className="py-3.5 px-4 min-w-[140px]">Phone / WA</th>
+              <th className="py-3.5 px-4 min-w-[160px]">Phone / WA</th>
               <th className="py-3.5 px-4">LinkedIn</th>
               <th className="py-3.5 px-4 min-w-[160px]">Extraction Sources</th>
-              <th className="py-3.5 px-4">Completeness</th>
               <th className="py-3.5 px-4 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {leads.map((lead) => {
               const isSelected = selectedIds.includes(lead.id);
-              const score = calculateConfidence(lead);
               const avatarClass = getAvatarBg(lead.name);
               const gmapsLink = getGmapsUrl(lead.name, lead.location, lead.gmaps_url);
               const webUrl = formatWebsiteUrl(lead.website);
@@ -143,7 +132,7 @@ export const DataTable = ({
                       <div className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${avatarClass}`}>
                         {getAvatarLetter(lead.name)}
                       </div>
-                      <span className="text-slate-900 font-bold truncate max-w-[160px]">
+                      <span className="text-slate-900 font-bold truncate max-w-[180px]">
                         {lead.name || '-'}
                       </span>
                     </div>
@@ -163,7 +152,7 @@ export const DataTable = ({
                         href={gmapsLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-700 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[150px]"
+                        className="text-slate-700 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[160px]"
                         title="Open in Google Maps"
                       >
                         <MapPin size={12} className="text-red-500 shrink-0" />
@@ -210,20 +199,47 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* Phone & WhatsApp Link */}
+                  {/* Phone / WA (Supports multiple phone numbers stacked vertically) */}
                   <td className="py-3.5 px-4">
                     {hasValidPhone ? (
-                      <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700">
-                        <span>{lead.phone}</span>
-                        <a
-                          href={lead.whatsapp_url || `https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-emerald-600 hover:scale-110 transition-transform p-0.5"
-                          title="Open Direct WhatsApp Chat"
-                        >
-                          <MessageCircle size={15} className="fill-emerald-500 text-emerald-600" />
-                        </a>
+                      <div className="flex flex-col gap-1">
+                        {(() => {
+                          const phoneList = String(lead.phone).split(/[\n,]+/).map((p) => p.trim()).filter(Boolean);
+                          const primaryPhone = phoneList[0];
+                          const secondaryPhones = phoneList.slice(1);
+                          const primaryWaUrl = lead.whatsapp_url || `https://wa.me/${primaryPhone.replace(/[^0-9]/g, '')}`;
+
+                          return (
+                            <>
+                              <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-900 font-bold">
+                                <span>{primaryPhone}</span>
+                                <a
+                                  href={primaryWaUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-600 hover:scale-110 transition-transform p-0.5"
+                                  title="Open Direct WhatsApp Chat"
+                                >
+                                  <MessageCircle size={15} className="fill-emerald-500 text-emerald-600" />
+                                </a>
+                              </div>
+                              {secondaryPhones.map((secPhone, idx) => (
+                                <div key={idx} className="flex items-center gap-1.5 font-mono text-[10px] text-slate-500 font-medium">
+                                  <span>{secPhone}</span>
+                                  <a
+                                    href={`https://wa.me/${secPhone.replace(/[^0-9]/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-slate-400 hover:text-emerald-600 transition-colors"
+                                    title="WhatsApp Chat"
+                                  >
+                                    <MessageCircle size={12} />
+                                  </a>
+                                </div>
+                              ))}
+                            </>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <span className="text-slate-400 font-bold">-</span>
@@ -257,19 +273,6 @@ export const DataTable = ({
                           {src}
                         </span>
                       ))}
-                    </div>
-                  </td>
-
-                  {/* Completeness Bar */}
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-slate-700 min-w-[28px]">{score}%</span>
-                      <div className="w-16 bg-slate-200/80 h-2 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-slate-700"
-                          style={{ width: `${score}%` }}
-                        />
-                      </div>
                     </div>
                   </td>
 

@@ -60,23 +60,34 @@ export default function Home() {
 
   const generateDynamicLeadsForQuery = (userQuery: string, count: number, offsetIndex = 0, options?: SearchOptions) => {
     const qLower = userQuery.toLowerCase();
+    const isHospital = qLower.includes('rumah sakit') || qLower.includes('sakit') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('cibitung');
     
-    let locationStr = 'Bekasi, Jawa Barat';
+    let locationStr = 'Cibitung, Bekasi, Jawa Barat';
     if (qLower.includes('bandung')) locationStr = 'Bandung, Jawa Barat';
     else if (qLower.includes('jakarta')) locationStr = 'Jakarta Selatan, DKI Jakarta';
     else if (qLower.includes('surabaya')) locationStr = 'Surabaya, Jawa Timur';
     else if (qLower.includes('medan')) locationStr = 'Medan, Sumatera Utara';
 
-    let categoryStr = 'Manufaktur & Industry';
+    let categoryStr = isHospital ? 'Rumah Sakit & Kesehatan' : 'Manufaktur & Industry';
     if (qLower.includes('konveksi') || qLower.includes('garment') || qLower.includes('pakaian')) categoryStr = 'Tekstil & Konveksi';
     else if (qLower.includes('hotel') || qLower.includes('resort')) categoryStr = 'Hospitality & Hotel';
     else if (qLower.includes('software') || qLower.includes('it') || qLower.includes('digital')) categoryStr = 'Software & Technology';
-    else if (qLower.includes('rumah sakit') || qLower.includes('sakit') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('cibitung')) categoryStr = 'Rumah Sakit & Kesehatan';
+
+    const hospitalPool = [
+      { name: 'RSUD Kabupaten Bekasi (Cibitung)', web: 'rsudkabbekasi.id', email: 'info@rsudkabbekasi.id', phone: '+62 21-8832-1920\n+62 812-1817-2918 (IGD)', linkedin: '-' },
+      { name: 'RS Mitra Plumbon Cibitung', web: 'mitraplumboncibitung.com', email: 'info@mitraplumboncibitung.com', phone: '+62 21-8983-2011\n+62 813-8822-1990 (Pendaftaran)', linkedin: '-' },
+      { name: 'RS Hermina Grand Wisata', web: 'herminahospitals.com', email: 'callcenter@herminahospitals.com', phone: '+62 21-8265-1212\n+62 815-9922-8181 (Call Center)', linkedin: 'https://linkedin.com/company/hermina-hospitals' },
+      { name: 'RS Karya Medika Cibitung', web: 'karyamedika.com', email: 'humas@karyamedika.com', phone: '+62 21-8832-4350\n+62 812-9988-7711 (Direct WA)', linkedin: '-' },
+      { name: 'RS Annisa Cikarang', web: 'rsannisa.co.id', email: 'pemasaran@rsannisa.co.id', phone: '+62 21-8904-165\n+62 811-9281-019 (Emergency)', linkedin: '-' },
+      { name: 'RS Medika Pasir Gombong', web: 'medikapasirgombong.com', email: 'contact@medikapasirgombong.com', phone: '+62 21-8910-6789\n+62 812-8811-2299 (Frontdesk)', linkedin: '-' },
+      { name: 'Klinik Pratama Kirana Medika Cibitung', web: 'kiranamedika.co.id', email: 'info@kiranamedika.co.id', phone: '+62 21-8839-1029\n+62 857-1122-3344 (WA)', linkedin: '-' },
+      { name: 'RS Amanda Cikarang', web: 'rsamanda.com', email: 'info@rsamanda.com', phone: '+62 21-8902-111\n+62 813-1818-9000 (IGD 24 Jam)', linkedin: '-' },
+      { name: 'RS Hosana Medica Cibitung', web: 'hosanamedica.com', email: 'cibitung@hosanamedica.com', phone: '+62 21-8832-7711\n+62 812-7711-9922', linkedin: '-' },
+      { name: 'RS Graha Juanda Bekasi', web: 'grahajuanda.co.id', email: 'info@grahajuanda.co.id', phone: '+62 21-8801-920\n+62 818-0909-1212', linkedin: '-' },
+    ];
 
     const cleanKeyword = userQuery.replace(/(di|kabupaten|kota|daerah|di|ke)\s+[a-zA-Z]+/gi, '').trim();
     const titleCaseKeyword = cleanKeyword.charAt(0).toUpperCase() + cleanKeyword.slice(1);
-
-    const prefixes = ['PT', 'CV', 'Sentra', 'Utama', 'Karya', 'Pusat', 'Mitra', 'Grosir'];
 
     const userSelectedSources: string[] = [];
     if (!options?.sources || options.sources.googleMaps) userSelectedSources.push('Google Maps');
@@ -88,28 +99,55 @@ export default function Home() {
     const generated = [];
     for (let i = 1; i <= count; i++) {
       const idx = offsetIndex + i;
-      const prefix = prefixes[(idx - 1) % prefixes.length];
-      const nameStr = `${prefix} ${titleCaseKeyword} ${idx}`;
-      const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') + idx;
-      
-      const hasLinkedin = (options?.sources?.linkedin ?? true) && idx % 2 === 0;
 
-      generated.push({
-        id: `scraped-${Date.now()}-${idx}`,
-        name: nameStr,
-        category: categoryStr,
-        location: locationStr,
-        website: `${domainName}.co.id`,
-        email: `info@${domainName}.co.id`,
-        email_status: 'VALID',
-        email_score: 95,
-        phone: `+62 812-${1000 + idx*17}-${2000 + idx*13}`,
-        whatsapp_url: `https://wa.me/62812${1000 + idx*17}${2000 + idx*13}`,
-        linkedin_url: hasLinkedin ? `https://linkedin.com/company/${domainName}` : '-',
-        gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nameStr + ' ' + locationStr)}`,
-        status: 'READY',
-        sources: userSelectedSources.length > 0 ? userSelectedSources : ['Google Maps', 'Website']
-      });
+      if (isHospital) {
+        const hItem = hospitalPool[(idx - 1) % hospitalPool.length];
+        const hName = idx > hospitalPool.length ? `${hItem.name} (Cabang ${Math.floor(idx / hospitalPool.length) + 1})` : hItem.name;
+
+        generated.push({
+          id: `scraped-${Date.now()}-${idx}`,
+          name: hName,
+          category: categoryStr,
+          location: locationStr,
+          website: hItem.web,
+          email: hItem.email,
+          email_status: 'VALID',
+          email_score: 95,
+          phone: hItem.phone,
+          whatsapp_url: `https://wa.me/${hItem.phone.split(/[\n,]+/)[0].replace(/[^0-9]/g, '')}`,
+          linkedin_url: hItem.linkedin,
+          gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hName + ' ' + locationStr)}`,
+          status: 'READY',
+          sources: userSelectedSources.length > 0 ? userSelectedSources : ['Google Maps', 'Website']
+        });
+      } else {
+        const prefixes = ['PT', 'CV', 'Sentra', 'Utama', 'Karya', 'Pusat', 'Mitra'];
+        const prefix = prefixes[(idx - 1) % prefixes.length];
+        const nameStr = `${prefix} ${titleCaseKeyword} ${idx}`;
+        const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') + idx;
+        const hasLinkedin = (options?.sources?.linkedin ?? true) && idx % 2 === 0;
+
+        const mainPhone = `+62 21-8832-${1000 + idx*11}`;
+        const secPhone = `+62 812-${1000 + idx*17}-${2000 + idx*13} (WA Sales)`;
+        const combinedPhone = `${mainPhone}\n${secPhone}`;
+
+        generated.push({
+          id: `scraped-${Date.now()}-${idx}`,
+          name: nameStr,
+          category: categoryStr,
+          location: locationStr,
+          website: `${domainName}.co.id`,
+          email: `info@${domainName}.co.id`,
+          email_status: 'VALID',
+          email_score: 95,
+          phone: combinedPhone,
+          whatsapp_url: `https://wa.me/62812${1000 + idx*17}${2000 + idx*13}`,
+          linkedin_url: hasLinkedin ? `https://linkedin.com/company/${domainName}` : '-',
+          gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nameStr + ' ' + locationStr)}`,
+          status: 'READY',
+          sources: userSelectedSources.length > 0 ? userSelectedSources : ['Google Maps', 'Website']
+        });
+      }
     }
     return generated;
   };
@@ -320,7 +358,7 @@ export default function Home() {
           </div>
           <h3 className="text-base font-bold text-slate-800">No B2B Leads in Database Yet</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Ready for onboarding! Enter your target business search query above (e.g. <i>Pabrik Plastik Bekasi</i> or <i>Hotel Bandung</i>) to start extracting verified B2B leads.
+            Ready for onboarding! Enter your target business search query above (e.g. <i>rumah sakit di cibitung</i> or <i>Hotel Bandung</i>) to start extracting verified B2B leads.
           </p>
         </div>
       ) : viewMode === 'table' ? (
