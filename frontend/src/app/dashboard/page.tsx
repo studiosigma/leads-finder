@@ -10,6 +10,7 @@ import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
+import { AnalyticsCharts } from '@/components/dashboard/analytics-charts';
 import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, ShieldCheck, Sparkles, PieChart, BarChart3 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -124,6 +125,9 @@ export default function DashboardPage() {
         <StatTile label="Phone Found" value={phonesFound.toString()} trend={`${phoneRate}% WhatsApp`} />
         <StatTile label="Website Found" value={websitesFound.toString()} trend={`${webRate}% Active`} />
       </div>
+
+      {/* Visual Pie & Bar Chart Analytics */}
+      <AnalyticsCharts leads={leads} />
 
       {/* Visual Analytics & Data Quality Insights Bar */}
       {leads.length > 0 && (
