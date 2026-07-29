@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Copy, MessageCircle, Check, Loader2, RefreshCw, Building2, MapPin, Tag, SearchX } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, Copy, MessageCircle, Check, Loader2, RefreshCw, Building2, MapPin, Tag, SearchX, Search as SearchIcon, Send, Wand2 } from 'lucide-react';
 
 export default function AiPitchPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -19,6 +20,12 @@ export default function AiPitchPage() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+  const demoLeads = [
+    { id: 'demo-1', name: 'RSUD Kabupaten Bekasi', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8832-1920', email: 'info@rsudkabbekasi.id', website: 'rsudkabbekasi.id' },
+    { id: 'demo-2', name: 'PT Gunung Raja Paksi Tbk', category: 'Manufaktur & Industry', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8983-0000', email: 'info@gunungrajapaksi.com', website: 'gunungrajapaksi.com' },
+    { id: 'demo-3', name: 'RS Hermina Grand Wisata', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8265-1212', email: 'callcenter@herminahospitals.com', website: 'herminahospitals.com' },
+  ];
+
   useEffect(() => {
     async function fetchLeads() {
       try {
@@ -29,6 +36,7 @@ export default function AiPitchPage() {
             setLeads(data);
             setSelectedLead(data[0]);
             updatePitchForLead(data[0], pitchTone, myOffer);
+            return;
           }
         }
       } catch (err) {
@@ -37,6 +45,12 @@ export default function AiPitchPage() {
     }
     fetchLeads();
   }, []);
+
+  const handleLoadDemoLeads = () => {
+    setLeads(demoLeads);
+    setSelectedLead(demoLeads[0]);
+    updatePitchForLead(demoLeads[0], pitchTone, myOffer);
+  };
 
   const updatePitchForLead = (lead: any, tone: string, offer: string) => {
     if (!lead) return;
@@ -47,27 +61,28 @@ export default function AiPitchPage() {
   };
 
   const generatePitchContent = (lead: any, tone: string, offer: string) => {
-    const offerText = offer.trim() ? offer.trim() : 'our B2B Growth Solution';
-    const category = lead.category || 'Business';
+    const offerText = offer.trim() ? offer.trim() : 'Layanan Solusi B2B Growth & Efisiensi Operasional';
+    const category = lead.category || 'Bisnis';
     const location = lead.location || 'Indonesia';
+    const leadName = lead.name || 'Perusahaan';
 
     if (tone === 'formal') {
       return {
-        subject: `Executive Proposal: ${lead.name} x ${offerText}`,
-        email: `Dear Decision Maker,\n\nI am reaching out regarding ${lead.name}'s ongoing initiatives within the ${category} sector in ${location}.\n\nOur team specializes in providing ${offerText} tailored to market leaders. We would welcome the opportunity to submit a brief preliminary proposal.\n\nSincerely,\n[Your Name]\n[Your Title]`,
-        wa: `Good day. I am writing regarding ${lead.name}'s initiatives in ${category}. We specialize in ${offerText}. May I share a 1-page overview with your team?`
+        subject: `Proposal Kemitraan Strategis: ${leadName} x ${offerText}`,
+        email: `Kepada Yth. Manajemen & Tim Direksi\n${leadName}\nDi Tempat\n\nDengan hormat,\n\nSehubungan dengan pesatnya perkembangan sektor ${category} di wilayah ${location}, kami dari tim profesional ingin mengajukan penawaran kemitraan terkait ${offerText}.\n\nKami telah berpengalaman membantu perusahaan terkemuka dalam meningkatkan efisiensi dan ROI operasional. Boleh kami kirimkan ringkasan proposal 1 halaman atau menjadwalkan diskusi singkat selama 10 menit minggu ini?\n\nHormat kami,\n[Nama Anda]\n[Jabatan Anda]\n[Nama Perusahaan Anda]`,
+        wa: `Selamat siang Bapak/Ibu Manajemen ${leadName}.\n\nPerkenalkan saya [Nama Anda]. Kami bergerak di bidang ${offerText} khusus sektor ${category}. Boleh kami kirimkan profil ringkas penawaran kami via WhatsApp ini?\n\nTerima kasih!`
       };
     } else if (tone === 'casual') {
       return {
-        subject: `Quick question for ${lead.name} team!`,
-        email: `Hi there,\n\nCame across ${lead.name} while researching top ${category} companies in ${location}. Really impressed by your work!\n\nWe build ${offerText} that helps teams like yours scale faster without the headache. Worth a quick 5-min chat this week?\n\nCheers,\n[Your Name]`,
-        wa: `Hey! Loved ${lead.name}'s presence in ${category}. We help ${location} companies with ${offerText}. Open to a quick chat?`
+        subject: `Peluang Kolaborasi Singkat untuk ${leadName}`,
+        email: `Halo Tim ${leadName},\n\nSalam kenal! Kami sangat mengagumi kiprah ${leadName} di industri ${category} area ${location}.\n\nKami memiliki solusi ${offerText} yang dapat membantu tim Anda berkembang lebih cepat dan efisien. Apakah ada waktu luang sekitar 5 menit minggu ini untuk ngobrol santai?\n\nSalam hangat,\n[Nama Anda]`,
+        wa: `Halo Kak! Salam kenal dari tim kami. Kami mengamati perkembangan ${leadName} di ${category}. Kami punya solusi ${offerText} yang cocok banget untuk skala bisnis Anda. Boleh diskusi santai sebentar?`
       };
     } else {
       return {
-        subject: `Regarding ${lead.name} & ${offerText} : Synergy?`,
-        email: `Hello,\n\nI noticed ${lead.name}'s strong positioning in ${category}. We've helped similar ${location} firms achieve a 40%+ increase in ROI using ${offerText}.\n\nWould you be open to a brief 5-minute exchange next week to see how this applies to ${lead.name}?\n\nBest regards,\n[Your Name]\nB2B Outreach Manager`,
-        wa: `Hi! I saw ${lead.name}'s impressive work in ${category}. We helped a team in ${location} boost ROI by 40% using ${offerText}. Would love to share a quick 2-min demo with you!`
+        subject: `Kerjasama Penawaran ${offerText} untuk ${leadName}`,
+        email: `Halo Manajemen ${leadName},\n\nKami mengamati posisi kuat ${leadName} dalam sektor ${category} di ${location}.\n\nSistem ${offerText} kami terbukti mampu membantu meningkatkan produktivitas hingga 40% dan menghemat biaya operasional. Apakah Bapak/Ibu bersedia berdiskusi singkat 5 menit untuk melihat potensi penerapannya di ${leadName}?\n\nTerima kasih dan salam sukses,\n[Nama Anda]\nB2B Business Lead`,
+        wa: `Halo Bapak/Ibu Manajemen ${leadName},\n\nKami ingin berbagi solusi penawaran ${offerText} khusus untuk sektor ${category}. Sudah banyak mitra kami di ${location} mengalami peningkatan efisiensi hingga 40%.\n\nBoleh kami kirimkan materi presentasi singkatnya?`
       };
     }
   };
@@ -122,6 +137,13 @@ export default function AiPitchPage() {
     }
   };
 
+  const handlePresetOffer = (preset: string) => {
+    setMyOffer(preset);
+    if (selectedLead) {
+      updatePitchForLead(selectedLead, pitchTone, preset);
+    }
+  };
+
   const handleCopyEmail = () => {
     const fullText = `Subject: ${subject}\n\n${emailBody}`;
     navigator.clipboard.writeText(fullText);
@@ -136,7 +158,7 @@ export default function AiPitchPage() {
   };
 
   const handleOpenWhatsApp = () => {
-    const phone = selectedLead?.phone ? selectedLead.phone.replace(/[^0-9]/g, '') : '';
+    const phone = selectedLead?.phone ? selectedLead.phone.split(/[\n,]+/)[0].replace(/[^0-9]/g, '') : '';
     const text = encodeURIComponent(waScript);
     if (phone) {
       window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
@@ -159,14 +181,32 @@ export default function AiPitchPage() {
       </div>
 
       {leads.length === 0 ? (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
-            <SearchX size={24} />
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
+            <SearchX size={28} />
           </div>
-          <h3 className="text-base font-bold text-slate-800">No Target Leads Available for AI Pitching</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Please run a search in <b>Find Leads</b> first to extract verified B2B leads. Once leads are saved, you can generate personalized sales pitches here!
-          </p>
+          <div>
+            <h3 className="text-base font-bold text-slate-800">No Target Leads Available for AI Pitching</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
+              Run a search in <b>Find Leads</b> first or test with sample prospects below to generate personalized sales pitch scripts immediately!
+            </p>
+          </div>
+
+          {/* Quick Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/"
+              className="px-5 py-2.5 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+            >
+              <SearchIcon size={14} /> Search Real-time Leads
+            </Link>
+            <button
+              onClick={handleLoadDemoLeads}
+              className="px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
+            >
+              <Wand2 size={14} className="text-emerald-600" /> Try Demo with Sample Prospects
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -236,11 +276,30 @@ export default function AiPitchPage() {
             </div>
 
             {/* Custom Offer Input */}
-            <div className="space-y-1.5 pt-2 border-t border-slate-100">
-              <label className="text-xs font-semibold text-slate-600">Your Product / Offer (Optional)</label>
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <label className="text-xs font-semibold text-slate-600 block">Your Product / Value Offer</label>
+              
+              {/* Preset Chips */}
+              <div className="flex flex-wrap gap-1">
+                {[
+                  '⚙️ Solusi B2B Growth',
+                  '🏥 Peralatan Medis & Alkes',
+                  '🏭 Peralatan Industri & Pabrik',
+                  '💻 Pengembangan Web & Software'
+                ].map((preset, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePresetOffer(preset)}
+                    className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md border border-slate-200/80 transition-colors"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+
               <textarea
                 rows={3}
-                placeholder="e.g. Website Redesign Services, B2B Growth Platform, SEO Automation..."
+                placeholder="Misal: Solusi Sistem Software HRD, Peralatan Medis Rumah Sakit, Jasa Kontraktor Pabrik..."
                 value={myOffer}
                 onChange={(e) => setMyOffer(e.target.value)}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
@@ -302,7 +361,7 @@ export default function AiPitchPage() {
                   <textarea
                     value={waScript}
                     onChange={(e) => setWaScript(e.target.value)}
-                    rows={3}
+                    rows={4}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
                   />
                 </div>
@@ -327,10 +386,10 @@ export default function AiPitchPage() {
 
                   <button
                     onClick={handleOpenWhatsApp}
-                    className="w-full sm:flex-1 py-2.5 px-4 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full sm:flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
                   >
                     <MessageCircle size={14} className="fill-white" />
-                    Open in WhatsApp
+                    Kirim via WhatsApp
                   </button>
                 </div>
               </div>
