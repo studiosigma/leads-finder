@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Database, Sparkles, Blocks, Clock, Settings, Moon } from 'lucide-react';
+import { Search, Database, Sparkles, Blocks, Clock, Settings, Moon, Megaphone } from 'lucide-react';
 
 export const Sidebar = () => {
   const pathname = usePathname();
@@ -12,6 +12,7 @@ export const Sidebar = () => {
     { name: 'Find Leads', icon: Search, path: '/' },
     { name: 'Leads Database', icon: Database, path: '/dashboard' },
     { name: 'AI Pitch Studio', icon: Sparkles, path: '/ai-pitch' },
+    { name: 'Broadcast Studio', icon: Megaphone, path: '/broadcast' },
     { name: 'Integrations & CRM', icon: Blocks, path: '/integrations' },
     { name: 'Scheduled Scraping', icon: Clock, path: '/schedules' },
     { name: 'Settings', icon: Settings, path: '/settings' },
