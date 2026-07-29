@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -8,6 +8,8 @@ interface Lead {
   location: string;
   website: string;
   email: string;
+  email_status?: string;
+  email_score?: number;
   phone: string;
   whatsapp_url?: string;
   linkedin_url?: string;
@@ -72,7 +74,7 @@ export const DataTable = ({
   };
 
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
+    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs font-sans">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -89,7 +91,7 @@ export const DataTable = ({
               <th className="py-3.5 px-4">Category</th>
               <th className="py-3.5 px-4">Location</th>
               <th className="py-3.5 px-4">Website</th>
-              <th className="py-3.5 px-4">Email</th>
+              <th className="py-3.5 px-4">Verified Email</th>
               <th className="py-3.5 px-4">Phone</th>
               <th className="py-3.5 px-4">Completeness</th>
               <th className="py-3.5 px-4 text-center">Status</th>
@@ -163,15 +165,20 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* Email */}
+                  {/* Email & MX Verification Badge */}
                   <td className="py-3.5 px-4">
                     {lead.email && lead.email !== 'N/A' ? (
-                      <a
-                        href={`mailto:${lead.email}`}
-                        className="text-slate-700 hover:text-blue-600 truncate max-w-[160px] block font-mono text-[11px]"
-                      >
-                        {lead.email}
-                      </a>
+                      <div className="flex flex-col gap-0.5">
+                        <a
+                          href={`mailto:${lead.email}`}
+                          className="text-slate-700 hover:text-blue-600 truncate max-w-[160px] block font-mono text-[11px]"
+                        >
+                          {lead.email}
+                        </a>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700">
+                          <ShieldCheck size={11} className="text-emerald-600" /> MX Verified
+                        </span>
+                      </div>
                     ) : (
                       <span className="text-slate-400">N/A</span>
                     )}
