@@ -18,13 +18,70 @@ interface Step {
 }
 
 const DEFAULT_INITIAL_LEADS = [
-  { id: '1', name: 'Acme Corp', category: 'Technology', location: 'San Francisco, CA', website: 'acme.co', email: 'sarah@acme.co', phone: '+1 555-0192', status: 'READY' },
-  { id: '2', name: 'Data Tech', category: 'Technology', location: 'San Francisco, CA', website: 'datatech.io', email: 'contact@datatech.io', phone: '+1 555-0192', status: 'READY' },
-  { id: '3', name: 'Global Solutions', category: 'Marketing', location: 'San Francisco, CA', website: 'globalsol.com', email: 'info@globalsol.com', phone: '+1 555-0192', status: 'READY' },
-  { id: '4', name: 'Apex Innovations', category: 'Technology', location: 'San Francisco, CA', website: 'apex.io', email: 'hello@apex.io', phone: '+1 555-0192', status: 'READY' },
-  { id: '5', name: 'Bimrny Tech', category: 'Marketing', location: 'San Francisco, CA', website: 'bimrny.com', email: 'sales@bimrny.com', phone: '+1 555-0192', status: 'READY' },
-  { id: '6', name: 'Glesan Tech', category: 'Technology', location: 'San Francisco, CA', website: 'glesan.io', email: 'info@glesan.io', phone: '+1 555-0192', status: 'READY' },
-  { id: '7', name: 'Eech Liog', category: 'Marketing', location: 'San Francisco, CA', website: 'eech.com', email: 'hello@eech.com', phone: '+1 555-0192', status: 'READY' },
+  {
+    id: '1',
+    name: 'Rumah Sakit Mitra Plumbon Cibitung',
+    category: 'Rumah Sakit & Kesehatan',
+    location: 'Cibitung, Bekasi, Jawa Barat',
+    website: 'mitraplumboncibitung.com',
+    email: 'info@mitraplumboncibitung.com',
+    email_status: 'VALID',
+    email_score: 95,
+    phone: '+62 812-1817-2918',
+    whatsapp_url: 'https://wa.me/6281218172918',
+    linkedin_url: '-',
+    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Mitra+Plumbon+Cibitung',
+    status: 'READY',
+    sources: ['Google Maps', 'Website', 'Google Search']
+  },
+  {
+    id: '2',
+    name: 'Acme Corp Technology',
+    category: 'Technology & Software',
+    location: 'San Francisco, CA',
+    website: 'acme.co',
+    email: 'sarah@acme.co',
+    email_status: 'VALID',
+    email_score: 95,
+    phone: '+1 555-0192',
+    whatsapp_url: 'https://wa.me/15550192',
+    linkedin_url: 'https://linkedin.com/company/acme-corp',
+    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Acme+Corp+San+Francisco',
+    status: 'READY',
+    sources: ['Google Maps', 'Website', 'LinkedIn']
+  },
+  {
+    id: '3',
+    name: 'Data Tech Solutions',
+    category: 'Data & Analytics',
+    location: 'San Francisco, CA',
+    website: 'datatech.io',
+    email: 'contact@datatech.io',
+    email_status: 'VALID',
+    email_score: 95,
+    phone: '+1 555-0192',
+    whatsapp_url: 'https://wa.me/15550192',
+    linkedin_url: 'https://linkedin.com/company/datatech-io',
+    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Data+Tech+San+Francisco',
+    status: 'READY',
+    sources: ['Google Maps', 'Website', 'Google Search', 'LinkedIn']
+  },
+  {
+    id: '4',
+    name: 'Global Marketing Solutions',
+    category: 'Marketing & Digital',
+    location: 'Jakarta Selatan, DKI Jakarta',
+    website: 'globalsol.com',
+    email: 'info@globalsol.com',
+    email_status: 'VALID',
+    email_score: 95,
+    phone: '+62 813-8822-1990',
+    whatsapp_url: 'https://wa.me/6281388221990',
+    linkedin_url: '-',
+    gmaps_url: 'https://www.google.com/maps/search/?api=1&query=Global+Marketing+Solutions+Jakarta',
+    status: 'READY',
+    sources: ['Google Maps', 'Website', 'Sosmed']
+  },
 ];
 
 export default function Home() {
@@ -83,21 +140,26 @@ export default function Home() {
     if (qLower.includes('konveksi') || qLower.includes('pabrik') || qLower.includes('garment')) categoryStr = 'Tekstil & Konveksi';
     else if (qLower.includes('hotel') || qLower.includes('resort')) categoryStr = 'Hospitality & Hotel';
     else if (qLower.includes('software') || qLower.includes('it') || qLower.includes('digital')) categoryStr = 'Software & Technology';
+    else if (qLower.includes('rumah sakit') || qLower.includes('klinik') || qLower.includes('sehat')) categoryStr = 'Rumah Sakit & Kesehatan';
 
     const cleanKeyword = userQuery.replace(/(di|kabupaten|kota|daerah|di|ke)\s+[a-zA-Z]+/gi, '').trim();
     const titleCaseKeyword = cleanKeyword.charAt(0).toUpperCase() + cleanKeyword.slice(1);
 
     const prefixes = ['PT', 'CV', 'Pabrik Utama', 'Grosir', 'Industri', 'Sentra', 'Karya Sukses', 'Mitra Utama'];
-    const activeSources = ['Google Maps', 'Website Deep Crawler', 'Google Search', 'Sosmed (IG/FB)', 'LinkedIn'];
+    const activeSources = ['Google Maps', 'Website', 'Google Search', 'Sosmed', 'LinkedIn'];
 
     const generated = [];
     for (let i = 1; i <= count; i++) {
       const idx = offsetIndex + i;
       const prefix = prefixes[(idx - 1) % prefixes.length];
+      const nameStr = `${prefix} ${titleCaseKeyword} ${idx}`;
       const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') + idx;
+      
+      const hasLinkedin = idx % 2 === 0;
+
       generated.push({
         id: `scraped-${Date.now()}-${idx}`,
-        name: `${prefix} ${titleCaseKeyword} ${idx}`,
+        name: nameStr,
         category: categoryStr,
         location: locationStr,
         website: `${domainName}.co.id`,
@@ -106,8 +168,10 @@ export default function Home() {
         email_score: 95,
         phone: `+62 812-${1000 + idx*17}-${2000 + idx*13}`,
         whatsapp_url: `https://wa.me/62812${1000 + idx*17}${2000 + idx*13}`,
+        linkedin_url: hasLinkedin ? `https://linkedin.com/company/${domainName}` : '-',
+        gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nameStr + ' ' + locationStr)}`,
         status: 'READY',
-        sources: activeSources
+        sources: hasLinkedin ? activeSources : activeSources.slice(0, 4)
       });
     }
     return generated;
@@ -206,9 +270,9 @@ export default function Home() {
   };
 
   const filteredLeads = leads.filter((lead) => {
-    if (activeFilter === 'HAS_EMAIL') return lead.email && lead.email !== 'N/A';
-    if (activeFilter === 'HAS_PHONE') return lead.phone && lead.phone !== 'N/A';
-    if (activeFilter === 'HAS_WEBSITE') return lead.website && lead.website !== 'N/A';
+    if (activeFilter === 'HAS_EMAIL') return lead.email && lead.email !== 'N/A' && lead.email !== '-';
+    if (activeFilter === 'HAS_PHONE') return lead.phone && lead.phone !== 'N/A' && lead.phone !== '-';
+    if (activeFilter === 'HAS_WEBSITE') return lead.website && lead.website !== 'N/A' && lead.website !== '-';
     if (activeFilter === 'READY') return lead.status === 'READY';
     if (activeFilter === 'FOLLOW_UP') return lead.status === 'FOLLOW UP';
     return true;
@@ -216,9 +280,9 @@ export default function Home() {
 
   const filterCounts = {
     all: leads.length,
-    hasEmail: leads.filter((l) => l.email && l.email !== 'N/A').length,
-    hasPhone: leads.filter((l) => l.phone && l.phone !== 'N/A').length,
-    hasWebsite: leads.filter((l) => l.website && l.website !== 'N/A').length,
+    hasEmail: leads.filter((l) => l.email && l.email !== 'N/A' && l.email !== '-').length,
+    hasPhone: leads.filter((l) => l.phone && l.phone !== 'N/A' && l.phone !== '-').length,
+    hasWebsite: leads.filter((l) => l.website && l.website !== 'N/A' && l.website !== '-').length,
     ready: leads.filter((l) => l.status === 'READY').length,
     followUp: leads.filter((l) => l.status === 'FOLLOW UP').length,
   };

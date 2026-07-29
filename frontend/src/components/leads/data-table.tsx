@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -15,6 +15,7 @@ interface Lead {
   linkedin_url?: string;
   instagram_url?: string;
   facebook_url?: string;
+  gmaps_url?: string;
   status: string;
   sources?: string[];
 }
@@ -36,29 +37,33 @@ export const DataTable = ({
   onOpenWebhookModal,
   onOpenAiPitchModal,
 }: DataTableProps) => {
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const isAllSelected = leads.length > 0 && selectedIds.length === leads.length;
 
   const calculateConfidence = (lead: Lead) => {
-    let score = 50; // base score for business existence
-    if (lead.website && lead.website !== 'N/A') score += 15;
-    if (lead.email && lead.email !== 'N/A') score += 15;
-    if (lead.phone && lead.phone !== 'N/A') score += 15;
+    let score = 40; // base score for business existence
+    if (lead.website && lead.website !== 'N/A' && lead.website !== '-') score += 15;
+    if (lead.email && lead.email !== 'N/A' && lead.email !== '-') score += 15;
+    if (lead.phone && lead.phone !== 'N/A' && lead.phone !== '-') score += 15;
+    if (lead.linkedin_url || lead.instagram_url) score += 10;
     return Math.min(score, 95);
   };
 
-  const formatWebsiteUrl = (url: string) => {
-    if (!url || url === 'N/A') return '#';
-    if (url.startsWith && url.startsWith('http')) return url;
+  const formatWebsiteUrl = (url?: string) => {
+    if (!url || url === 'N/A' || url === '-') return null;
+    if (url.startsWith('http')) return url;
     return `https://${url}`;
   };
 
-  // Helper for letter icon avatar
+  const getGmapsUrl = (name: string, location: string, gmapsUrl?: string) => {
+    if (gmapsUrl && gmapsUrl.startsWith('http')) return gmapsUrl;
+    const query = encodeURIComponent(`${name} ${location}`);
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  };
+
   const getAvatarLetter = (name: string) => {
     return name ? name.charAt(0).toUpperCase() : 'B';
   };
 
-  // Helper for company logo color
   const getAvatarBg = (name: string) => {
     const colors = [
       'bg-slate-900 text-white',
@@ -69,7 +74,7 @@ export const DataTable = ({
       'bg-emerald-700 text-white'
     ];
     let hash = 0;
-    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+    for (let i = 0; i < (name || '').length; i++) hash += name.charCodeAt(i);
     return colors[hash % colors.length];
   };
 
@@ -87,14 +92,15 @@ export const DataTable = ({
                   className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4"
                 />
               </th>
-              <th className="py-3.5 px-4 min-w-[220px]">Company Name</th>
+              <th className="py-3.5 px-4 min-w-[200px]">Company Name</th>
               <th className="py-3.5 px-4">Category</th>
-              <th className="py-3.5 px-4">Location</th>
+              <th className="py-3.5 px-4 min-w-[140px]">Location (Google Maps)</th>
               <th className="py-3.5 px-4">Website</th>
-              <th className="py-3.5 px-4">Verified Email</th>
-              <th className="py-3.5 px-4">Phone</th>
+              <th className="py-3.5 px-4 min-w-[160px]">Verified Email</th>
+              <th className="py-3.5 px-4 min-w-[140px]">Phone / WA</th>
+              <th className="py-3.5 px-4">LinkedIn</th>
+              <th className="py-3.5 px-4 min-w-[160px]">Extraction Sources</th>
               <th className="py-3.5 px-4">Completeness</th>
-              <th className="py-3.5 px-4 text-center">Status</th>
               <th className="py-3.5 px-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -103,6 +109,16 @@ export const DataTable = ({
               const isSelected = selectedIds.includes(lead.id);
               const score = calculateConfidence(lead);
               const avatarClass = getAvatarBg(lead.name);
+              const gmapsLink = getGmapsUrl(lead.name, lead.location, lead.gmaps_url);
+              const webUrl = formatWebsiteUrl(lead.website);
+
+              const hasValidEmail = lead.email && lead.email !== 'N/A' && lead.email !== '-';
+              const hasValidPhone = lead.phone && lead.phone !== 'N/A' && lead.phone !== '-';
+              const hasValidLinkedin = lead.linkedin_url && lead.linkedin_url !== 'N/A' && lead.linkedin_url !== '-';
+
+              const sourcesList = lead.sources && lead.sources.length > 0
+                ? lead.sources
+                : ['Google Maps', 'Website Deep Crawler'];
 
               return (
                 <tr
@@ -121,53 +137,63 @@ export const DataTable = ({
                     />
                   </td>
 
-                  {/* Company Name with Icon Avatar */}
+                  {/* Company Name */}
                   <td className="py-3.5 px-4 font-semibold text-slate-900">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       <div className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${avatarClass}`}>
                         {getAvatarLetter(lead.name)}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-slate-900 font-bold hover:text-blue-600 transition-colors truncate max-w-[160px]">
-                          {lead.name}
-                        </span>
-                      </div>
+                      <span className="text-slate-900 font-bold truncate max-w-[160px]">
+                        {lead.name || '-'}
+                      </span>
                     </div>
                   </td>
 
-                  {/* Category Pill Tag */}
+                  {/* Category */}
                   <td className="py-3.5 px-4 text-slate-600">
                     <span className="inline-block bg-slate-200/60 text-slate-700 font-medium px-2.5 py-1 rounded-lg text-[11px]">
-                      {lead.category || 'Technology'}
+                      {lead.category && lead.category !== 'N/A' ? lead.category : '-'}
                     </span>
                   </td>
 
-                  {/* Location */}
+                  {/* Location & Google Maps Clickable Link */}
                   <td className="py-3.5 px-4 text-slate-600 font-normal">
-                    <span className="truncate max-w-[140px] block">
-                      {lead.location || 'San Francisco, CA'}
-                    </span>
-                  </td>
-
-                  {/* Website */}
-                  <td className="py-3.5 px-4">
-                    {lead.website && lead.website !== 'N/A' ? (
+                    {lead.location && lead.location !== 'N/A' ? (
                       <a
-                        href={formatWebsiteUrl(lead.website)}
+                        href={gmapsLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-600 hover:text-blue-600 font-medium underline underline-offset-2"
+                        className="text-slate-700 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[150px]"
+                        title="Open in Google Maps"
                       >
-                        Link
+                        <MapPin size={12} className="text-red-500 shrink-0" />
+                        <span className="truncate">{lead.location}</span>
+                        <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </a>
                     ) : (
-                      <span className="text-slate-400">N/A</span>
+                      <span className="text-slate-400 font-bold">-</span>
                     )}
                   </td>
 
-                  {/* Email & MX Verification Badge */}
+                  {/* Website Link */}
                   <td className="py-3.5 px-4">
-                    {lead.email && lead.email !== 'N/A' ? (
+                    {webUrl ? (
+                      <a
+                        href={webUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-700 hover:text-blue-600 font-medium underline underline-offset-2 flex items-center gap-1"
+                      >
+                        <Globe size={12} className="text-slate-400" /> Link
+                      </a>
+                    ) : (
+                      <span className="text-slate-400 font-bold">-</span>
+                    )}
+                  </td>
+
+                  {/* Verified Email & MX Badge */}
+                  <td className="py-3.5 px-4">
+                    {hasValidEmail ? (
                       <div className="flex flex-col gap-0.5">
                         <a
                           href={`mailto:${lead.email}`}
@@ -180,39 +206,57 @@ export const DataTable = ({
                         </span>
                       </div>
                     ) : (
-                      <span className="text-slate-400">N/A</span>
+                      <span className="text-slate-400 font-bold">-</span>
                     )}
                   </td>
 
-                  {/* Phone & WhatsApp Chat */}
+                  {/* Phone & WhatsApp Link */}
                   <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700">
-                      {lead.phone && lead.phone !== 'N/A' ? (
+                    {hasValidPhone ? (
+                      <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700">
                         <span>{lead.phone}</span>
-                      ) : (
-                        <span className="text-slate-400">+1 555-0192</span>
-                      )}
-                      {lead.whatsapp_url ? (
                         <a
-                          href={lead.whatsapp_url}
+                          href={lead.whatsapp_url || `https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-emerald-600 hover:scale-110 transition-transform p-0.5"
-                          title="Open WhatsApp Chat"
+                          title="Open Direct WhatsApp Chat"
                         >
                           <MessageCircle size={15} className="fill-emerald-500 text-emerald-600" />
                         </a>
-                      ) : (
-                        <a
-                          href={`https://wa.me/${(lead.phone || '15550192').replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-emerald-600 hover:scale-110 transition-transform p-0.5"
-                          title="Open WhatsApp Chat"
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 font-bold">-</span>
+                    )}
+                  </td>
+
+                  {/* LinkedIn Link */}
+                  <td className="py-3.5 px-4">
+                    {hasValidLinkedin ? (
+                      <a
+                        href={lead.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-1 font-semibold text-[11px]"
+                      >
+                        <Linkedin size={13} className="fill-blue-600 text-blue-600" /> LinkedIn
+                      </a>
+                    ) : (
+                      <span className="text-slate-400 font-bold text-center block">-</span>
+                    )}
+                  </td>
+
+                  {/* Extraction Sources Badges */}
+                  <td className="py-3.5 px-4">
+                    <div className="flex flex-wrap gap-1">
+                      {sourcesList.map((src, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-block bg-slate-100 text-slate-600 font-semibold border border-slate-200 px-2 py-0.5 rounded-md text-[10px]"
                         >
-                          <MessageCircle size={15} className="fill-emerald-500 text-emerald-600" />
-                        </a>
-                      )}
+                          {src}
+                        </span>
+                      ))}
                     </div>
                   </td>
 
@@ -220,20 +264,13 @@ export const DataTable = ({
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-bold text-slate-700 min-w-[28px]">{score}%</span>
-                      <div className="w-20 bg-slate-200/80 h-2 rounded-full overflow-hidden">
+                      <div className="w-16 bg-slate-200/80 h-2 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full bg-slate-700"
                           style={{ width: `${score}%` }}
                         />
                       </div>
                     </div>
-                  </td>
-
-                  {/* Status Badge */}
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
-                      Ready
-                    </span>
                   </td>
 
                   {/* Actions Column */}
