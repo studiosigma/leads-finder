@@ -40,13 +40,22 @@ class BaseScraper(ABC):
 
     @property
     def proxies(self):
-        # 1. Check Proxy Pool list first
-        valid_pool = [p.trim() for p in self.proxy_pool if p and p.startswith("http")]
+        # 1. Check System Settings Registry first
+        try:
+            from app.api.settings_routes import get_active_proxy
+            sys_proxy = get_active_proxy()
+            if sys_proxy:
+                return sys_proxy
+        except Exception:
+            pass
+
+        # 2. Check Proxy Pool list
+        valid_pool = [p.strip() for p in self.proxy_pool if p and p.strip().startswith("http")]
         if valid_pool:
             selected = random.choice(valid_pool)
             return {"http": selected, "https": selected}
 
-        # 2. Check single Proxy URL
+        # 3. Check single Proxy URL
         if self.proxy_url and self.proxy_url.startswith("http"):
             return {"http": self.proxy_url, "https": self.proxy_url}
 

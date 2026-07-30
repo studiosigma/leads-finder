@@ -65,4 +65,15 @@ def run_search(query: str, limit: int = 10):
 
     set_cached_search(query, limit, final_results, ttl_seconds=86400)
 
+    # 6. Emit real-time webhook event to configured n8n / Zapier URL
+    try:
+        from app.api.webhook_routes import emit_webhook_event
+        emit_webhook_event("scraping.completed", {
+            "query": query,
+            "count": len(final_results),
+            "leads": final_results
+        })
+    except Exception as e:
+        print("[Tasks Webhook Warning]:", e)
+
     return {"status": "completed", "results": final_results, "cached": False}

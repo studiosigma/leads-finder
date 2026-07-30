@@ -60,8 +60,7 @@ export const Sidebar = () => {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col animate-in fade-in duration-200">
-              <span className="text-xl font-extrabold text-slate-800 tracking-tight leading-none">LFE</span>
-              <span className="text-[10px] text-slate-500 font-bold mt-1 tracking-wider">LEADS FINDER</span>
+              <span className="text-base font-extrabold text-slate-900 tracking-tight leading-none">LEADS FINDER</span>
             </div>
           )}
         </Link>

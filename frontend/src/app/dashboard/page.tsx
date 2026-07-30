@@ -12,7 +12,8 @@ import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
 import { AnalyticsCharts } from '@/components/dashboard/analytics-charts';
 import { ScrapingHistoryTable, ScrapingSession } from '@/components/dashboard/scraping-history-table';
-import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X, Trash2 } from 'lucide-react';
+import { KanbanBoard } from '@/components/dashboard/kanban-board';
+import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X, Trash2, Columns } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -20,7 +21,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'leads' | 'history'>('leads');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'map'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'card' | 'map'>('kanban');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [webhookModalLead, setWebhookModalLead] = useState<any | null>(null);
   const [aiPitchModalLead, setAiPitchModalLead] = useState<any | null>(null);
@@ -325,6 +326,15 @@ export default function DashboardPage() {
                   <Table size={14} /> Table
                 </button>
                 <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
+                    viewMode === 'kanban' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="CRM Sales Pipeline Kanban Board"
+                >
+                  <Columns size={14} /> Kanban Pipeline
+                </button>
+                <button
                   onClick={() => setViewMode('card')}
                   className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors ${
                     viewMode === 'card' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
@@ -405,6 +415,12 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
+          ) : viewMode === 'kanban' ? (
+            <KanbanBoard
+              leads={filteredLeads}
+              onStatusChange={handleStatusChange}
+              onOpenAiPitchModal={setAiPitchModalLead}
+            />
           ) : viewMode === 'map' ? (
             <MapView leads={filteredLeads} />
           ) : viewMode === 'table' ? (

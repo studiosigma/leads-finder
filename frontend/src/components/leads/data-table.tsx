@@ -16,6 +16,9 @@ interface Lead {
   instagram_url?: string;
   facebook_url?: string;
   gmaps_url?: string;
+  decision_maker_name?: string;
+  decision_maker_title?: string;
+  decision_maker_linkedin?: string;
   status: string;
   sources?: string[];
 }
@@ -147,6 +150,7 @@ export const DataTable = ({
               <th className="py-3.5 px-4 min-w-[210px] sticky left-10 z-30 bg-slate-50 border-r border-slate-200/60">
                 Company Name
               </th>
+              <th className="py-3.5 px-4 min-w-[170px]">Executive Contact</th>
               <th className="py-3.5 px-4">Category</th>
               <th className="py-3.5 px-4 min-w-[140px]">Location</th>
               <th className="py-3.5 px-4">Website</th>
@@ -200,6 +204,22 @@ export const DataTable = ({
                         {lead.name || '-'}
                       </span>
                     </div>
+                  </td>
+
+                  {/* Executive Contact (Decision Maker) */}
+                  <td className="py-3.5 px-4 text-slate-700">
+                    {lead.decision_maker_name ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-slate-900 text-xs flex items-center gap-1">
+                          👤 {lead.decision_maker_name}
+                        </span>
+                        <span className="text-[10px] font-semibold text-[#4a6382] bg-slate-100 px-1.5 py-0.5 rounded w-fit border border-slate-200">
+                          {lead.decision_maker_title || 'Owner / CEO'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 font-medium text-[11px]">-</span>
+                    )}
                   </td>
 
                   {/* Category */}

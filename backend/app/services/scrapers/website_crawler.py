@@ -7,6 +7,21 @@ PHONE_REGEX = re.compile(r'(?:\+?62|0)[2-9][0-9\s-]{7,14}')
 WHATSAPP_REGEX = re.compile(r'(?:https?://)?(?:wa\.me|api\.whatsapp\.com/send\?phone=)(\+?\d+)', re.IGNORECASE)
 IGNORED_EMAIL_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.css', '.js', '.wixpress.com')
 
+DECISION_MAKER_TITLES = [
+    "Founder", "Co-Founder", "Owner", "Pemilik", "CEO", "Chief Executive Officer",
+    "Managing Director", "Direktur Utama", "Director", "Direktur", "General Manager", "CMO", "CTO"
+]
+
+TITLE_PATTERN = re.compile(
+    r'(?:(?:Pak|Bu|Bapak|Ibu|Bpk\.|Dr\.|Ir\.|H\.)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\s*[-–—:|,(]\s*((?:Founder|Co-Founder|Owner|Pemilik|CEO|Chief Executive Officer|Managing Director|Direktur Utama|Director|Direktur|General Manager|CMO|CTO)(?:\s*(?:&|/|,|and)\s*(?:Founder|Co-Founder|Owner|Pemilik|CEO|Chief Executive Officer|Managing Director|Direktur Utama|Director|Direktur|General Manager|CMO|CTO))?)',
+    re.IGNORECASE
+)
+
+REVERSE_TITLE_PATTERN = re.compile(
+    r'((?:Founder|Co-Founder|Owner|Pemilik|CEO|Chief Executive Officer|Managing Director|Direktur Utama|Director|Direktur|General Manager|CMO|CTO)(?:\s*(?:&|/|,|and)\s*(?:Founder|Co-Founder|Owner|Pemilik|CEO|Chief Executive Officer|Managing Director|Direktur Utama|Director|Direktur|General Manager|CMO|CTO)?))\s*[-–—:|,(]?\s*(?:Bapak|Ibu|Pak|Bu|Bpk\.|Dr\.|Ir\.|H\.)?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})',
+    re.IGNORECASE
+)
+
 class WebsiteCrawler(BaseScraper):
     def crawl_website(self, website_url: str):
         data = {
@@ -16,7 +31,12 @@ class WebsiteCrawler(BaseScraper):
             "linkedin_url": None,
             "instagram_url": None,
             "facebook_url": None,
-            "social_links": []
+            "social_links": [],
+            "raw_html": None,
+            "company_summary": None,
+            "decision_maker_name": None,
+            "decision_maker_title": None,
+            "decision_maker_linkedin": None
         }
 
         if not website_url or not website_url.startswith(("http://", "https://")):
@@ -40,18 +60,26 @@ class WebsiteCrawler(BaseScraper):
         if not html:
             return data
 
+        data["raw_html"] = html
         visited_urls.add(website_url)
 
-        # Step 2: Find contact / about page links
+        # Extract meta description for company summary
+        meta_desc_match = re.search(r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+        if not meta_desc_match:
+            meta_desc_match = re.search(r'<meta\s+property=["\']og:description["\']\s+content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+        if meta_desc_match:
+            data["company_summary"] = meta_desc_match.group(1).strip()
+
+        # Step 2: Find contact, about, team, management page links
         hrefs = re.findall(r'href=["\']([^"\']+)["\']', html, re.IGNORECASE)
         for href in hrefs:
             href_lower = href.lower()
-            if any(k in href_lower for k in ["contact", "about", "kontak", "hubungi", "tentang"]):
+            if any(k in href_lower for k in ["contact", "about", "kontak", "hubungi", "tentang", "team", "direksi", "management", "our-team", "pendiri"]):
                 full_url = urljoin(website_url, href)
                 if full_url not in visited_urls and urlparse(full_url).netloc == urlparse(website_url).netloc:
                     pages_to_visit.append(full_url)
                     visited_urls.add(full_url)
-                    if len(pages_to_visit) >= 3:
+                    if len(pages_to_visit) >= 4:
                         break
 
         # Step 3: Scan content across target pages
@@ -65,6 +93,23 @@ class WebsiteCrawler(BaseScraper):
                 continue
 
             text_content = re.sub(r'<[^>]+>', ' ', page_html)
+
+            # Decision Maker Name & Title Mining
+            if not data["decision_maker_name"]:
+                match = TITLE_PATTERN.search(text_content)
+                if match:
+                    data["decision_maker_name"] = match.group(1).strip()
+                    data["decision_maker_title"] = match.group(2).strip()
+                else:
+                    rev_match = REVERSE_TITLE_PATTERN.search(text_content)
+                    if rev_match:
+                        data["decision_maker_title"] = rev_match.group(1).strip()
+                        data["decision_maker_name"] = rev_match.group(2).strip()
+
+            # Extract Personal LinkedIn Profiles
+            for linkedin_link in re.findall(r'href=["\'](https://(?:[a-z]{2,3}\.)?linkedin\.com/in/[^"\']+)["\']', page_html, re.IGNORECASE):
+                if not data["decision_maker_linkedin"]:
+                    data["decision_maker_linkedin"] = linkedin_link
 
             # Extract Emails
             for email in EMAIL_REGEX.findall(text_content):
@@ -112,5 +157,3 @@ class WebsiteCrawler(BaseScraper):
 
     def search(self, query: str, limit: int = 10):
         return []
-
-

@@ -4,12 +4,21 @@ import socket
 class EmailVerifier:
     """
     Email Verification & MX Record Validation Engine
-    Validates syntax, checks disposable email domains, and verifies MX DNS records.
+    Validates syntax, checks disposable email domains, role-based prefixes, and verifies MX DNS records.
     """
 
     DISPOSABLE_DOMAINS = {
-        "tempmail.com", "mailinator.com", "10minutemail.com", "guerrillamail.com",
-        "trashmail.com", "yopmail.com", "dispostable.com", "sharklasers.com"
+        "tempmail.com", "temp-mail.org", "mailinator.com", "10minutemail.com", 
+        "guerrillamail.com", "trashmail.com", "yopmail.com", "dispostable.com", 
+        "sharklasers.com", "throwawaymail.com", "getnada.com", "maildrop.cc", 
+        "yopmail.net", "crazymailing.com", "fakeinbox.com", "tempmail.net",
+        "emailondeck.com", "binkmail.com", "safetymail.info", "mohmal.com",
+        "burnermail.io", "generator.email", "inboxalias.com", "mytrashmail.com"
+    }
+
+    ROLE_PREFIXES = {
+        "noreply", "no-reply", "donotreply", "postmaster", "mailer-daemon",
+        "abuse", "hostmaster", "root", "webmaster"
     }
 
     EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
@@ -34,7 +43,9 @@ class EmailVerifier:
                 "reason": "Invalid email syntax"
             }
 
-        domain = email_clean.split("@")[-1]
+        parts = email_clean.split("@")
+        local_part = parts[0]
+        domain = parts[-1]
 
         # 2. Disposable Email Domain Check
         if domain in self.DISPOSABLE_DOMAINS:
@@ -45,7 +56,16 @@ class EmailVerifier:
                 "reason": "Disposable temp-mail domain"
             }
 
-        # 3. Domain MX / IP Host Check
+        # 3. Role-based prefix check (e.g. noreply@, donotreply@)
+        if local_part in self.ROLE_PREFIXES:
+            return {
+                "is_valid": False,
+                "status": "ROLE_BASED",
+                "score": 30,
+                "reason": "System/automated role-based email address"
+            }
+
+        # 4. Domain MX / IP Host Check
         has_mx = self._check_domain_has_mx(domain)
         if not has_mx:
             return {
@@ -64,7 +84,7 @@ class EmailVerifier:
 
     def _check_domain_has_mx(self, domain: str) -> bool:
         try:
-            # Fallback host IP lookup for domain validity
+            # Host IP lookup for domain validity
             socket.gethostbyname(domain)
             return True
         except Exception:

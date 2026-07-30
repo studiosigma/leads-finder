@@ -8,7 +8,7 @@ UPSTASH_REDIS_REST_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
 # In-memory Redis Cache fallback
 LOCAL_MEMORY_CACHE = {}
 
-def get_cache_key(query: str, limit: int = 10) => str:
+def get_cache_key(query: str, limit: int = 10) -> str:
     clean_q = (query or "").strip().lower()
     return f"lfe:cache:query:{clean_q}:{limit}"
 

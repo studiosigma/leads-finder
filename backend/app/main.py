@@ -8,6 +8,8 @@ from app.api.webhook_routes import router as webhook_router
 from app.api.schedule_routes import router as schedule_router
 from app.api.crm_routes import router as crm_router
 from app.api.ai_routes import router as ai_router
+from app.api.broadcast_routes import router as broadcast_router
+from app.api.settings_routes import router as settings_router
 
 app = FastAPI(title="Leads Finder Engine")
 
@@ -68,6 +70,8 @@ app.include_router(webhook_router, prefix="/api/v1")
 app.include_router(schedule_router, prefix="/api/v1")
 app.include_router(crm_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(broadcast_router, prefix="/api/v1")
+app.include_router(settings_router, prefix="/api/v1")
 
 @app.get("/")
 def health_check():

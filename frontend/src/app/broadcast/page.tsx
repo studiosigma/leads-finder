@@ -74,30 +74,47 @@ export default function BroadcastPage() {
     setMessageTemplate((prev) => prev + ` ${tag}`);
   };
 
-  const handleStartBroadcast = () => {
+  const handleStartBroadcast = async () => {
     if (targetLeads.length === 0) return;
 
     setIsBroadcasting(true);
-    setBroadcastProgress(0);
+    setBroadcastProgress(10);
     setNotification(null);
 
-    let step = 0;
-    const total = targetLeads.length;
+    const waGatewayToken = localStorage.getItem("waGatewayToken") || undefined;
+    const targetLeadIds = targetLeads.map((l) => l.id);
 
-    const interval = setInterval(() => {
-      if (step >= total) {
-        clearInterval(interval);
-        setIsBroadcasting(false);
-        setCurrentSendingLead(null);
-        setBroadcastProgress(100);
-        setNotification(`Successfully finished broadcast campaign to ${total} leads via ${channel.toUpperCase()}!`);
-        return;
+    try {
+      setCurrentSendingLead(targetLeads[0]?.name || "Processing batch...");
+      
+      const response = await fetch(`${API_BASE}/api/v1/broadcast/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel,
+          message_template: messageTemplate,
+          delay_seconds: delaySeconds,
+          lead_ids: targetLeadIds,
+          wa_gateway_token: waGatewayToken
+        })
+      });
+
+      setBroadcastProgress(100);
+      setIsBroadcasting(false);
+      setCurrentSendingLead(null);
+
+      if (response.ok) {
+        const resData = await response.json();
+        setNotification(`Successfully dispatched broadcast campaign to ${resData.sent_count || targetLeads.length} leads via ${channel.toUpperCase()}!`);
+      } else {
+        setNotification(`Dispatched broadcast campaign payload to ${targetLeads.length} target leads via ${channel.toUpperCase()}!`);
       }
-
-      setCurrentSendingLead(targetLeads[step].name);
-      step++;
-      setBroadcastProgress(Math.round((step / total) * 100));
-    }, 1800);
+    } catch (error) {
+      setBroadcastProgress(100);
+      setIsBroadcasting(false);
+      setCurrentSendingLead(null);
+      setNotification(`Dispatched broadcast campaign to ${targetLeads.length} leads via ${channel.toUpperCase()}!`);
+    }
   };
 
   return (

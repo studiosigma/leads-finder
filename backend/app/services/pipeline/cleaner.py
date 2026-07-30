@@ -1,10 +1,36 @@
+from urllib.parse import urlparse
 import re
 import uuid
 from app.services.pipeline.email_verifier import EmailVerifier
+from app.services.pipeline.tech_detector import TechDetector
+from app.services.pipeline.lead_scorer import LeadScorer
 
 class DataCleaner:
     def __init__(self):
         self.verifier = EmailVerifier()
+        self.tech_detector = TechDetector()
+        self.scorer = LeadScorer()
+
+    def normalize_domain(self, url: str) -> str:
+        """
+        Extracts clean root domain FQDN from a raw URL.
+        e.g. "https://www.example.co.id/about-us?lang=id" -> "example.co.id"
+        """
+        if not url or url == 'N/A' or url == '-':
+            return 'N/A'
+        
+        raw = url.strip()
+        if not raw.startswith(('http://', 'https://')):
+            raw = 'http://' + raw
+            
+        try:
+            parsed = urlparse(raw)
+            host = parsed.netloc.split(':')[0].lower()
+            if host.startswith('www.'):
+                host = host[4:]
+            return host if host else 'N/A'
+        except Exception:
+            return 'N/A'
 
     def normalize_phone(self, raw_phone: str):
         if not raw_phone or raw_phone == 'N/A':
@@ -41,7 +67,8 @@ class DataCleaner:
 
     def clean(self, raw_data: list):
         """
-        Membersihkan, menormalisasi, menyatukan, dan menguji validitas email data hasil scraping.
+        Membersihkan, menormalisasi, menyatukan, dan menguji validitas email data hasil scraping,
+        serta menghitung ICP lead score, grade, dan tech stack.
         """
         cleaned_data = {}
 
@@ -50,10 +77,14 @@ class DataCleaner:
             if not name:
                 continue
 
-            # Key unik berdasarkan nama / domain
-            key = name.lower()
-            if item.get('domain'):
-                key = item.get('domain').lower()
+            raw_website = item.get('website') or 'N/A'
+            norm_domain = item.get('normalized_domain') or self.normalize_domain(raw_website)
+
+            # Key unik berdasarkan domain bersih atau nama
+            if norm_domain and norm_domain != 'N/A':
+                key = f"domain:{norm_domain.lower()}"
+            else:
+                key = f"name:{name.lower()}"
 
             phone_norm = self.normalize_phone(item.get('phone'))
             wa_url = self.generate_whatsapp_url(phone_norm, item.get('whatsapp_url'))
@@ -61,14 +92,21 @@ class DataCleaner:
             email_val = item.get('email') or 'N/A'
             email_verification = self.verifier.verify(email_val)
 
+            # Tech stack & summary extraction from website HTML
+            raw_html = item.get('raw_html') or ''
+            detected_tech = self.tech_detector.detect(raw_html) if raw_html else (item.get('tech_stack') or [])
+            comp_summary = item.get('company_summary') or 'N/A'
+
             if key not in cleaned_data:
                 cleaned_data[key] = {
                     "id": str(uuid.uuid4()),
                     "name": name,
                     "category": (item.get('category') or 'Business').capitalize(),
                     "location": item.get('location') or item.get('address') or 'Indonesia',
-                    "website": item.get('website') or 'N/A',
+                    "website": raw_website,
+                    "normalized_domain": norm_domain,
                     "email": email_val,
+                    "is_email_verified": email_verification["is_valid"],
                     "email_status": email_verification["status"],
                     "email_score": email_verification["score"],
                     "phone": phone_norm,
@@ -76,17 +114,29 @@ class DataCleaner:
                     "linkedin_url": item.get('linkedin_url'),
                     "instagram_url": item.get('instagram_url'),
                     "facebook_url": item.get('facebook_url'),
+                    "tech_stack": detected_tech,
+                    "company_summary": comp_summary,
+                    "decision_maker_name": item.get('decision_maker_name'),
+                    "decision_maker_title": item.get('decision_maker_title'),
+                    "decision_maker_linkedin": item.get('decision_maker_linkedin'),
                     "status": "READY" if ((email_val and email_val != 'N/A') or (phone_norm and phone_norm != 'N/A') or wa_url) else "FOLLOW UP",
-                    "sources": [item.get('source')] if item.get('source') else ["Scraper"]
+                    "sources": [item.get('source')] if item.get('source') else (item.get('sources') or ["Scraper"])
                 }
             else:
                 existing = cleaned_data[key]
                 # Merge missing fields
-                if existing["website"] == "N/A" and item.get("website"):
-                    existing["website"] = item.get("website")
-                if existing["email"] == "N/A" and item.get("email"):
-                    existing["email"] = item.get("email")
-                    updated_verif = self.verifier.verify(item.get("email"))
+                if not existing.get("decision_maker_name") and item.get("decision_maker_name"):
+                    existing["decision_maker_name"] = item.get("decision_maker_name")
+                    existing["decision_maker_title"] = item.get("decision_maker_title")
+                if not existing.get("decision_maker_linkedin") and item.get("decision_maker_linkedin"):
+                    existing["decision_maker_linkedin"] = item.get("decision_maker_linkedin")
+                if existing["website"] == "N/A" and raw_website != "N/A":
+                    existing["website"] = raw_website
+                    existing["normalized_domain"] = norm_domain
+                if existing["email"] == "N/A" and email_val != "N/A":
+                    existing["email"] = email_val
+                    updated_verif = self.verifier.verify(email_val)
+                    existing["is_email_verified"] = updated_verif["is_valid"]
                     existing["email_status"] = updated_verif["status"]
                     existing["email_score"] = updated_verif["score"]
                 if existing["phone"] == "N/A" and phone_norm != 'N/A':
@@ -103,13 +153,29 @@ class DataCleaner:
                     existing["facebook_url"] = item.get("facebook_url")
                 if existing["location"] == "Indonesia" and item.get("location"):
                     existing["location"] = item.get("location")
+                if existing["company_summary"] == "N/A" and comp_summary != "N/A":
+                    existing["company_summary"] = comp_summary
+
+                # Merge tech stack
+                if detected_tech:
+                    existing["tech_stack"] = sorted(list(set(existing.get("tech_stack", []) + detected_tech)))
                 
                 # Merge sources
-                if item.get('source') and item.get('source') not in existing["sources"]:
-                    existing["sources"].append(item.get('source'))
+                item_sources = [item.get('source')] if item.get('source') else (item.get('sources') or [])
+                for s in item_sources:
+                    if s and s not in existing["sources"]:
+                        existing["sources"].append(s)
                 
                 # Update status if contact info is found
                 if existing["email"] != "N/A" or existing["phone"] != "N/A" or existing["whatsapp_url"]:
                     existing["status"] = "READY"
 
-        return list(cleaned_data.values())
+        # Calculate Lead Scoring & ICP Grades for all leads
+        results = list(cleaned_data.values())
+        for lead in results:
+            scoring_res = self.scorer.score_lead(lead)
+            lead["lead_score"] = scoring_res["lead_score"]
+            lead["lead_grade"] = scoring_res["lead_grade"]
+            lead["icp_reasoning"] = scoring_res["icp_reasoning"]
+
+        return results

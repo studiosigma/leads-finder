@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LFE - B2B Lead Prospecting Engine",
+  title: "Leads Finder",
   description: "Find, extract, and clean business B2B leads in real-time.",
   icons: {
     icon: "/logo.png",
