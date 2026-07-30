@@ -108,20 +108,21 @@ export const DataTable = ({
 
   const getStatusBadgeStyle = (statusStr: string) => {
     const st = (statusStr || 'READY').toUpperCase();
-    if (st === 'WON' || st === 'DEAL') return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-    if (st === 'QUALIFIED') return 'bg-purple-100 text-purple-800 border-purple-300';
-    if (st === 'CONTACTED' || st === 'FOLLOW UP') return 'bg-amber-100 text-amber-800 border-amber-300';
-    if (st === 'LOST') return 'bg-red-100 text-red-800 border-red-300';
-    return 'bg-blue-100 text-blue-800 border-blue-300';
+    if (st === 'WON' || st === 'DEAL') return 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+    if (st === 'QUALIFIED') return 'bg-purple-100 text-purple-800 border-purple-300 font-bold';
+    if (st === 'CONTACTED' || st === 'FOLLOW UP') return 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+    if (st === 'LOST' || st === 'REJECTED') return 'bg-red-100 text-red-800 border-red-300 font-bold';
+    return 'bg-blue-100 text-blue-800 border-blue-300 font-bold';
   };
 
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs font-sans space-y-0">
-      <div className="overflow-x-auto">
+    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs font-sans space-y-0 relative">
+      <div className="overflow-x-auto max-h-[70vh]">
         <table className="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
-              <th className="py-3.5 px-4 w-10 text-center">
+          {/* Sticky Table Header */}
+          <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200/90 shadow-xs">
+            <tr className="text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+              <th className="py-3.5 px-4 w-10 text-center sticky left-0 z-30 bg-slate-50 border-r border-slate-200/60">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -129,14 +130,17 @@ export const DataTable = ({
                   className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4 cursor-pointer"
                 />
               </th>
-              <th className="py-3.5 px-4 min-w-[190px]">Company Name</th>
+              {/* Sticky First Column: Company Name */}
+              <th className="py-3.5 px-4 min-w-[210px] sticky left-10 z-30 bg-slate-50 border-r border-slate-200/60">
+                Company Name
+              </th>
               <th className="py-3.5 px-4">Category</th>
-              <th className="py-3.5 px-4 min-w-[140px]">Location (Google Maps)</th>
+              <th className="py-3.5 px-4 min-w-[140px]">Location (Muted)</th>
               <th className="py-3.5 px-4">Website</th>
               <th className="py-3.5 px-4 min-w-[160px]">MX Verified Email</th>
-              <th className="py-3.5 px-4 min-w-[170px]">Phone / WA (Classifier)</th>
+              <th className="py-3.5 px-4 min-w-[180px]">Phone / WA (Classifier)</th>
               <th className="py-3.5 px-4">LinkedIn</th>
-              <th className="py-3.5 px-4 min-w-[130px]">CRM Pipeline Stage</th>
+              <th className="py-3.5 px-4 min-w-[140px]">CRM Pipeline Stage</th>
               <th className="py-3.5 px-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -160,8 +164,8 @@ export const DataTable = ({
                     isSelected ? 'bg-slate-100/60' : ''
                   }`}
                 >
-                  {/* Checkbox */}
-                  <td className="py-3.5 px-4 text-center">
+                  {/* Sticky Checkbox Column */}
+                  <td className="py-3.5 px-4 text-center sticky left-0 z-10 bg-white border-r border-slate-100">
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -170,13 +174,13 @@ export const DataTable = ({
                     />
                   </td>
 
-                  {/* Company Name */}
-                  <td className="py-3.5 px-4 font-semibold text-slate-900">
+                  {/* Sticky First Column: Company Name (Bold primary text & Avatar) */}
+                  <td className="py-3.5 px-4 font-semibold text-slate-900 sticky left-10 z-10 bg-white border-r border-slate-100 shadow-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${avatarClass}`}>
+                      <div className={`w-7 h-7 rounded-lg font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs ${avatarClass}`}>
                         {getAvatarLetter(lead.name)}
                       </div>
-                      <span className="text-slate-900 font-bold truncate max-w-[170px]">
+                      <span className="text-slate-900 font-extrabold text-xs truncate max-w-[170px]" title={lead.name}>
                         {lead.name || '-'}
                       </span>
                     </div>
@@ -184,23 +188,23 @@ export const DataTable = ({
 
                   {/* Category */}
                   <td className="py-3.5 px-4 text-slate-600">
-                    <span className="inline-block bg-slate-200/60 text-slate-700 font-medium px-2.5 py-1 rounded-lg text-[11px]">
+                    <span className="inline-block bg-slate-100 text-slate-700 font-semibold px-2.5 py-1 rounded-lg text-[11px] border border-slate-200/60">
                       {lead.category && lead.category !== 'N/A' ? lead.category : '-'}
                     </span>
                   </td>
 
-                  {/* Location & Google Maps Clickable Link */}
-                  <td className="py-3.5 px-4 text-slate-600 font-normal">
+                  {/* Location & Google Maps Clickable Link (Muted secondary text) */}
+                  <td className="py-3.5 px-4 text-slate-500 font-normal">
                     {lead.location && lead.location !== 'N/A' ? (
                       <a
                         href={gmapsLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-700 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[150px]"
+                        className="text-slate-500 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[150px]"
                         title="Open Exact Google Maps Coordinates"
                       >
                         <MapPin size={12} className="text-red-500 shrink-0" />
-                        <span className="truncate">{lead.location}</span>
+                        <span className="truncate text-slate-500">{lead.location}</span>
                         <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </a>
                     ) : (
@@ -224,13 +228,14 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* Verified Email & Smart MX Verification Badge */}
+                  {/* Verified Email & Smart MX Verification Badge (Clickable mailto:) */}
                   <td className="py-3.5 px-4">
                     {hasValidEmail ? (
                       <div className="flex flex-col gap-0.5">
                         <a
                           href={`mailto:${lead.email}`}
-                          className="text-slate-700 hover:text-blue-600 truncate max-w-[160px] block font-mono text-[11px]"
+                          className="text-slate-800 hover:text-blue-600 font-bold truncate max-w-[160px] block font-mono text-[11px] hover:underline"
+                          title={`Send Email to ${lead.email}`}
                         >
                           {lead.email}
                         </a>
@@ -243,7 +248,7 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* Phone / WA Classifier (Multi-line stacked classification) */}
+                  {/* Phone / WA Classifier (Clickable tel: and WhatsApp direct) */}
                   <td className="py-3.5 px-4">
                     {hasValidPhone ? (
                       <div className="flex flex-col gap-1">
@@ -258,9 +263,13 @@ export const DataTable = ({
                             return (
                               <div key={idx} className="flex items-center justify-between gap-1 text-slate-800">
                                 <div className="flex flex-col">
-                                  <span className={`font-mono font-bold ${isFirst ? 'text-[11px] text-slate-900' : 'text-[10px] text-slate-600'}`}>
+                                  <a
+                                    href={`tel:${cleanNum}`}
+                                    className={`font-mono font-bold hover:text-blue-600 ${isFirst ? 'text-[11px] text-slate-900' : 'text-[10px] text-slate-600'}`}
+                                    title={`Call ${pStr}`}
+                                  >
                                     {pStr}
-                                  </span>
+                                  </a>
                                   <span className="text-[9px] font-semibold text-slate-400">
                                     {label}
                                   </span>
@@ -300,12 +309,12 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* CRM Pipeline Stage Dropdown with Optimistic 0ms UI Updates */}
+                  {/* CRM Pipeline Stage Color-coded Capsule Badges */}
                   <td className="py-3.5 px-4">
                     <select
                       value={activeStatus}
                       onChange={(e) => handleStatusUpdateOptimistic(lead.id, e.target.value)}
-                      className={`text-[10px] font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer transition-colors ${getStatusBadgeStyle(
+                      className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border focus:outline-none cursor-pointer transition-all shadow-xs ${getStatusBadgeStyle(
                         activeStatus
                       )}`}
                     >
@@ -313,7 +322,7 @@ export const DataTable = ({
                       <option value="CONTACTED">🟡 Contacted</option>
                       <option value="QUALIFIED">🟣 Qualified</option>
                       <option value="WON">🟢 Won / Deal</option>
-                      <option value="LOST">🔴 Lost</option>
+                      <option value="LOST">🔴 Lost / Rejected</option>
                     </select>
                   </td>
 
