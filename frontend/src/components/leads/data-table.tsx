@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap, Copy, Check } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -46,6 +46,9 @@ export const DataTable = ({
   // Optimistic UI State Store for 0ms status latency
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
 
+  // Micro-interaction: Click-to-copy state
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
   const totalLeads = leads.length;
   const totalPages = Math.ceil(totalLeads / pageSize) || 1;
   const safePage = Math.min(currentPage, totalPages);
@@ -57,6 +60,16 @@ export const DataTable = ({
   }, [leads, safePage, pageSize]);
 
   const isAllSelected = paginatedLeads.length > 0 && paginatedLeads.every((l) => selectedIds.includes(l.id));
+
+  const handleCopyText = (text: string, keyIdentifier: string) => {
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedKey(keyIdentifier);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch (e) {
+      console.error('Error copying text:', e);
+    }
+  };
 
   const handleStatusUpdateOptimistic = (id: string, newStatus: string) => {
     // 1. Optimistic Update (0ms immediate UI reflection)
@@ -135,13 +148,13 @@ export const DataTable = ({
                 Company Name
               </th>
               <th className="py-3.5 px-4">Category</th>
-              <th className="py-3.5 px-4 min-w-[140px]">Location (Muted)</th>
+              <th className="py-3.5 px-4 min-w-[140px]">Location</th>
               <th className="py-3.5 px-4">Website</th>
-              <th className="py-3.5 px-4 min-w-[160px]">MX Verified Email</th>
-              <th className="py-3.5 px-4 min-w-[180px]">Phone / WA (Classifier)</th>
+              <th className="py-3.5 px-4 min-w-[170px]">MX Verified Email</th>
+              <th className="py-3.5 px-4 min-w-[190px]">Phone / WA Classifier</th>
               <th className="py-3.5 px-4">LinkedIn</th>
               <th className="py-3.5 px-4 min-w-[140px]">CRM Pipeline Stage</th>
-              <th className="py-3.5 px-4 text-center">Actions</th>
+              <th className="py-3.5 px-4 text-center min-w-[100px]">Quick Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -157,15 +170,18 @@ export const DataTable = ({
               const hasValidPhone = lead.phone && lead.phone !== 'N/A' && lead.phone !== '-';
               const hasValidLinkedin = lead.linkedin_url && lead.linkedin_url !== 'N/A' && lead.linkedin_url !== '-';
 
+              const emailCopyKey = `email-${lead.id}`;
+              const isEmailCopied = copiedKey === emailCopyKey;
+
               return (
                 <tr
                   key={lead.id}
-                  className={`hover:bg-slate-50/80 transition-colors ${
+                  className={`group hover:bg-slate-50/90 transition-colors ${
                     isSelected ? 'bg-slate-100/60' : ''
                   }`}
                 >
                   {/* Sticky Checkbox Column */}
-                  <td className="py-3.5 px-4 text-center sticky left-0 z-10 bg-white border-r border-slate-100">
+                  <td className="py-3.5 px-4 text-center sticky left-0 z-10 bg-white group-hover:bg-slate-50/90 border-r border-slate-100">
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -174,8 +190,8 @@ export const DataTable = ({
                     />
                   </td>
 
-                  {/* Sticky First Column: Company Name (Bold primary text & Avatar) */}
-                  <td className="py-3.5 px-4 font-semibold text-slate-900 sticky left-10 z-10 bg-white border-r border-slate-100 shadow-xs">
+                  {/* Sticky First Column: Company Name */}
+                  <td className="py-3.5 px-4 font-semibold text-slate-900 sticky left-10 z-10 bg-white group-hover:bg-slate-50/90 border-r border-slate-100 shadow-xs">
                     <div className="flex items-center gap-2.5">
                       <div className={`w-7 h-7 rounded-lg font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs ${avatarClass}`}>
                         {getAvatarLetter(lead.name)}
@@ -193,19 +209,19 @@ export const DataTable = ({
                     </span>
                   </td>
 
-                  {/* Location & Google Maps Clickable Link (Muted secondary text) */}
+                  {/* Location & Google Maps Clickable Link */}
                   <td className="py-3.5 px-4 text-slate-500 font-normal">
                     {lead.location && lead.location !== 'N/A' ? (
                       <a
                         href={gmapsLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-500 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[150px]"
+                        className="text-slate-500 hover:text-blue-600 font-medium flex items-center gap-1 group/link truncate max-w-[150px]"
                         title="Open Exact Google Maps Coordinates"
                       >
                         <MapPin size={12} className="text-red-500 shrink-0" />
                         <span className="truncate text-slate-500">{lead.location}</span>
-                        <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <ExternalLink size={10} className="opacity-0 group-hover/link:opacity-100 transition-opacity shrink-0" />
                       </a>
                     ) : (
                       <span className="text-slate-400 font-bold">-</span>
@@ -228,17 +244,34 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* Verified Email & Smart MX Verification Badge (Clickable mailto:) */}
+                  {/* Verified Email & Click-to-Copy Feature */}
                   <td className="py-3.5 px-4">
                     {hasValidEmail ? (
                       <div className="flex flex-col gap-0.5">
-                        <a
-                          href={`mailto:${lead.email}`}
-                          className="text-slate-800 hover:text-blue-600 font-bold truncate max-w-[160px] block font-mono text-[11px] hover:underline"
-                          title={`Send Email to ${lead.email}`}
-                        >
-                          {lead.email}
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={`mailto:${lead.email}`}
+                            className="text-slate-800 hover:text-blue-600 font-bold truncate max-w-[140px] block font-mono text-[11px] hover:underline"
+                            title={`Send Email to ${lead.email}`}
+                          >
+                            {lead.email}
+                          </a>
+                          
+                          <button
+                            onClick={() => handleCopyText(lead.email, emailCopyKey)}
+                            className="text-slate-400 hover:text-slate-700 p-0.5 rounded transition-colors"
+                            title="Copy Email to Clipboard"
+                          >
+                            {isEmailCopied ? (
+                              <span className="inline-flex items-center text-[9px] font-bold text-emerald-600 bg-emerald-100 px-1 rounded animate-in fade-in">
+                                <Check size={10} className="mr-0.5" /> Copied!
+                              </span>
+                            ) : (
+                              <Copy size={11} className="opacity-60 group-hover:opacity-100 transition-opacity" />
+                            )}
+                          </button>
+                        </div>
+
                         <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/80 w-fit">
                           <ShieldCheck size={11} className="text-emerald-600 shrink-0" /> MX Verified ({lead.email_score || 98}% Score)
                         </span>
@@ -248,7 +281,7 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* Phone / WA Classifier (Clickable tel: and WhatsApp direct) */}
+                  {/* Phone / WA Classifier with Click-to-Copy */}
                   <td className="py-3.5 px-4">
                     {hasValidPhone ? (
                       <div className="flex flex-col gap-1">
@@ -259,10 +292,12 @@ export const DataTable = ({
                             const label = getPhoneLabel(pStr);
                             const cleanNum = pStr.replace(/[^0-9]/g, '');
                             const isFirst = idx === 0;
+                            const phoneCopyKey = `phone-${lead.id}-${idx}`;
+                            const isPhoneCopied = copiedKey === phoneCopyKey;
 
                             return (
                               <div key={idx} className="flex items-center justify-between gap-1 text-slate-800">
-                                <div className="flex flex-col">
+                                <div className="flex items-center gap-1">
                                   <a
                                     href={`tel:${cleanNum}`}
                                     className={`font-mono font-bold hover:text-blue-600 ${isFirst ? 'text-[11px] text-slate-900' : 'text-[10px] text-slate-600'}`}
@@ -270,10 +305,22 @@ export const DataTable = ({
                                   >
                                     {pStr}
                                   </a>
-                                  <span className="text-[9px] font-semibold text-slate-400">
-                                    {label}
-                                  </span>
+                                  
+                                  <button
+                                    onClick={() => handleCopyText(cleanNum, phoneCopyKey)}
+                                    className="text-slate-400 hover:text-slate-700 p-0.5"
+                                    title="Copy Phone Number"
+                                  >
+                                    {isPhoneCopied ? (
+                                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-100 px-1 rounded">
+                                        Copied!
+                                      </span>
+                                    ) : (
+                                      <Copy size={10} className="opacity-50 group-hover:opacity-100" />
+                                    )}
+                                  </button>
                                 </div>
+
                                 <a
                                   href={`https://wa.me/${cleanNum}`}
                                   target="_blank"
@@ -309,7 +356,7 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* CRM Pipeline Stage Color-coded Capsule Badges */}
+                  {/* CRM Pipeline Stage Inline Dropdown Editing */}
                   <td className="py-3.5 px-4">
                     <select
                       value={activeStatus}
@@ -326,22 +373,22 @@ export const DataTable = ({
                     </select>
                   </td>
 
-                  {/* Actions Column */}
+                  {/* Hover Quick Actions Bar */}
                   <td className="py-3.5 px-4 text-center relative">
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                       {onOpenAiPitchModal && (
                         <button
                           onClick={() => onOpenAiPitchModal(lead)}
-                          className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80 rounded-lg transition-colors"
                           title="Generate AI Cold Outreach Pitch"
                         >
-                          <Sparkles size={14} className="text-slate-700" />
+                          <Sparkles size={14} className="text-amber-600 fill-amber-500" />
                         </button>
                       )}
                       <button
                         onClick={() => onOpenWebhookModal(lead)}
-                        className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 rounded-lg transition-colors"
-                        title="Actions"
+                        className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80 rounded-lg transition-colors"
+                        title="Actions & Webhook Trigger"
                       >
                         <MoreHorizontal size={16} />
                       </button>
