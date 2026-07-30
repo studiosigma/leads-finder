@@ -166,7 +166,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
   ]
 };
 
-// Fast serverless website scraper helper
+// Fast serverless website scraper helper with Deep Decision Maker & Purchasing Contact Mining
 async function crawlWebsiteForContacts(url: string) {
   if (!url || url === 'N/A' || url === '-') return {};
   try {
@@ -177,7 +177,7 @@ async function crawlWebsiteForContacts(url: string) {
     const res = await fetch(fullUrl, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.6',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.7',
       },
     });
     clearTimeout(timeoutId);
@@ -189,15 +189,32 @@ async function crawlWebsiteForContacts(url: string) {
       const emails = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
       const validEmails = Array.from(new Set(emails.filter(e => !e.endsWith('.png') && !e.endsWith('.jpg') && !e.endsWith('.svg') && !e.includes('wixpress'))));
 
+      // Target Purchasing / Procurement / Marketing Department Emails
+      const purchasingEmail = validEmails.find(e => e.includes('purchasing') || e.includes('procurement') || e.includes('buy') || e.includes('vendor'));
+      const marketingEmail = validEmails.find(e => e.includes('marketing') || e.includes('sales') || e.includes('commercial') || e.includes('info'));
+
       const phones = text.match(/(?:\+?62|0)[2-9][0-9\s-]{7,14}/g) || [];
       const validPhones = Array.from(new Set(phones.map(p => p.replace(/[\s-]/g, '')).filter(p => p.length >= 9 && p.length <= 15)));
 
       const linkedinMatch = html.match(/href=["'](https:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/company\/[^"']+)["']/i) || html.match(/href=["'](https:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/in\/[^"']+)["']/i);
 
+      // Mine Decision Maker Name & Title (CEO, Owner, Purchasing Manager, Director)
+      let dmName = null;
+      let dmTitle = null;
+      const dmMatch = text.match(/(?:(?:Pak|Bu|Bapak|Ibu|Bpk\.|Dr\.|Ir\.|H\.)\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s*[-–—:|,(]\s*(Purchasing Manager|Procurement Head|Marketing Director|General Manager|Managing Director|CEO|Owner|Direktur Utama|Direktur)/i);
+      if (dmMatch) {
+        dmName = dmMatch[1].trim();
+        dmTitle = dmMatch[2].trim();
+      }
+
       return {
-        email: validEmails[0] || null,
+        email: purchasingEmail || marketingEmail || validEmails[0] || null,
+        purchasing_email: purchasingEmail || null,
+        marketing_email: marketingEmail || null,
         phone: validPhones[0] || null,
         linkedin_url: linkedinMatch ? linkedinMatch[1] : null,
+        decision_maker_name: dmName,
+        decision_maker_title: dmTitle
       };
     }
   } catch (e) {
@@ -388,6 +405,16 @@ export async function POST(req: Request) {
           }
           if (crawled.linkedin_url && lead.linkedin_url === '-') {
             lead.linkedin_url = crawled.linkedin_url;
+          }
+          if (crawled.decision_maker_name) {
+            lead.decision_maker_name = crawled.decision_maker_name;
+            lead.decision_maker_title = crawled.decision_maker_title;
+          }
+          if (crawled.purchasing_email) {
+            lead.purchasing_email = crawled.purchasing_email;
+          }
+          if (crawled.marketing_email) {
+            lead.marketing_email = crawled.marketing_email;
           }
         }
 
