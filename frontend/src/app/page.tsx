@@ -189,20 +189,7 @@ export default function Home() {
         if (Array.isArray(places) && places.length > 0) {
           return places.map((place: any, i: number) => {
             const rawParts = (place.display_name || queryStr).split(',').map((p: string) => p.trim());
-            let primaryName = rawParts[0] || queryStr;
-
-            if (place.namedetails?.official_name) primaryName = place.namedetails.official_name;
-            else if (place.namedetails?.brand) primaryName = place.namedetails.brand;
-            else if (place.namedetails?.name) primaryName = place.namedetails.name;
-
-            const genericWords = ['pabrik', 'works', 'factory', 'building', 'industrial', 'toko', 'bengkel', 'sekolah', 'gudang', 'office', 'company', 'pt', 'cv'];
-            if (genericWords.includes(primaryName.toLowerCase()) || primaryName.length <= 8) {
-              const subLocation = rawParts[1] || place.address?.road || place.address?.suburb || place.address?.city || place.address?.county || '';
-              const district = place.address?.city || place.address?.county || place.address?.state || '';
-              if (subLocation) {
-                primaryName = `${primaryName} - ${subLocation}${district && subLocation !== district ? `, ${district}` : ''}`;
-              }
-            }
+            let primaryName = place.namedetails?.name || place.namedetails?.official_name || place.namedetails?.brand || place.name || rawParts[0] || queryStr;
 
             const fullAddress = place.display_name || queryStr;
             const city = place.address?.city || place.address?.county || place.address?.town || place.address?.city_district || place.address?.state || 'Indonesia';

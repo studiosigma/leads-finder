@@ -20,22 +20,8 @@ class GoogleMapsScraper(BaseScraper):
                         places = json.loads(response.read().decode('utf-8'))
                         for place in places:
                             raw_parts = [p.strip() for p in place.get("display_name", "").split(",") if p.strip()]
-                            name = raw_parts[0] if raw_parts else query
-
                             namedetails = place.get("namedetails") or {}
-                            if namedetails.get("official_name"):
-                                name = namedetails.get("official_name")
-                            elif namedetails.get("brand"):
-                                name = namedetails.get("brand")
-                            elif namedetails.get("name"):
-                                name = namedetails.get("name")
-
-                            generic_words = ["pabrik", "works", "factory", "building", "industrial", "toko", "bengkel", "sekolah", "gudang", "office", "company", "pt", "cv"]
-                            if name.lower() in generic_words or len(name) <= 8:
-                                sub_loc = raw_parts[1] if len(raw_parts) > 1 else ""
-                                city_loc = place.get("address", {}).get("city") or place.get("address", {}).get("county") or place.get("address", {}).get("state", "")
-                                if sub_loc:
-                                    name = f"{name} - {sub_loc}" + (f", {city_loc}" if city_loc and sub_loc != city_loc else "")
+                            name = namedetails.get("name") or namedetails.get("official_name") or namedetails.get("brand") or place.get("name") or (raw_parts[0] if raw_parts else query)
 
                             address = place.get("display_name", "")
                             city = place.get("address", {}).get("city") or place.get("address", {}).get("county") or place.get("address", {}).get("state", "Indonesia")
