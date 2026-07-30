@@ -196,19 +196,13 @@ export default function AiPitchPage() {
           </div>
 
           {/* Quick Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <div className="flex items-center justify-center pt-2">
             <Link
               href="/"
               className="px-5 py-2.5 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
             >
               <SearchIcon size={14} /> Search Real-time Leads
             </Link>
-            <button
-              onClick={handleLoadDemoLeads}
-              className="px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
-            >
-              <Wand2 size={14} className="text-emerald-600" /> Try Demo with Sample Prospects
-            </button>
           </div>
         </div>
       ) : (
