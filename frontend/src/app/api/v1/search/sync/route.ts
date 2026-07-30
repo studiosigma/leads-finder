@@ -5,7 +5,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
   bekasi: [
     {
       name: "PT Gunung Raja Paksi Tbk",
-      category: "Manufaktur & Steel Industry",
+      category: "Manufaktur Steel Industry — Cikarang",
       location: "Cikarang, Bekasi, Jawa Barat",
       address: "Jl. Perjuangan No. 8, Sukadanau, Cikarang Barat, Kab Bekasi, Jawa Barat 17530",
       website: "https://www.gunungrajapaksi.com",
@@ -17,7 +17,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
     },
     {
       name: "PT Mayora Indah Tbk (Plant Cibitung)",
-      category: "FMCG & Food Manufacturing",
+      category: "FMCG & Food Manufacturing — MM2100",
       location: "Cibitung, Bekasi, Jawa Barat",
       address: "Kawasan Industri MM2100, Jl. Jawa Blok H, Cibitung, Bekasi, Jawa Barat 17520",
       website: "https://www.mayoraindah.co.id",
@@ -29,7 +29,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
     },
     {
       name: "PT Hitachi Sakti Indonesia",
-      category: "Manufaktur Machinery & Electronics",
+      category: "Manufaktur Electronics — Jababeka",
       location: "Kawasan Industri Jababeka, Bekasi, Jawa Barat",
       address: "Jl. Jababeka XI Blok C No. 12, Harjamekar, Cikarang Utara, Bekasi, Jawa Barat 17530",
       website: "https://www.hitachi.co.id",
@@ -41,7 +41,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
     },
     {
       name: "PT Astra Honda Motor (Plant 3 Tambun)",
-      category: "Automotive Manufacturing",
+      category: "Automotive Manufacturing — Tambun",
       location: "Tambun, Bekasi, Jawa Barat",
       address: "Jl. Raya Sultan Hasanuddin Km 46.5, Tambun Selatan, Bekasi, Jawa Barat 17510",
       website: "https://www.astra-honda.com",
@@ -53,7 +53,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
     },
     {
       name: "PT Unilever Indonesia Tbk (Cikarang Plant)",
-      category: "Consumer Goods & Manufacturing",
+      category: "Consumer Goods — Jababeka",
       location: "Kawasan Industri Jababeka, Cikarang, Bekasi, Jawa Barat",
       address: "Jl. Jababeka V Blok U No. 14-16, Cikarang Utara, Bekasi, Jawa Barat 17530",
       website: "https://www.unilever.co.id",
@@ -65,7 +65,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
     },
     {
       name: "PT Hankook Tire Indonesia",
-      category: "Automotive & Rubber Industry",
+      category: "Automotive & Rubber Industry — Delta Silicon",
       location: "Kawasan Industri Delta Silicon, Cikarang, Bekasi, Jawa Barat",
       address: "Jl. Inti II Blok C4 No. 1, Cikarang Selatan, Bekasi, Jawa Barat 17550",
       website: "https://www.hankooktire.com",
@@ -77,7 +77,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
     },
     {
       name: "PT Samsung Electronics Indonesia",
-      category: "Electronics Manufacturing",
+      category: "Electronics Manufacturing — Jababeka",
       location: "Kawasan Industri Jababeka, Cikarang, Bekasi, Jawa Barat",
       address: "Jl. Jababeka XIV Blok J No. 1, Cikarang Utara, Bekasi, Jawa Barat 17530",
       website: "https://www.samsung.com/id",
@@ -89,7 +89,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
     },
     {
       name: "PT Mattel Indonesia",
-      category: "Toys & Consumer Manufacturing",
+      category: "Consumer Toys Manufacturing — Jababeka",
       location: "Kawasan Industri Jababeka, Cikarang, Bekasi, Jawa Barat",
       address: "Jl. Jababeka V Blok G No. 4-6, Cikarang Utara, Bekasi, Jawa Barat 17530",
       website: "https://www.mattel.com",
@@ -97,6 +97,70 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
       phone: "+62218934008",
       linkedin_url: "https://www.linkedin.com/company/mattel-inc",
       gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Mattel+Indonesia+Cikarang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    }
+  ],
+  cikarang: [
+    {
+      name: "PT Gunung Raja Paksi Tbk",
+      category: "Manufaktur Steel Industry — Cikarang",
+      location: "Cikarang, Bekasi, Jawa Barat",
+      address: "Jl. Perjuangan No. 8, Sukadanau, Cikarang Barat, Kab Bekasi, Jawa Barat 17530",
+      website: "https://www.gunungrajapaksi.com",
+      email: "corsec@gunungrajapaksi.com",
+      phone: "+622189838454",
+      linkedin_url: "https://www.linkedin.com/company/pt-gunung-raja-paksi-tbk",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Gunung+Raja+Paksi+Tbk+Cikarang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    },
+    {
+      name: "PT Unilever Indonesia Tbk (Cikarang Plant)",
+      category: "Consumer Goods — Jababeka",
+      location: "Kawasan Industri Jababeka, Cikarang, Bekasi, Jawa Barat",
+      address: "Jl. Jababeka V Blok U No. 14-16, Cikarang Utara, Bekasi, Jawa Barat 17530",
+      website: "https://www.unilever.co.id",
+      email: "media.indonesia@unilever.com",
+      phone: "+622189980000",
+      linkedin_url: "https://www.linkedin.com/company/unilever",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Unilever+Indonesia+Tbk+Cikarang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    },
+    {
+      name: "PT Hankook Tire Indonesia",
+      category: "Automotive & Rubber Industry — Delta Silicon",
+      location: "Kawasan Industri Delta Silicon, Cikarang, Bekasi, Jawa Barat",
+      address: "Jl. Inti II Blok C4 No. 1, Cikarang Selatan, Bekasi, Jawa Barat 17550",
+      website: "https://www.hankooktire.com",
+      email: "sales.id@hankooktire.com",
+      phone: "+622189971000",
+      linkedin_url: "https://www.linkedin.com/company/hankook-tire",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Hankook+Tire+Indonesia+Cikarang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    }
+  ],
+  karawang: [
+    {
+      name: "PT Toyota Motor Manufacturing Indonesia (Karawang Plant)",
+      category: "Automotive Manufacturing — KIIC Karawang",
+      location: "KIIC, Karawang, Jawa Barat",
+      address: "Kawasan Industri KIIC Lot DD 1, Telukjambe Barat, Karawang, Jawa Barat 41361",
+      website: "https://www.toyotamanufacturing.co.id",
+      email: "contact@toyotamanufacturing.co.id",
+      phone: "+62267640300",
+      linkedin_url: "https://www.linkedin.com/company/tmmin",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Toyota+Motor+Manufacturing+Indonesia+Karawang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    },
+    {
+      name: "PT Nestle Indonesia (Karawang Factory)",
+      category: "FMCG Food & Beverage — Surya Cipta",
+      location: "Kawasan Industri Surya Cipta, Karawang, Jawa Barat",
+      address: "Jl. Surya Utama Kav 1-65, Ciampel, Karawang, Jawa Barat 41363",
+      website: "https://www.nestle.co.id",
+      email: "nestle.indonesia@id.nestle.com",
+      phone: "+622178836000",
+      linkedin_url: "https://www.linkedin.com/company/nestle-s-a-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Nestle+Indonesia+Karawang",
       sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
     }
   ]
@@ -192,7 +256,7 @@ export async function POST(req: Request) {
             gmaps_url: corp.gmaps_url,
             status: 'READY',
             sources: corp.sources,
-            lead_score: 95,
+            lead_score: 100,
             is_corporate: true
           });
         });
@@ -209,7 +273,6 @@ export async function POST(req: Request) {
       searchQueries.push(`PT ${locationKeyword}`);
     } else if (qLower.includes('sekolah') || qLower.includes('pendidikan')) {
       searchQueries.push(`SMA SMK ${locationKeyword}`);
-      searchQueries.push(`Universitas ${locationKeyword}`);
     } else if (qLower.includes('rumah sakit') || qLower.includes('klinik')) {
       searchQueries.push(`RS ${locationKeyword}`);
     }
