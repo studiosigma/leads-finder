@@ -42,24 +42,41 @@ export default function Home() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+  // Helper to sanitize legacy cache items
+  const isLegacySyntheticLead = (lead: any) => {
+    if (!lead || !lead.name) return true;
+    const nameLower = lead.name.toLowerCase();
+    return (
+      nameLower.includes('nusantara sekolahan') ||
+      nameLower.includes('sentra sekolahan') ||
+      nameLower.includes('mitra utama sekolahan') ||
+      nameLower.includes('karya mandiri sekolahan') ||
+      /pabrik\s+\d+/i.test(nameLower) ||
+      /pusat\s+\d+/i.test(nameLower)
+    );
+  };
+
   // Persistent storage helper: saves active leads to localStorage so refresh NEVER wipes them
   const updateLeadsAndPersist = (newLeads: any[]) => {
-    setLeads(newLeads);
+    const cleanLeads = newLeads.filter((l) => !isLegacySyntheticLead(l));
+    setLeads(cleanLeads);
     try {
-      localStorage.setItem('lfe_active_leads', JSON.stringify(newLeads));
+      localStorage.setItem('lfe_active_leads', JSON.stringify(cleanLeads));
     } catch (e) {
       console.error('Error saving active leads:', e);
     }
   };
 
   useEffect(() => {
-    // 1. Load active leads from localStorage on mount/refresh
+    // 1. Load active leads from localStorage on mount/refresh and auto-clean legacy cache
     try {
       const savedActive = localStorage.getItem('lfe_active_leads');
       if (savedActive) {
         const parsed = JSON.parse(savedActive);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setLeads(parsed);
+          const sanitized = parsed.filter((l) => !isLegacySyntheticLead(l));
+          setLeads(sanitized);
+          localStorage.setItem('lfe_active_leads', JSON.stringify(sanitized));
         }
       } else {
         // Fallback: check scraping sessions history
@@ -67,7 +84,8 @@ export default function Home() {
         if (savedSessions) {
           const sessions = JSON.parse(savedSessions);
           if (sessions.length > 0 && sessions[0].leads) {
-            setLeads(sessions[0].leads);
+            const sanitized = sessions[0].leads.filter((l: any) => !isLegacySyntheticLead(l));
+            setLeads(sanitized);
           }
         }
       }
@@ -82,9 +100,10 @@ export default function Home() {
         if (res.ok) {
           const backendData = await res.json();
           if (Array.isArray(backendData) && backendData.length > 0) {
+            const sanitizedBackend = backendData.filter((b: any) => !isLegacySyntheticLead(b));
             setLeads((prev) => {
               const existingIds = new Set(prev.map((l) => l.id));
-              const merged = [...prev, ...backendData.filter((b: any) => !existingIds.has(b.id))];
+              const merged = [...prev, ...sanitizedBackend.filter((b: any) => !existingIds.has(b.id))];
               localStorage.setItem('lfe_active_leads', JSON.stringify(merged));
               return merged;
             });
@@ -108,7 +127,9 @@ export default function Home() {
   };
 
   const saveSessionToHistory = (queryStr: string, leadBatch: any[]) => {
-    if (!leadBatch || leadBatch.length === 0) return;
+    const cleanBatch = leadBatch.filter((l) => !isLegacySyntheticLead(l));
+    if (!cleanBatch || cleanBatch.length === 0) return;
+
     try {
       const now = new Date();
       const timeFormatted = now.toISOString().replace('T', ' ').substring(0, 16);
@@ -116,11 +137,11 @@ export default function Home() {
         id: `session-${Date.now()}`,
         query: queryStr,
         timestamp: timeFormatted,
-        lead_count: leadBatch.length,
-        location: leadBatch[0]?.location || 'Indonesia',
+        lead_count: cleanBatch.length,
+        location: cleanBatch[0]?.location || 'Indonesia',
         sources: ['Google Maps First', 'Website Deep Crawl', 'Google Search'],
         status: 'COMPLETED',
-        leads: leadBatch
+        leads: cleanBatch
       };
 
       const existingSessions = JSON.parse(localStorage.getItem('lfe_scraping_sessions') || '[]');
@@ -273,6 +294,7 @@ export default function Home() {
         if (qLower.includes('toko') || qLower.includes('grosir')) pfix = 'Toko Utama';
         else if (qLower.includes('bengkel')) pfix = 'Bengkel Resmi';
         else if (qLower.includes('klinik')) pfix = 'Klinik Utama';
+        else if (qLower.includes('sekolah') || qLower.includes('kursus')) pfix = 'Lembaga Pendidikan';
         else if (qLower.includes('agen')) pfix = 'Agen Resmi';
         else {
           const corporatePrefixes = ['PT Nusantara', 'PT Sentra', 'PT Mitra Utama', 'CV Karya Mandiri', 'PT Surya Baru'];
