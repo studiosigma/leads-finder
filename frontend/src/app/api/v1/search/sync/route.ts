@@ -403,11 +403,30 @@ export async function POST(req: Request) {
       })
     );
 
+    // Apply Advanced Search Precision Filters (requireEmail, requirePhone, excludeKeywords)
+    const searchOptions = body.options;
+    let filteredResults = finalResults;
+    if (searchOptions) {
+      if (searchOptions.requireEmail) {
+        filteredResults = filteredResults.filter(l => l.email && l.email !== 'N/A' && l.email !== '-');
+      }
+      if (searchOptions.requirePhone) {
+        filteredResults = filteredResults.filter(l => l.phone && l.phone !== 'N/A' && l.phone !== '-');
+      }
+      if (searchOptions.excludeKeywords && typeof searchOptions.excludeKeywords === 'string' && searchOptions.excludeKeywords.trim()) {
+        const negativeWords = searchOptions.excludeKeywords.toLowerCase().split(',').map((w: string) => w.trim()).filter(Boolean);
+        filteredResults = filteredResults.filter(l => {
+          const leadStr = (l.name + ' ' + l.address + ' ' + l.category).toLowerCase();
+          return !negativeWords.some((neg: string) => leadStr.includes(neg));
+        });
+      }
+    }
+
     return NextResponse.json({
       status: 'completed',
       query,
-      results: finalResults,
-      count: finalResults.length,
+      results: filteredResults,
+      count: filteredResults.length,
     });
   } catch (err: any) {
     console.error('[Next.js API Search Route Error]:', err);
