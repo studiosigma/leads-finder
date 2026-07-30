@@ -41,9 +41,16 @@ export default function DashboardPage() {
     return (
       nameLower.includes('sekolahan') ||
       emailLower.includes('sekolahan.co.id') ||
+      emailLower.includes('warnet.co.id') ||
+      websiteLower.includes('warnet.co.id') ||
       emailLower.includes('warnettambun') ||
       websiteLower.includes('warnettambun') ||
-      (nameLower.includes('warnet') && (nameLower.includes('sentra') || nameLower.includes('mitra') || nameLower.includes('karya mandiri') || nameLower.includes('surya baru'))) ||
+      nameLower.includes('pt nusantara warnet') ||
+      nameLower.includes('pt sentra warnet') ||
+      nameLower.includes('pt mitra utama warnet') ||
+      nameLower.includes('cv karya mandiri warnet') ||
+      nameLower.includes('pt surya baru warnet') ||
+      (nameLower.includes('warnet') && (nameLower.includes('sentra') || nameLower.includes('mitra') || nameLower.includes('karya mandiri') || nameLower.includes('surya baru') || nameLower.includes('nusantara'))) ||
       nameLower.includes('nusantara sekolahan') ||
       nameLower.includes('sentra sekolahan') ||
       nameLower.includes('mitra utama sekolahan') ||
