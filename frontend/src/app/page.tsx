@@ -181,30 +181,55 @@ export default function Home() {
   const fetchOpenStreetMapPlaces = async (queryStr: string, limitCount = 10) => {
     try {
       const encoded = encodeURIComponent(queryStr);
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&limit=${limitCount}`, {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limitCount}`, {
         headers: { 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8' }
       });
       if (res.ok) {
         const places = await res.json();
         if (Array.isArray(places) && places.length > 0) {
           return places.map((place: any, i: number) => {
-            const rawName = place.display_name ? place.display_name.split(',')[0].trim() : queryStr;
+            const rawParts = (place.display_name || queryStr).split(',').map((p: string) => p.trim());
+            let primaryName = rawParts[0] || queryStr;
+
+            if (place.namedetails?.official_name) primaryName = place.namedetails.official_name;
+            else if (place.namedetails?.brand) primaryName = place.namedetails.brand;
+            else if (place.namedetails?.name) primaryName = place.namedetails.name;
+
+            const genericWords = ['pabrik', 'works', 'factory', 'building', 'industrial', 'toko', 'bengkel', 'sekolah', 'gudang', 'office', 'company', 'pt', 'cv'];
+            if (genericWords.includes(primaryName.toLowerCase()) || primaryName.length <= 8) {
+              const subLocation = rawParts[1] || place.address?.road || place.address?.suburb || place.address?.city || place.address?.county || '';
+              const district = place.address?.city || place.address?.county || place.address?.state || '';
+              if (subLocation) {
+                primaryName = `${primaryName} - ${subLocation}${district && subLocation !== district ? `, ${district}` : ''}`;
+              }
+            }
+
             const fullAddress = place.display_name || queryStr;
-            const city = place.address?.city || place.address?.county || place.address?.town || place.address?.state || 'Indonesia';
-            const category = place.type ? (place.type.charAt(0).toUpperCase() + place.type.slice(1)) : 'Business';
+            const city = place.address?.city || place.address?.county || place.address?.town || place.address?.city_district || place.address?.state || 'Indonesia';
+            const state = place.address?.state || '';
+            const locationStr = state ? `${city}, ${state}` : `${city}, Indonesia`;
+
+            const rawCat = place.type || place.category || 'Business';
+            const category = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
+
+            const extra = place.extratags || {};
+            const website = extra.website || extra['contact:website'] || extra.url || 'N/A';
+            const email = extra.email || extra['contact:email'] || 'N/A';
+            const phone = extra.phone || extra['contact:phone'] || extra['contact:mobile'] || extra['contact:whatsapp'] || 'N/A';
+            const waUrl = phone !== 'N/A' ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}` : undefined;
 
             return {
               id: `osm-${place.place_id || Date.now()}-${i}`,
-              name: rawName,
-              category: category,
-              location: `${city}, Indonesia`,
-              website: 'N/A',
-              email: 'N/A',
-              email_status: 'UNVERIFIED',
-              phone: 'N/A',
-              whatsapp_url: undefined,
+              name: primaryName,
+              category: category === 'Industrial' || category === 'Works' ? 'Manufaktur & Industry' : category,
+              location: locationStr,
+              website: website,
+              email: email,
+              email_status: email !== 'N/A' ? 'VALID' : 'UNVERIFIED',
+              phone: phone,
+              whatsapp_url: waUrl,
               linkedin_url: '-',
-              gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawName + ' ' + fullAddress)}`,
+              gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(primaryName + ' ' + locationStr)}`,
               status: 'READY',
               sources: ['Google Maps / OpenStreetMap']
             };

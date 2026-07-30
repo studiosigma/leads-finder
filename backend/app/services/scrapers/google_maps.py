@@ -10,9 +10,8 @@ class GoogleMapsScraper(BaseScraper):
             
             from urllib.parse import quote_plus
             encoded_query = quote_plus(query)
-            osm_url = f"https://nominatim.openstreetmap.org/search?q={encoded_query}&format=json&addressdetails=1&limit={limit}"
+            osm_url = f"https://nominatim.openstreetmap.org/search?q={encoded_query}&format=json&addressdetails=1&extratags=1&namedetails=1&limit={limit}"
 
-            
             try:
                 import urllib.request
                 req = urllib.request.Request(osm_url, headers={"User-Agent": "LeadsFinderEngine/1.0 (contact@leadsfinder.local)"})
@@ -20,14 +19,39 @@ class GoogleMapsScraper(BaseScraper):
                     if response.status == 200:
                         places = json.loads(response.read().decode('utf-8'))
                         for place in places:
-                            name = place.get("display_name", "").split(",")[0]
+                            raw_parts = [p.strip() for p in place.get("display_name", "").split(",") if p.strip()]
+                            name = raw_parts[0] if raw_parts else query
+
+                            namedetails = place.get("namedetails") or {}
+                            if namedetails.get("official_name"):
+                                name = namedetails.get("official_name")
+                            elif namedetails.get("brand"):
+                                name = namedetails.get("brand")
+                            elif namedetails.get("name"):
+                                name = namedetails.get("name")
+
+                            generic_words = ["pabrik", "works", "factory", "building", "industrial", "toko", "bengkel", "sekolah", "gudang", "office", "company", "pt", "cv"]
+                            if name.lower() in generic_words or len(name) <= 8:
+                                sub_loc = raw_parts[1] if len(raw_parts) > 1 else ""
+                                city_loc = place.get("address", {}).get("city") or place.get("address", {}).get("county") or place.get("address", {}).get("state", "")
+                                if sub_loc:
+                                    name = f"{name} - {sub_loc}" + (f", {city_loc}" if city_loc and sub_loc != city_loc else "")
+
                             address = place.get("display_name", "")
-                            city = place.get("address", {}).get("city") or place.get("address", {}).get("county") or place.get("address", {}).get("state", "N/A")
-                            
+                            city = place.get("address", {}).get("city") or place.get("address", {}).get("county") or place.get("address", {}).get("state", "Indonesia")
+
+                            extratags = place.get("extratags") or {}
+                            website = extratags.get("website") or extratags.get("contact:website") or extratags.get("url") or "N/A"
+                            phone = extratags.get("phone") or extratags.get("contact:phone") or extratags.get("contact:mobile") or "N/A"
+                            email = extratags.get("email") or extratags.get("contact:email") or "N/A"
+
                             results.append({
                                 "name": name,
                                 "location": city,
                                 "address": address,
+                                "website": website,
+                                "phone": phone,
+                                "email": email,
                                 "lat": place.get("lat"),
                                 "lon": place.get("lon"),
                                 "category": place.get("type", "Business"),
