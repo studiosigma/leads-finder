@@ -11,7 +11,8 @@ import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
-import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX, MapPin, Upload, Trash2 } from 'lucide-react';
+import { TableSkeleton } from '@/components/leads/table-skeleton';
+import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX, MapPin, Upload, Trash2, Bell } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -75,7 +76,7 @@ export default function Home() {
     setLeads([]);
     localStorage.removeItem('lfe_active_leads');
     localStorage.removeItem('lfe_scraping_sessions');
-    setSearchNotice('Cleard old cached demo data! Table is now fresh and clean.');
+    setSearchNotice('Cleared old cached demo data! Table is now fresh and clean.');
     setTimeout(() => setSearchNotice(null), 3000);
   };
 
@@ -546,10 +547,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* Progress Tracker */}
+      {/* Progressive Stream Progress Tracker with Live Counter */}
       {isSearching && (
         <div className="pt-2">
-          <ProgressTracker steps={searchSteps} />
+          <ProgressTracker steps={searchSteps} leadCount={leads.length} />
         </div>
       )}
 
@@ -594,8 +595,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Spreadsheet Data Table View / Map View / Cards View */}
-      {leads.length === 0 ? (
+      {/* Skeleton Loading State vs Spreadsheet Data Table View / Map View / Cards View */}
+      {isSearching && leads.length === 0 ? (
+        <TableSkeleton rows={6} />
+      ) : leads.length === 0 ? (
         <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
             <SearchX size={24} />
