@@ -39,8 +39,8 @@ def run_search(query: str, limit: int = 10):
 
     raw_results = maps_data + search_data
 
-    # 3. Phase 2 Deep Crawl: Crawl official company websites found on Google Maps
-    print("[Tasks] Phase 2: Deep crawling company websites for emails & secondary phone contacts...")
+    # 3. Phase 2 Deep Crawl: Enrich secondary attributes (Email, Social, Decision Makers, Tech Stack) from Company Website
+    print("[Tasks] Phase 2: Deep crawling company websites for secondary emails, decision makers & social links...")
     for item in raw_results:
         website_url = item.get("website")
         if website_url and website_url != "N/A" and website_url != "-":
@@ -53,6 +53,11 @@ def run_search(query: str, limit: int = 10):
                 item["phone"] = f"{item['phone']}\n{crawl_data['phone']} (Website)"
                 if "Website" not in item.get("sources", []):
                     item["sources"].append("Website")
+
+            # Attach Secondary Enrichment Attributes (Decision Makers, Social Links, Summary)
+            for sec_field in ["decision_maker_name", "decision_maker_title", "decision_maker_linkedin", "company_summary", "linkedin_url", "instagram_url", "facebook_url", "whatsapp_url"]:
+                if crawl_data.get(sec_field) and not item.get(sec_field):
+                    item[sec_field] = crawl_data[sec_field]
 
     # 4. Clean & Deduplicate results
     cleaner = DataCleaner()
