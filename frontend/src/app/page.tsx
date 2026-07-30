@@ -12,7 +12,7 @@ import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { TableSkeleton } from '@/components/leads/table-skeleton';
-import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX, MapPin, Upload, Trash2, Bell } from 'lucide-react';
+import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX, MapPin, Upload, Trash2, Rocket, ArrowRight } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -32,6 +32,7 @@ export default function Home() {
   const [aiPitchModalLead, setAiPitchModalLead] = useState<any | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [searchSteps, setSearchSteps] = useState<Step[]>([
@@ -457,6 +458,10 @@ export default function Home() {
     setSearchNotice(`Successfully imported & enriched ${importedLeads.length} leads from CSV file!`);
   };
 
+  const handleFocusSearch = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const filteredLeads = leads.filter((lead) => {
     if (activeFilter === 'NEW') return !lead.status || lead.status === 'READY' || lead.status === 'NEW';
     if (activeFilter === 'CONTACTED') return lead.status === 'CONTACTED' || lead.status === 'FOLLOW UP';
@@ -595,18 +600,38 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Skeleton Loading State vs Spreadsheet Data Table View / Map View / Cards View */}
+      {/* Skeleton Loading State vs Educating Empty State vs Data Table View */}
       {isSearching && leads.length === 0 ? (
         <TableSkeleton rows={6} />
       ) : leads.length === 0 ? (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto">
-            <SearchX size={24} />
+        /* Educating Onboarding Empty State Card */
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-5 shadow-xs max-w-2xl mx-auto my-6 animate-in fade-in duration-200">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#4a6382] to-slate-800 text-white flex items-center justify-center mx-auto shadow-md">
+            <Rocket size={32} />
           </div>
-          <h3 className="text-base font-bold text-slate-800">No B2B Leads in Database Yet</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Ready for onboarding! Enter your target business search query above (e.g. <i>pabrik di tambun</i>, <i>sekolahan di tambun</i>, <i>hotel di bekasi</i>) to start extracting verified B2B leads.
-          </p>
+          <div className="space-y-1.5">
+            <h3 className="text-xl font-extrabold text-slate-800 tracking-tight">Database Prospek Anda Masih Kosong</h3>
+            <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed">
+              Mulai temukan ratusan prospek bisnis B2B terverifikasi di Google Maps & Direktori Publik secara 100% gratis, atau perkaya file CSV lama Anda.
+            </p>
+          </div>
+
+          {/* Prominent CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              onClick={handleFocusSearch}
+              className="px-6 py-3 bg-[#4a6382] hover:bg-[#3b5175] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-md hover:scale-105"
+            >
+              <SearchIcon size={16} /> Mulai Cari Prospek Pertamamu <ArrowRight size={14} />
+            </button>
+            
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="px-6 py-3 bg-white hover:bg-slate-100 border border-slate-200/90 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs"
+            >
+              <Upload size={16} /> Unggah File CSV / Excel
+            </button>
+          </div>
         </div>
       ) : viewMode === 'map' ? (
         <MapView leads={filteredLeads} />
