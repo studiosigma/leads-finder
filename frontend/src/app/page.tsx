@@ -176,140 +176,7 @@ export default function Home() {
     }
   };
 
-  const generateDynamicLeadsForQuery = (userQuery: string, count: number, offsetIndex = 0, options?: SearchOptions) => {
-    const qLower = userQuery.toLowerCase();
-    
-    // AI Intent Geocoding Resolution Engine (Exact Sub-districts & Industrial Estates)
-    let locationStr = 'Tambun Selatan, Bekasi, Jawa Barat 17510';
-    if (qLower.includes('mm2100')) locationStr = 'Kawasan Industri MM2100, Cibitung, Bekasi, Jawa Barat 17520';
-    else if (qLower.includes('jababeka')) locationStr = 'Kawasan Industri Jababeka, Cikarang Utara, Bekasi, Jawa Barat 17530';
-    else if (qLower.includes('ejip')) locationStr = 'Kawasan Industri EJIP, Cikarang Selatan, Bekasi, Jawa Barat 17550';
-    else if (qLower.includes('hyundai')) locationStr = 'Kawasan Industri Hyundai, Cikarang Selatan, Bekasi, Jawa Barat 17550';
-    else if (qLower.includes('deltamas')) locationStr = 'Kawasan Industri Kota Deltamas, Cikarang Pusat, Bekasi, Jawa Barat 17530';
-    else if (qLower.includes('marunda')) locationStr = 'Kawasan Industri Marunda, Jakarta Utara, DKI Jakarta 14120';
-    else if (qLower.includes('pulogadung')) locationStr = 'Kawasan Industri Pulogadung, Jakarta Timur, DKI Jakarta 13920';
-    else if (qLower.includes('tambun')) locationStr = 'Tambun Selatan, Bekasi, Jawa Barat 17510';
-    else if (qLower.includes('cibitung')) locationStr = 'Cibitung, Bekasi, Jawa Barat 17520';
-    else if (qLower.includes('cikarang')) locationStr = 'Cikarang Barat, Bekasi, Jawa Barat 17530';
-    else if (qLower.includes('bekasi')) locationStr = 'Bekasi Kota, Jawa Barat 17141';
-    else if (qLower.includes('bandung')) locationStr = 'Bandung Kota, Jawa Barat 40111';
-    else if (qLower.includes('jakarta')) locationStr = 'Jakarta Selatan, DKI Jakarta 12190';
-    else if (qLower.includes('surabaya')) locationStr = 'Surabaya Kota, Jawa Timur 60271';
-    else if (qLower.includes('semarang')) locationStr = 'Semarang Kota, Jawa Tengah 50134';
-    else if (qLower.includes('jogja') || qLower.includes('yogyakarta')) locationStr = 'Yogyakarta, DI Yogyakarta 55281';
-    else if (qLower.includes('medan')) locationStr = 'Medan Kota, Sumatera Utara 20111';
 
-    // Smart Multi-Directory Intent Classifier
-    const isSchool = qLower.includes('sekolah') || qLower.includes('sekolahan') || qLower.includes('sma') || qLower.includes('smk') || qLower.includes('smp') || qLower.includes('sd') || qLower.includes('kampus') || qLower.includes('universitas') || qLower.includes('kursus') || qLower.includes('pendidikan');
-    const isHospital = qLower.includes('rumah sakit') || qLower.includes('sakit') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('apotek');
-    const isFactory = qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur') || qLower.includes('pergudangan') || qLower.includes('plastik') || qLower.includes('baja') || qLower.includes('kimia');
-    const isHotel = qLower.includes('hotel') || qLower.includes('resort') || qLower.includes('penginapan') || qLower.includes('villa');
-    const isCulinary = qLower.includes('restoran') || qLower.includes('rumah makan') || qLower.includes('cafe') || qLower.includes('kafe') || qLower.includes('kuliner') || qLower.includes('catering');
-    const isAuto = qLower.includes('bengkel') || qLower.includes('dealer') || qLower.includes('showroom') || qLower.includes('otomotif');
-    const isIT = qLower.includes('software') || qLower.includes('it') || qLower.includes('digital') || qLower.includes('komputer');
-
-    let categoryStr = 'Manufaktur & Industry';
-    if (isSchool) categoryStr = 'Pendidikan & Sekolah';
-    else if (isHospital) categoryStr = 'Rumah Sakit & Kesehatan';
-    else if (isFactory) categoryStr = 'Manufaktur & Industry';
-    else if (isHotel) categoryStr = 'Hospitality & Hotel';
-    else if (isCulinary) categoryStr = 'Kuliner & Restoran';
-    else if (isAuto) categoryStr = 'Otomotif & Bengkel';
-    else if (isIT) categoryStr = 'Software & Technology';
-
-    // Authentic Indonesian Entity Pools
-    const schoolPool = [
-      { name: 'SMA Negeri 1 Tambun Selatan', web: 'sman1tambunselatan.sch.id', email: 'info@sman1tambunselatan.sch.id', phone: '+62 21-8832-5500\n+62 812-9900-1122 (TU Sekolah)', linkedin: '-' },
-      { name: 'SMK Negeri 1 Tambun Selatan', web: 'smkn1tambunselatan.sch.id', email: 'humas@smkn1tambunselatan.sch.id', phone: '+62 21-8832-1144\n+62 813-8822-1990 (Humas)', linkedin: '-' },
-      { name: 'SDIT Thariq Bin Ziyad Tambun', web: 'thariq.sch.id', email: 'pendaftaran@thariq.sch.id', phone: '+62 21-8832-7234\n+62 811-9281-019 (Panitia PPDB)', linkedin: '-' },
-      { name: 'SMP Negeri 1 Tambun Selatan', web: 'smpn1tamsel.sch.id', email: 'info@smpn1tamsel.sch.id', phone: '+62 21-8832-1920\n+62 812-1817-2918 (TU)', linkedin: '-' },
-      { name: 'Universitas Islam 45 Bekasi (UNISMA)', web: 'unismabekasi.ac.id', email: 'pmb@unismabekasi.ac.id', phone: '+62 21-8834-1111\n+62 815-1122-3300 (PMB)', linkedin: 'https://linkedin.com/school/unisma-bekasi' },
-    ];
-
-    const factoryPool = [
-      { name: 'PT Gunung Raja Paksi Tbk (Plant Tambun)', web: 'gunungrajapaksi.com', email: 'info@gunungrajapaksi.com', phone: '+62 21-8983-0000\n+62 812-1100-2200 (WA Sales)', linkedin: 'https://linkedin.com/company/gunung-raja-paksi' },
-      { name: 'PT Hitachi Sakti Indonesia', web: 'hitachi.co.id', email: 'sales@hitachi.co.id', phone: '+62 21-8832-1200\n+62 813-8000-9900 (Office)', linkedin: '-' },
-      { name: 'PT Mayora Indah Tbk (Plant Tambun)', web: 'mayoraindah.co.id', email: 'corporate@mayoraindah.co.id', phone: '+62 21-8830-2211\n+62 812-9900-1122 (Frontdesk)', linkedin: 'https://linkedin.com/company/mayora-group' },
-      { name: 'PT Unilever Indonesia Tbk (Tambun/Cikarang)', web: 'unilever.co.id', email: 'unilever.indonesia@unilever.com', phone: '+62 21-8990-1000\n+62 815-1122-3300', linkedin: 'https://linkedin.com/company/unilever' },
-      { name: 'PT Astra Honda Motor (Plant 3 Tambun)', web: 'astra-honda.com', email: 'contact@astra-honda.com', phone: '+62 21-8983-5500\n+62 812-7788-9900', linkedin: 'https://linkedin.com/company/astra-honda-motor' },
-    ];
-
-    const hotelPool = [
-      { name: 'Hotel Santika Mega City Bekasi', web: 'mysantika.com', email: 'reservation.bekasi@santika.com', phone: '+62 21-2928-5777\n+62 812-9988-7711 (Reservasi)', linkedin: '-' },
-      { name: 'Grand Zuri Cikarang', web: 'zuri-hotels.com', email: 'reservation.gzc@zuri-hotels.com', phone: '+62 21-8983-8888\n+62 813-8800-1122', linkedin: '-' },
-    ];
-
-    const hospitalPool = [
-      { name: 'RSUD Kabupaten Bekasi', web: 'rsudkabbekasi.id', email: 'info@rsudkabbekasi.id', phone: '+62 21-8832-1920\n+62 812-1817-2918 (IGD 24 Jam)', linkedin: '-' },
-      { name: 'RS Karya Medika Tambun', web: 'karyamedika.com', email: 'humas@karyamedika.com', phone: '+62 21-8832-4350\n+62 812-9988-7711 (WA Sales)', linkedin: '-' },
-    ];
-
-    const userSelectedSources: string[] = ['Google Maps AI Intent'];
-    if (!options?.sources || options.sources.website) userSelectedSources.push('Website');
-    if (!options?.sources || options.sources.googleSearch) userSelectedSources.push('Google Search');
-
-    const generated = [];
-    for (let i = 1; i <= count; i++) {
-      const idx = offsetIndex + i;
-
-      let targetPool = factoryPool;
-      if (isSchool) targetPool = schoolPool;
-      else if (isHospital) targetPool = hospitalPool;
-      else if (isHotel) targetPool = hotelPool;
-
-      if (isSchool || isHospital || isFactory || isHotel) {
-        const item = targetPool[(idx - 1) % targetPool.length];
-        const fullName = idx > targetPool.length ? `${item.name} (Cabang ${Math.floor(idx / targetPool.length) + 1})` : item.name;
-
-        generated.push({
-          id: `gmaps-${Date.now()}-${idx}`,
-          name: fullName,
-          category: categoryStr,
-          location: locationStr,
-          website: item.web,
-          email: item.email,
-          email_status: 'VALID',
-          email_score: 98,
-          phone: item.phone,
-          whatsapp_url: `https://wa.me/${item.phone.split(/[\n,]+/)[0].replace(/[^0-9]/g, '')}`,
-          linkedin_url: item.linkedin,
-          gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullName + ' ' + locationStr)}`,
-          status: 'READY',
-          sources: userSelectedSources
-        });
-      } else {
-        let cleanKeyword = userQuery.replace(/(di|kabupaten|kota|daerah|ke|kawasan|industri)\s+[a-zA-Z0-9]+/gi, '').trim();
-        if (!cleanKeyword) cleanKeyword = 'Perusahaan Utama';
-        const titleCaseKeyword = cleanKeyword.charAt(0).toUpperCase() + cleanKeyword.slice(1);
-        
-        const corporatePrefixes = ['PT Nusantara', 'PT Sentra', 'PT Mitra Utama', 'CV Karya Mandiri', 'PT Surya Baru'];
-        const pfix = corporatePrefixes[(idx - 1) % corporatePrefixes.length];
-        const fullName = `${pfix} ${titleCaseKeyword}`;
-        const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') || 'perusahaan';
-
-        const mainPhone = `+62 21-8832-${1000 + idx*11}`;
-        const secPhone = `+62 812-${1000 + idx*17}-${2000 + idx*13} (WA Direct)`;
-
-        generated.push({
-          id: `gmaps-${Date.now()}-${idx}`,
-          name: fullName,
-          category: categoryStr,
-          location: locationStr,
-          website: `${domainName}.co.id`,
-          email: `info@${domainName}.co.id`,
-          email_status: 'VALID',
-          email_score: 95,
-          phone: `${mainPhone}\n${secPhone}`,
-          whatsapp_url: `https://wa.me/62812${1000 + idx*17}${2000 + idx*13}`,
-          linkedin_url: idx % 2 === 0 ? `https://linkedin.com/company/${domainName}` : '-',
-          gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullName + ' ' + locationStr)}`,
-          status: 'READY',
-          sources: userSelectedSources
-        });
-      }
-    }
-    return generated;
-  };
 
   const fetchOpenStreetMapPlaces = async (queryStr: string, limitCount = 10) => {
     try {
@@ -428,60 +295,16 @@ export default function Home() {
       return;
     }
 
-    if (isContinuous) {
-      const firstBatch = generateDynamicLeadsForQuery(query, 5, 0, options);
-      updateLeadsAndPersist(firstBatch);
-      saveSessionToHistory(query, firstBatch);
+    // If no real places returned from either Backend or OpenStreetMap
+    setSearchSteps([
+      { id: '1', label: 'Phase 1: AI Intent & Geocoding Core Profiles Checked', status: 'completed' },
+      { id: '2', label: 'Phase 2: Deep Website Contacts & Directory Search Complete', status: 'completed' },
+      { id: '3', label: 'Phase 3: Directory Search Finished', status: 'completed' },
+      { id: '4', label: 'No Places Found for Query', status: 'completed' },
+    ]);
 
-      let leadCounter = 5;
-      streamIntervalRef.current = setInterval(() => {
-        leadCounter += 4;
-        const nextBatch = generateDynamicLeadsForQuery(query, 4, leadCounter, options);
-        setLeads((prev) => {
-          const updated = [...nextBatch, ...prev].filter((l) => !isLegacySyntheticLead(l));
-          try {
-            localStorage.setItem('lfe_active_leads', JSON.stringify(updated));
-          } catch (e) {
-            // ignore
-          }
-          saveSessionToHistory(query, updated);
-          return updated;
-        });
-
-        setSearchSteps([
-          { id: '1', label: 'Phase 1: AI Intent Geocoding & Stream Active', status: 'completed' },
-          { id: '2', label: 'Phase 2: Deep Website Crawling & MX Verification Complete', status: 'completed' },
-          { id: '3', label: `Streamed ${leadCounter} Verified Leads (MX 98% Score & Phone Classifier)...`, status: 'active' },
-          { id: '4', label: 'Click "Stop Searching" anytime to finish.', status: 'pending' },
-        ]);
-      }, 2500);
-
-    } else {
-      setTimeout(() => {
-        setSearchSteps([
-          { id: '1', label: 'Phase 1: AI Intent & Geocoding Core Directory Resolved', status: 'completed' },
-          { id: '2', label: 'Phase 2: Deep Website Crawling & MX Verification Complete', status: 'completed' },
-          { id: '3', label: 'Phase 3: Phone Line Classifier (Office vs WA Direct) Active', status: 'active' },
-          { id: '4', label: 'Phase 4: Saving Verified Leads to Database...', status: 'pending' },
-        ]);
-      }, 2400);
-
-      setTimeout(() => {
-        const batchLeads = generateDynamicLeadsForQuery(query, targetLimit || 10, 0, options);
-        updateLeadsAndPersist(batchLeads);
-        saveSessionToHistory(query, batchLeads);
-
-        setSearchSteps([
-          { id: '1', label: 'Phase 1: AI Intent & Geocoding Core Profiles Resolved', status: 'completed' },
-          { id: '2', label: 'Phase 2: Deep Website Contacts & MX Records Verified', status: 'completed' },
-          { id: '3', label: 'Phase 3: Contacts & Phone Line Classifier Active', status: 'completed' },
-          { id: '4', label: `Saved ${batchLeads.length} Verified Leads (Exact Location & MX 98%)!`, status: 'completed' },
-        ]);
-
-        setSearchNotice(`Found & Extracted ${batchLeads.length} verified B2B leads for "${query}" with AI Geocoding & MX verification!`);
-        setIsSearching(false);
-      }, 3600);
-    }
+    setSearchNotice(`Tidak ditemukan lokasi atau bisnis untuk kata kunci "${query}". Silakan coba kata kunci lain (misal: "Rumah Sakit", "Pabrik", "Hotel", "Restoran").`);
+    setIsSearching(false);
   };
 
   const handleStopSearch = () => {

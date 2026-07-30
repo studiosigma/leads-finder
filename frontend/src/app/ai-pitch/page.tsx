@@ -20,23 +20,32 @@ export default function AiPitchPage() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  const demoLeads = [
-    { id: 'demo-1', name: 'RSUD Kabupaten Bekasi', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8832-1920', email: 'info@rsudkabbekasi.id', website: 'rsudkabbekasi.id' },
-    { id: 'demo-2', name: 'PT Gunung Raja Paksi Tbk', category: 'Manufaktur & Industry', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8983-0000', email: 'info@gunungrajapaksi.com', website: 'gunungrajapaksi.com' },
-    { id: 'demo-3', name: 'RS Hermina Grand Wisata', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8265-1212', email: 'callcenter@herminahospitals.com', website: 'herminahospitals.com' },
-  ];
-
   useEffect(() => {
+    // 1. Try loading from localStorage active leads
+    try {
+      const savedActive = localStorage.getItem('lfe_active_leads');
+      if (savedActive) {
+        const parsed = JSON.parse(savedActive);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLeads(parsed);
+          setSelectedLead(parsed[0]);
+          updatePitchForLead(parsed[0], pitchTone, myOffer);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading active leads:', e);
+    }
+
+    // 2. Fetch from Backend API
     async function fetchLeads() {
       try {
         const res = await fetch(`${API_BASE}/api/v1/leads`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0) {
             setLeads(data);
             setSelectedLead(data[0]);
             updatePitchForLead(data[0], pitchTone, myOffer);
-            return;
           }
         }
       } catch (err) {
@@ -45,12 +54,6 @@ export default function AiPitchPage() {
     }
     fetchLeads();
   }, []);
-
-  const handleLoadDemoLeads = () => {
-    setLeads(demoLeads);
-    setSelectedLead(demoLeads[0]);
-    updatePitchForLead(demoLeads[0], pitchTone, myOffer);
-  };
 
   const updatePitchForLead = (lead: any, tone: string, offer: string) => {
     if (!lead) return;

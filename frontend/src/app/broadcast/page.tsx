@@ -21,23 +21,28 @@ export default function BroadcastPage() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  const demoLeads = [
-    { id: 'demo-1', name: 'RSUD Kabupaten Bekasi', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8832-1920', email: 'info@rsudkabbekasi.id', website: 'rsudkabbekasi.id' },
-    { id: 'demo-2', name: 'PT Gunung Raja Paksi Tbk', category: 'Manufaktur & Industry', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8983-0000', email: 'info@gunungrajapaksi.com', website: 'gunungrajapaksi.com' },
-    { id: 'demo-3', name: 'RS Hermina Grand Wisata', category: 'Rumah Sakit & Kesehatan', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8265-1212', email: 'callcenter@herminahospitals.com', website: 'herminahospitals.com' },
-    { id: 'demo-4', name: 'PT Hitachi Sakti Indonesia', category: 'Manufaktur & Industry', location: 'Tambun Selatan, Bekasi', phone: '+62 21-8832-1200', email: 'sales@hitachi.co.id', website: 'hitachi.co.id' },
-    { id: 'demo-5', name: 'RS Mitra Plumbon Cibitung', category: 'Rumah Sakit & Kesehatan', location: 'Cibitung, Bekasi', phone: '+62 21-8983-2011', email: 'info@mitraplumboncibitung.com', website: 'mitraplumboncibitung.com' },
-  ];
-
   useEffect(() => {
+    // 1. Load active leads from localStorage
+    try {
+      const savedActive = localStorage.getItem('lfe_active_leads');
+      if (savedActive) {
+        const parsed = JSON.parse(savedActive);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLeads(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading active leads:', e);
+    }
+
+    // 2. Fetch from Backend API
     async function fetchLeads() {
       try {
         const res = await fetch(`${API_BASE}/api/v1/leads`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0) {
             setLeads(data);
-            return;
           }
         }
       } catch (err) {
@@ -46,10 +51,6 @@ export default function BroadcastPage() {
     }
     fetchLeads();
   }, []);
-
-  const handleLoadDemoLeads = () => {
-    setLeads(demoLeads);
-  };
 
   const targetLeads = leads.filter((l) => {
     if (audienceFilter === 'HAS_PHONE') return l.phone && l.phone !== 'N/A' && l.phone !== '-';
