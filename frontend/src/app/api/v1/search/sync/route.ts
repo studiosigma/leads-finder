@@ -1,5 +1,45 @@
 import { NextResponse } from 'next/server';
 
+// Fast serverless website scraper helper
+async function crawlWebsiteForContacts(url: string) {
+  if (!url || url === 'N/A' || url === '-') return {};
+  try {
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s fast timeout
+
+    const res = await fetch(fullUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.5',
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const html = await res.text();
+      const text = html.replace(/<[^>]+>/g, ' ');
+
+      const emails = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+      const validEmails = Array.from(new Set(emails.filter(e => !e.endsWith('.png') && !e.endsWith('.jpg') && !e.endsWith('.svg') && !e.includes('wixpress'))));
+
+      const phones = text.match(/(?:\+?62|0)[2-9][0-9\s-]{7,14}/g) || [];
+      const validPhones = Array.from(new Set(phones.map(p => p.replace(/[\s-]/g, '')).filter(p => p.length >= 9 && p.length <= 15)));
+
+      const linkedinMatch = html.match(/href=["'](https:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/company\/[^"']+)["']/i) || html.match(/href=["'](https:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/in\/[^"']+)["']/i);
+
+      return {
+        email: validEmails[0] || null,
+        phone: validPhones[0] || null,
+        linkedin_url: linkedinMatch ? linkedinMatch[1] : null,
+      };
+    }
+  } catch (e) {
+    // Ignore timeout / network errors for fast user experience
+  }
+  return {};
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -47,14 +87,13 @@ export async function POST(req: Request) {
       searchQueries.push(`Klinik Utama ${locationKeyword}`);
     }
 
-    // 3. Multi-Source Search (OpenStreetMap + Web Directory Scraper)
+    // 3. Multi-Source Search (OpenStreetMap Places)
     const allPlaces: any[] = [];
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.5',
       'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
     };
 
-    // Source A: OpenStreetMap Places
     for (const qStr of searchQueries) {
       if (allPlaces.length >= limit * 2) break;
       try {
@@ -72,9 +111,9 @@ export async function POST(req: Request) {
       }
     }
 
-    // 4. Processing & Real Corporate Entity Resolution
+    // 4. Processing, Web Crawl Contact Enrichment & ICP Lead Scoring
     const seenNames = new Set<string>();
-    const formattedLeads: any[] = [];
+    const rawLeads: any[] = [];
 
     for (let i = 0; i < allPlaces.length; i++) {
       const place = allPlaces[i];
@@ -108,14 +147,14 @@ export async function POST(req: Request) {
       }
 
       const extra = place.extratags || {};
-      const website = extra.website || extra['contact:website'] || extra.url || 'N/A';
-      const email = extra.email || extra['contact:email'] || 'N/A';
-      const phone = extra.phone || extra['contact:phone'] || extra['contact:mobile'] || extra['contact:whatsapp'] || 'N/A';
-      const waUrl = phone !== 'N/A' ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}` : undefined;
+      let website = extra.website || extra['contact:website'] || extra.url || 'N/A';
+      let email = extra.email || extra['contact:email'] || 'N/A';
+      let phone = extra.phone || extra['contact:phone'] || extra['contact:mobile'] || extra['contact:whatsapp'] || 'N/A';
+      let linkedinUrl = '-';
 
       const isCorporate = primaryName.toUpperCase().includes('PT') || primaryName.toUpperCase().includes('CV') || primaryName.toUpperCase().includes('TBK') || primaryName.toUpperCase().includes('INC') || primaryName.toUpperCase().includes('CORP');
 
-      formattedLeads.push({
+      rawLeads.push({
         id: `osm-${place.place_id || Date.now()}-${i}`,
         name: primaryName,
         category: category,
@@ -123,35 +162,61 @@ export async function POST(req: Request) {
         address: place.display_name,
         website: website,
         email: email,
-        email_status: email !== 'N/A' ? 'VALID' : 'UNVERIFIED',
         phone: phone,
-        whatsapp_url: waUrl,
-        linkedin_url: '-',
+        linkedin_url: linkedinUrl,
         gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(primaryName + ' ' + locationStr)}`,
         status: 'READY',
         sources: ['Google Maps / OpenStreetMap'],
         is_corporate: isCorporate,
-        is_generic: isGenericName
+        is_generic: isGenericName,
       });
     }
 
-    // Real Corporate Entity Prioritization:
-    // 1st Priority: Real PT / CV / Tbk Companies
-    // 2nd Priority: Named Buildings & Factories
-    // 3rd Priority: Generic "Pabrik - Jalan..." fallback entries
-    formattedLeads.sort((a, b) => {
+    // Sort corporate PT / CV entities first
+    rawLeads.sort((a, b) => {
       if (a.is_corporate !== b.is_corporate) return b.is_corporate ? 1 : -1;
       if (a.is_generic !== b.is_generic) return a.is_generic ? 1 : -1;
       return 0;
     });
 
-    const finalResults = formattedLeads.slice(0, limit);
+    const candidateLeads = rawLeads.slice(0, limit);
+
+    // 5. Async Fast Web Crawl Enrichment (Top 5 leads with website)
+    await Promise.all(
+      candidateLeads.map(async (lead) => {
+        if (lead.website && lead.website !== 'N/A' && lead.website !== '-') {
+          const crawled = await crawlWebsiteForContacts(lead.website);
+          if (crawled.email && lead.email === 'N/A') {
+            lead.email = crawled.email;
+            lead.sources.push('Website Scraper');
+          }
+          if (crawled.phone && lead.phone === 'N/A') {
+            lead.phone = crawled.phone;
+            lead.sources.push('Website Scraper');
+          }
+          if (crawled.linkedin_url && lead.linkedin_url === '-') {
+            lead.linkedin_url = crawled.linkedin_url;
+          }
+        }
+
+        // Calculate Lead Score & ICP Intent Rating
+        let score = 30; // base score for place profile
+        if (lead.is_corporate) score += 20;
+        if (lead.website !== 'N/A') score += 20;
+        if (lead.phone !== 'N/A') score += 15;
+        if (lead.email !== 'N/A') score += 15;
+
+        lead.lead_score = Math.min(100, score);
+        lead.email_status = lead.email !== 'N/A' ? 'VALID' : 'UNVERIFIED';
+        lead.whatsapp_url = lead.phone !== 'N/A' ? `https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}` : undefined;
+      })
+    );
 
     return NextResponse.json({
       status: 'completed',
       query,
-      results: finalResults,
-      count: finalResults.length,
+      results: candidateLeads,
+      count: candidateLeads.length,
     });
   } catch (err: any) {
     console.error('[Next.js API Search Route Error]:', err);
