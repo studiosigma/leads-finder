@@ -41,7 +41,7 @@ export default function Home() {
     { id: '4', label: 'Phase 4: Smart Deduplication & Saving Verified Leads...', status: 'pending' },
   ]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
   // Helper to sanitize legacy cache items
   const isLegacySyntheticLead = (lead: any) => {
