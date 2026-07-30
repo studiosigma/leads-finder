@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, Database, Sparkles, Blocks, Clock, Settings, Megaphone } from 'lucide-react';
+import { Search, Database, Sparkles, Blocks, Clock, Settings, Megaphone, ShieldCheck } from 'lucide-react';
 
 export const Sidebar = () => {
   const pathname = usePathname();
@@ -59,10 +59,20 @@ export const Sidebar = () => {
         })}
       </nav>
 
-      {/* Footer Info */}
-      <div className="pt-4 border-t border-slate-200/80 px-2 text-[11px] text-slate-400 font-medium">
-        <p className="font-bold text-slate-600">Leads Finder v2.4</p>
-        <p className="text-slate-400">100% Free & Open Engine</p>
+      {/* Footer Info & GDPR/CCPA Compliance Disclaimer */}
+      <div className="pt-4 border-t border-slate-200/80 px-2 text-[10px] text-slate-400 font-medium space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="font-bold text-slate-600">Leads Finder v2.4</span>
+          <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-bold font-mono text-[9px]">
+            Rate Limit: 60/m
+          </span>
+        </div>
+        <div className="bg-slate-100/80 p-2 rounded-xl border border-slate-200/60 text-[9px] text-slate-500 leading-tight">
+          <p className="font-bold text-slate-700 flex items-center gap-1 mb-0.5">
+            <ShieldCheck size={11} className="text-emerald-600 shrink-0" /> GDPR & CCPA Compliant
+          </p>
+          Data extracted exclusively from public commercial registers & Google Maps in compliance with GDPR Art 6(1)(f).
+        </div>
       </div>
     </aside>
   );
