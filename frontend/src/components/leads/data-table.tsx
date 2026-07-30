@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin, Shield, Trophy } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -39,7 +39,34 @@ export const DataTable = ({
   onOpenAiPitchModal,
   onStatusChange,
 }: DataTableProps) => {
-  const isAllSelected = leads.length > 0 && selectedIds.length === leads.length;
+  // Big Data Virtualization / Windowing Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Optimistic UI State Store for 0ms status latency
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
+
+  const totalLeads = leads.length;
+  const totalPages = Math.ceil(totalLeads / pageSize) || 1;
+  const safePage = Math.min(currentPage, totalPages);
+
+  // Compute active virtual window slice (Virtualization)
+  const paginatedLeads = useMemo(() => {
+    const startIndex = (safePage - 1) * pageSize;
+    return leads.slice(startIndex, startIndex + pageSize);
+  }, [leads, safePage, pageSize]);
+
+  const isAllSelected = paginatedLeads.length > 0 && paginatedLeads.every((l) => selectedIds.includes(l.id));
+
+  const handleStatusUpdateOptimistic = (id: string, newStatus: string) => {
+    // 1. Optimistic Update (0ms immediate UI reflection)
+    setOptimisticStatuses((prev) => ({ ...prev, [id]: newStatus }));
+
+    // 2. Dispatch background persistence sync
+    if (onStatusChange) {
+      onStatusChange(id, newStatus);
+    }
+  };
 
   const formatWebsiteUrl = (url?: string) => {
     if (!url || url === 'N/A' || url === '-') return null;
@@ -89,7 +116,7 @@ export const DataTable = ({
   };
 
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs font-sans">
+    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs font-sans space-y-0">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
@@ -99,7 +126,7 @@ export const DataTable = ({
                   type="checkbox"
                   checked={isAllSelected}
                   onChange={onToggleSelectAll}
-                  className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4"
+                  className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4 cursor-pointer"
                 />
               </th>
               <th className="py-3.5 px-4 min-w-[190px]">Company Name</th>
@@ -114,19 +141,17 @@ export const DataTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {leads.map((lead) => {
+            {paginatedLeads.map((lead) => {
               const isSelected = selectedIds.includes(lead.id);
               const avatarClass = getAvatarBg(lead.name);
               const gmapsLink = getGmapsUrl(lead.name, lead.location, lead.gmaps_url);
               const webUrl = formatWebsiteUrl(lead.website);
 
+              const activeStatus = optimisticStatuses[lead.id] || lead.status || 'READY';
+
               const hasValidEmail = lead.email && lead.email !== 'N/A' && lead.email !== '-';
               const hasValidPhone = lead.phone && lead.phone !== 'N/A' && lead.phone !== '-';
               const hasValidLinkedin = lead.linkedin_url && lead.linkedin_url !== 'N/A' && lead.linkedin_url !== '-';
-
-              const sourcesList = lead.sources && lead.sources.length > 0
-                ? lead.sources
-                : ['Google Maps', 'Website Deep Crawler'];
 
               return (
                 <tr
@@ -141,7 +166,7 @@ export const DataTable = ({
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => onToggleSelect(lead.id)}
-                      className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4"
+                      className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4 cursor-pointer"
                     />
                   </td>
 
@@ -275,13 +300,13 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* CRM Pipeline Stage Dropdown */}
+                  {/* CRM Pipeline Stage Dropdown with Optimistic 0ms UI Updates */}
                   <td className="py-3.5 px-4">
                     <select
-                      value={lead.status || 'READY'}
-                      onChange={(e) => onStatusChange && onStatusChange(lead.id, e.target.value)}
+                      value={activeStatus}
+                      onChange={(e) => handleStatusUpdateOptimistic(lead.id, e.target.value)}
                       className={`text-[10px] font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer transition-colors ${getStatusBadgeStyle(
-                        lead.status
+                        activeStatus
                       )}`}
                     >
                       <option value="READY">🔵 New Lead</option>
@@ -318,6 +343,58 @@ export const DataTable = ({
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Big Data Virtualization Pagination Controls */}
+      <div className="px-4 py-3 bg-slate-50/90 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2 text-slate-500 font-medium">
+          <span>
+            Showing <strong className="text-slate-800">{totalLeads > 0 ? (safePage - 1) * pageSize + 1 : 0}</strong> -{' '}
+            <strong className="text-slate-800">{Math.min(safePage * pageSize, totalLeads)}</strong> of{' '}
+            <strong className="text-slate-800">{totalLeads}</strong> leads
+          </span>
+
+          <div className="flex items-center gap-1 ml-4">
+            <span className="text-[11px] text-slate-400 font-semibold">Rows per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2 py-1 bg-white border border-slate-200 rounded-lg font-bold text-slate-700 focus:outline-none text-xs cursor-pointer"
+            >
+              <option value={15}>15</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            disabled={safePage <= 1}
+            className="p-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
+            title="Previous Page"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          <span className="px-3 py-1 font-bold text-slate-800 bg-white border border-slate-200 rounded-lg text-xs">
+            Page {safePage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            disabled={safePage >= totalPages}
+            className="p-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
+            title="Next Page"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
