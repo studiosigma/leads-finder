@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin, Shield } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin, Shield, Trophy } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -27,6 +27,7 @@ interface DataTableProps {
   onToggleSelectAll: () => void;
   onOpenWebhookModal: (lead: Lead) => void;
   onOpenAiPitchModal?: (lead: Lead) => void;
+  onStatusChange?: (id: string, newStatus: string) => void;
 }
 
 export const DataTable = ({
@@ -36,6 +37,7 @@ export const DataTable = ({
   onToggleSelectAll,
   onOpenWebhookModal,
   onOpenAiPitchModal,
+  onStatusChange,
 }: DataTableProps) => {
   const isAllSelected = leads.length > 0 && selectedIds.length === leads.length;
 
@@ -77,6 +79,15 @@ export const DataTable = ({
     return '📞 Contact';
   };
 
+  const getStatusBadgeStyle = (statusStr: string) => {
+    const st = (statusStr || 'READY').toUpperCase();
+    if (st === 'WON' || st === 'DEAL') return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    if (st === 'QUALIFIED') return 'bg-purple-100 text-purple-800 border-purple-300';
+    if (st === 'CONTACTED' || st === 'FOLLOW UP') return 'bg-amber-100 text-amber-800 border-amber-300';
+    if (st === 'LOST') return 'bg-red-100 text-red-800 border-red-300';
+    return 'bg-blue-100 text-blue-800 border-blue-300';
+  };
+
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs font-sans">
       <div className="overflow-x-auto">
@@ -91,14 +102,14 @@ export const DataTable = ({
                   className="rounded border-slate-300 text-slate-800 focus:ring-slate-500 h-4 w-4"
                 />
               </th>
-              <th className="py-3.5 px-4 min-w-[200px]">Company Name</th>
+              <th className="py-3.5 px-4 min-w-[190px]">Company Name</th>
               <th className="py-3.5 px-4">Category</th>
-              <th className="py-3.5 px-4 min-w-[150px]">Location (Google Maps)</th>
+              <th className="py-3.5 px-4 min-w-[140px]">Location (Google Maps)</th>
               <th className="py-3.5 px-4">Website</th>
-              <th className="py-3.5 px-4 min-w-[170px]">MX Verified Email</th>
-              <th className="py-3.5 px-4 min-w-[180px]">Phone / WA (Classifier)</th>
+              <th className="py-3.5 px-4 min-w-[160px]">MX Verified Email</th>
+              <th className="py-3.5 px-4 min-w-[170px]">Phone / WA (Classifier)</th>
               <th className="py-3.5 px-4">LinkedIn</th>
-              <th className="py-3.5 px-4 min-w-[160px]">Extraction Sources</th>
+              <th className="py-3.5 px-4 min-w-[130px]">CRM Pipeline Stage</th>
               <th className="py-3.5 px-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -140,7 +151,7 @@ export const DataTable = ({
                       <div className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${avatarClass}`}>
                         {getAvatarLetter(lead.name)}
                       </div>
-                      <span className="text-slate-900 font-bold truncate max-w-[180px]">
+                      <span className="text-slate-900 font-bold truncate max-w-[170px]">
                         {lead.name || '-'}
                       </span>
                     </div>
@@ -160,7 +171,7 @@ export const DataTable = ({
                         href={gmapsLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-700 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[170px]"
+                        className="text-slate-700 hover:text-blue-600 font-medium flex items-center gap-1 group truncate max-w-[150px]"
                         title="Open Exact Google Maps Coordinates"
                       >
                         <MapPin size={12} className="text-red-500 shrink-0" />
@@ -194,7 +205,7 @@ export const DataTable = ({
                       <div className="flex flex-col gap-0.5">
                         <a
                           href={`mailto:${lead.email}`}
-                          className="text-slate-700 hover:text-blue-600 truncate max-w-[170px] block font-mono text-[11px]"
+                          className="text-slate-700 hover:text-blue-600 truncate max-w-[160px] block font-mono text-[11px]"
                         >
                           {lead.email}
                         </a>
@@ -264,18 +275,21 @@ export const DataTable = ({
                     )}
                   </td>
 
-                  {/* Extraction Sources Badges */}
+                  {/* CRM Pipeline Stage Dropdown */}
                   <td className="py-3.5 px-4">
-                    <div className="flex flex-wrap gap-1">
-                      {sourcesList.map((src, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-block bg-slate-100 text-slate-600 font-semibold border border-slate-200 px-2 py-0.5 rounded-md text-[10px]"
-                        >
-                          {src}
-                        </span>
-                      ))}
-                    </div>
+                    <select
+                      value={lead.status || 'READY'}
+                      onChange={(e) => onStatusChange && onStatusChange(lead.id, e.target.value)}
+                      className={`text-[10px] font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer transition-colors ${getStatusBadgeStyle(
+                        lead.status
+                      )}`}
+                    >
+                      <option value="READY">🔵 New Lead</option>
+                      <option value="CONTACTED">🟡 Contacted</option>
+                      <option value="QUALIFIED">🟣 Qualified</option>
+                      <option value="WON">🟢 Won / Deal</option>
+                      <option value="LOST">🔴 Lost</option>
+                    </select>
                   </td>
 
                   {/* Actions Column */}

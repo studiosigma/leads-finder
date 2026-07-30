@@ -1,29 +1,33 @@
 import React from 'react';
-import { Mail, Phone, Globe, CheckCircle2, Clock } from 'lucide-react';
+import { Mail, Phone, Globe, CheckCircle2, Clock, Sparkles, Trophy, AlertTriangle, UserCheck } from 'lucide-react';
 
-export type FilterChipType = 'ALL' | 'HAS_EMAIL' | 'HAS_PHONE' | 'HAS_WEBSITE' | 'READY' | 'FOLLOW_UP';
+export type FilterChipType = 'ALL' | 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'WON' | 'HAS_EMAIL' | 'HAS_PHONE' | 'HAS_WEBSITE';
 
 interface FilterChipsProps {
   activeFilter: FilterChipType;
   onFilterChange: (filter: FilterChipType) => void;
   counts: {
     all: number;
+    newCount: number;
+    contacted: number;
+    qualified: number;
+    won: number;
     hasEmail: number;
     hasPhone: number;
     hasWebsite: number;
-    ready: number;
-    followUp: number;
   };
 }
 
 export const FilterChips = ({ activeFilter, onFilterChange, counts }: FilterChipsProps) => {
-  const chips: { id: FilterChipType; label: string; icon: React.ElementType; count: number }[] = [
+  const chips: { id: FilterChipType; label: string; icon: React.ElementType; count: number; colorClass?: string }[] = [
     { id: 'ALL', label: 'All Leads', icon: CheckCircle2, count: counts.all },
+    { id: 'NEW', label: '🔵 New Lead', icon: Sparkles, count: counts.newCount },
+    { id: 'CONTACTED', label: '🟡 Contacted', icon: Clock, count: counts.contacted },
+    { id: 'QUALIFIED', label: '🟣 Qualified', icon: UserCheck, count: counts.qualified },
+    { id: 'WON', label: '🟢 Won / Deal', icon: Trophy, count: counts.won },
     { id: 'HAS_EMAIL', label: 'Has Email', icon: Mail, count: counts.hasEmail },
     { id: 'HAS_PHONE', label: 'Has Phone', icon: Phone, count: counts.hasPhone },
     { id: 'HAS_WEBSITE', label: 'Has Website', icon: Globe, count: counts.hasWebsite },
-    { id: 'READY', label: 'Status: Ready', icon: CheckCircle2, count: counts.ready },
-    { id: 'FOLLOW_UP', label: 'Status: Follow Up', icon: Clock, count: counts.followUp },
   ];
 
   return (

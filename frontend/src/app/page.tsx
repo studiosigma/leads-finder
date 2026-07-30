@@ -61,6 +61,12 @@ export default function Home() {
     };
   }, []);
 
+  const handleStatusChange = (leadId: string, newStatus: string) => {
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
+    );
+  };
+
   const saveSessionToHistory = (queryStr: string, leadBatch: any[]) => {
     if (!leadBatch || leadBatch.length === 0) return;
     try {
@@ -333,21 +339,25 @@ export default function Home() {
   };
 
   const filteredLeads = leads.filter((lead) => {
+    if (activeFilter === 'NEW') return !lead.status || lead.status === 'READY' || lead.status === 'NEW';
+    if (activeFilter === 'CONTACTED') return lead.status === 'CONTACTED' || lead.status === 'FOLLOW UP';
+    if (activeFilter === 'QUALIFIED') return lead.status === 'QUALIFIED';
+    if (activeFilter === 'WON') return lead.status === 'WON' || lead.status === 'DEAL';
     if (activeFilter === 'HAS_EMAIL') return lead.email && lead.email !== 'N/A' && lead.email !== '-';
     if (activeFilter === 'HAS_PHONE') return lead.phone && lead.phone !== 'N/A' && lead.phone !== '-';
     if (activeFilter === 'HAS_WEBSITE') return lead.website && lead.website !== 'N/A' && lead.website !== '-';
-    if (activeFilter === 'READY') return lead.status === 'READY';
-    if (activeFilter === 'FOLLOW_UP') return lead.status === 'FOLLOW UP';
     return true;
   });
 
   const filterCounts = {
     all: leads.length,
+    newCount: leads.filter((l) => !l.status || l.status === 'READY' || l.status === 'NEW').length,
+    contacted: leads.filter((l) => l.status === 'CONTACTED' || l.status === 'FOLLOW UP').length,
+    qualified: leads.filter((l) => l.status === 'QUALIFIED').length,
+    won: leads.filter((l) => l.status === 'WON' || l.status === 'DEAL').length,
     hasEmail: leads.filter((l) => l.email && l.email !== 'N/A' && l.email !== '-').length,
     hasPhone: leads.filter((l) => l.phone && l.phone !== 'N/A' && l.phone !== '-').length,
     hasWebsite: leads.filter((l) => l.website && l.website !== 'N/A' && l.website !== '-').length,
-    ready: leads.filter((l) => l.status === 'READY').length,
-    followUp: leads.filter((l) => l.status === 'FOLLOW UP').length,
   };
 
   const handleToggleSelect = (id: string) => {
@@ -475,6 +485,7 @@ export default function Home() {
           onToggleSelectAll={handleToggleSelectAll}
           onOpenWebhookModal={setWebhookModalLead}
           onOpenAiPitchModal={setAiPitchModalLead}
+          onStatusChange={handleStatusChange}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

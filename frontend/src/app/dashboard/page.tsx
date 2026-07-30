@@ -58,6 +58,12 @@ export default function DashboardPage() {
     fetchLeads();
   }, []);
 
+  const handleStatusChange = (leadId: string, newStatus: string) => {
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
+    );
+  };
+
   const handleDeleteSession = (sessionId: string) => {
     const updated = sessions.filter((s) => s.id !== sessionId);
     setSessions(updated);
@@ -71,7 +77,6 @@ export default function DashboardPage() {
     setActiveSessionFilter(sess);
     setActiveTab('leads');
     if (sess.leads && sess.leads.length > 0) {
-      // Merge session leads into leads list if not present
       setLeads((prev) => {
         const existingIds = new Set(prev.map((l) => l.id));
         const newLeads = sess.leads!.filter((l) => !existingIds.has(l.id));
@@ -271,11 +276,11 @@ export default function DashboardPage() {
               {/* Status Filter */}
               <div className="flex items-center gap-1 bg-white border border-slate-200/90 p-1 rounded-xl">
                 <Filter size={14} className="text-slate-400 ml-2" />
-                {(['ALL', 'READY', 'FOLLOW UP'] as const).map((st) => (
+                {(['ALL', 'READY', 'CONTACTED', 'QUALIFIED', 'WON'] as const).map((st) => (
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-colors ${
                       statusFilter === st
                         ? 'bg-[#4a6382] text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -327,6 +332,7 @@ export default function DashboardPage() {
               onToggleSelectAll={handleToggleSelectAll}
               onOpenWebhookModal={setWebhookModalLead}
               onOpenAiPitchModal={setAiPitchModalLead}
+              onStatusChange={handleStatusChange}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
