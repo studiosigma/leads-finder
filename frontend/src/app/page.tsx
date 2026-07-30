@@ -11,7 +11,7 @@ import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { BulkActionsBar } from '@/components/leads/bulk-actions-bar';
 import { WebhookModal } from '@/components/leads/webhook-modal';
 import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
-import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX, MapPin, Upload } from 'lucide-react';
+import { Plus, SlidersHorizontal, LayoutGrid, Table, Sparkles, Search as SearchIcon, CheckCircle2, SearchX, MapPin, Upload, Trash2 } from 'lucide-react';
 
 interface Step {
   id: string;
@@ -46,11 +46,15 @@ export default function Home() {
   const isLegacySyntheticLead = (lead: any) => {
     if (!lead || !lead.name) return true;
     const nameLower = lead.name.toLowerCase();
+    const emailLower = (lead.email || '').toLowerCase();
     return (
+      nameLower.includes('sekolahan') ||
+      emailLower.includes('sekolahan.co.id') ||
       nameLower.includes('nusantara sekolahan') ||
       nameLower.includes('sentra sekolahan') ||
       nameLower.includes('mitra utama sekolahan') ||
       nameLower.includes('karya mandiri sekolahan') ||
+      nameLower.includes('surya baru sekolahan') ||
       /pabrik\s+\d+/i.test(nameLower) ||
       /pusat\s+\d+/i.test(nameLower)
     );
@@ -65,6 +69,14 @@ export default function Home() {
     } catch (e) {
       console.error('Error saving active leads:', e);
     }
+  };
+
+  const handleClearCache = () => {
+    setLeads([]);
+    localStorage.removeItem('lfe_active_leads');
+    localStorage.removeItem('lfe_scraping_sessions');
+    setSearchNotice('Cleard old cached demo data! Table is now fresh and clean.');
+    setTimeout(() => setSearchNotice(null), 3000);
   };
 
   useEffect(() => {
@@ -287,7 +299,10 @@ export default function Home() {
         });
       } else {
         // Authentic Indonesian Business Naming Patterns (Smart Niche Classification)
-        const cleanKeyword = userQuery.replace(/(di|kabupaten|kota|daerah|ke)\s+[a-zA-Z]+/gi, '').trim();
+        let cleanKeyword = userQuery.replace(/(di|kabupaten|kota|daerah|ke)\s+[a-zA-Z]+/gi, '').trim();
+        if (cleanKeyword.toLowerCase().includes('sekolah')) {
+          cleanKeyword = 'Pendidikan & Pelatihan';
+        }
         const titleCaseKeyword = cleanKeyword.charAt(0).toUpperCase() + cleanKeyword.slice(1);
         
         let pfix = 'PT Nusantara';
@@ -302,7 +317,7 @@ export default function Home() {
         }
 
         const fullName = `${pfix} ${titleCaseKeyword}`;
-        const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const domainName = cleanKeyword.toLowerCase().replace(/[^a-z0-9]/g, '') || 'perusahaan';
 
         const mainPhone = `+62 21-8832-${1000 + idx*11}`;
         const secPhone = `+62 812-${1000 + idx*17}-${2000 + idx*13} (WA Direct)`;
@@ -368,7 +383,7 @@ export default function Home() {
         leadCounter += 4;
         const nextBatch = generateDynamicLeadsForQuery(query, 4, leadCounter, options);
         setLeads((prev) => {
-          const updated = [...nextBatch, ...prev];
+          const updated = [...nextBatch, ...prev].filter((l) => !isLegacySyntheticLead(l));
           try {
             localStorage.setItem('lfe_active_leads', JSON.stringify(updated));
           } catch (e) {
@@ -491,12 +506,24 @@ export default function Home() {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsImportModalOpen(true)}
-          className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200/90 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
-        >
-          <Upload size={14} /> Import CSV & Enrich
-        </button>
+        <div className="flex items-center gap-2">
+          {leads.length > 0 && (
+            <button
+              onClick={handleClearCache}
+              className="px-3.5 py-2 bg-slate-200/80 hover:bg-red-100 hover:text-red-700 border border-slate-300/80 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+              title="Reset table view"
+            >
+              <Trash2 size={14} /> Clear Cache
+            </button>
+          )}
+
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-200/90 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+          >
+            <Upload size={14} /> Import CSV & Enrich
+          </button>
+        </div>
       </div>
 
       {/* Prominent Integrated Search Bar */}

@@ -12,7 +12,7 @@ import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
 import { AnalyticsCharts } from '@/components/dashboard/analytics-charts';
 import { ScrapingHistoryTable, ScrapingSession } from '@/components/dashboard/scraping-history-table';
-import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X } from 'lucide-react';
+import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X, Trash2 } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -31,6 +31,30 @@ export default function DashboardPage() {
   const [activeSessionFilter, setActiveSessionFilter] = useState<ScrapingSession | null>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  const isLegacySyntheticLead = (lead: any) => {
+    if (!lead || !lead.name) return true;
+    const nameLower = lead.name.toLowerCase();
+    const emailLower = (lead.email || '').toLowerCase();
+    return (
+      nameLower.includes('sekolahan') ||
+      emailLower.includes('sekolahan.co.id') ||
+      nameLower.includes('nusantara sekolahan') ||
+      nameLower.includes('sentra sekolahan') ||
+      nameLower.includes('mitra utama sekolahan') ||
+      nameLower.includes('karya mandiri sekolahan') ||
+      nameLower.includes('surya baru sekolahan') ||
+      /pabrik\s+\d+/i.test(nameLower) ||
+      /pusat\s+\d+/i.test(nameLower)
+    );
+  };
+
+  const handleClearDatabaseCache = () => {
+    setLeads([]);
+    setSessions([]);
+    localStorage.removeItem('lfe_active_leads');
+    localStorage.removeItem('lfe_scraping_sessions');
+  };
 
   useEffect(() => {
     let combinedLeads: any[] = [];
@@ -68,7 +92,8 @@ export default function DashboardPage() {
       console.error('Error loading sessions:', e);
     }
 
-    setLeads(combinedLeads);
+    const cleanLeads = combinedLeads.filter((l) => !isLegacySyntheticLead(l));
+    setLeads(cleanLeads);
     setLoading(false);
 
     // 3. Fetch from Backend API without overwriting local storage
@@ -78,9 +103,10 @@ export default function DashboardPage() {
         if (response.ok) {
           const backendData = await response.json();
           if (Array.isArray(backendData) && backendData.length > 0) {
+            const cleanBackend = backendData.filter((b: any) => !isLegacySyntheticLead(b));
             setLeads((prev) => {
               const prevIds = new Set(prev.map((l) => l.id));
-              const merged = [...prev, ...backendData.filter((b: any) => !prevIds.has(b.id))];
+              const merged = [...prev, ...cleanBackend.filter((b: any) => !prevIds.has(b.id))];
               localStorage.setItem('lfe_active_leads', JSON.stringify(merged));
               return merged;
             });
@@ -120,8 +146,9 @@ export default function DashboardPage() {
     setActiveTab('leads');
     if (sess.leads && sess.leads.length > 0) {
       setLeads((prev) => {
+        const cleanSessLeads = sess.leads!.filter((l) => !isLegacySyntheticLead(l));
         const existingIds = new Set(prev.map((l) => l.id));
-        const newLeads = sess.leads!.filter((l) => !existingIds.has(l.id));
+        const newLeads = cleanSessLeads.filter((l) => !existingIds.has(l.id));
         return [...newLeads, ...prev];
       });
     }
@@ -138,15 +165,15 @@ export default function DashboardPage() {
 
   const handleImportSuccess = (importedLeads: any[]) => {
     setLeads((prev) => {
-      const updated = [...importedLeads, ...prev];
+      const updated = [...importedLeads, ...prev].filter((l) => !isLegacySyntheticLead(l));
       localStorage.setItem('lfe_active_leads', JSON.stringify(updated));
       return updated;
     });
   };
 
-  const displayLeads = activeSessionFilter && activeSessionFilter.leads && activeSessionFilter.leads.length > 0
+  const displayLeads = (activeSessionFilter && activeSessionFilter.leads && activeSessionFilter.leads.length > 0
     ? activeSessionFilter.leads
-    : leads;
+    : leads).filter((l) => !isLegacySyntheticLead(l));
 
   const filteredLeads = displayLeads.filter((lead) => {
     const matchesStatus =
@@ -192,6 +219,16 @@ export default function DashboardPage() {
         </div>
         
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          {leads.length > 0 && (
+            <button
+              onClick={handleClearDatabaseCache}
+              className="px-3 py-2 bg-slate-200/80 hover:bg-red-100 hover:text-red-700 border border-slate-300/80 text-slate-600 text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1"
+              title="Clear old cached data"
+            >
+              <Trash2 size={14} /> Clear Cache
+            </button>
+          )}
+
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 border border-slate-200/90 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-xs"
