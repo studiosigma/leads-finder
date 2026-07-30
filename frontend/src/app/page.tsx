@@ -42,29 +42,69 @@ export default function Home() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  const fetchLeads = async () => {
+  // Persistent storage helper: saves active leads to localStorage so refresh NEVER wipes them
+  const updateLeadsAndPersist = (newLeads: any[]) => {
+    setLeads(newLeads);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/leads`);
-      if (res.ok) {
-        const data = await res.json();
-        setLeads(data || []);
-      }
-    } catch (err) {
-      console.error('Error fetching leads:', err);
+      localStorage.setItem('lfe_active_leads', JSON.stringify(newLeads));
+    } catch (e) {
+      console.error('Error saving active leads:', e);
     }
   };
 
   useEffect(() => {
-    fetchLeads();
+    // 1. Load active leads from localStorage on mount/refresh
+    try {
+      const savedActive = localStorage.getItem('lfe_active_leads');
+      if (savedActive) {
+        const parsed = JSON.parse(savedActive);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLeads(parsed);
+        }
+      } else {
+        // Fallback: check scraping sessions history
+        const savedSessions = localStorage.getItem('lfe_scraping_sessions');
+        if (savedSessions) {
+          const sessions = JSON.parse(savedSessions);
+          if (sessions.length > 0 && sessions[0].leads) {
+            setLeads(sessions[0].leads);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error reading saved leads on mount:', e);
+    }
+
+    // 2. Fetch from Backend API without wiping local state if API returns empty
+    const fetchBackendLeads = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/leads`);
+        if (res.ok) {
+          const backendData = await res.json();
+          if (Array.isArray(backendData) && backendData.length > 0) {
+            setLeads((prev) => {
+              const existingIds = new Set(prev.map((l) => l.id));
+              const merged = [...prev, ...backendData.filter((b: any) => !existingIds.has(b.id))];
+              localStorage.setItem('lfe_active_leads', JSON.stringify(merged));
+              return merged;
+            });
+          }
+        }
+      } catch (err) {
+        // Silent API offline fallback
+      }
+    };
+
+    fetchBackendLeads();
+
     return () => {
       if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
     };
   }, []);
 
   const handleStatusChange = (leadId: string, newStatus: string) => {
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
-    );
+    const updated = leads.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l));
+    updateLeadsAndPersist(updated);
   };
 
   const saveSessionToHistory = (queryStr: string, leadBatch: any[]) => {
@@ -298,7 +338,7 @@ export default function Home() {
     if (isContinuous) {
       // Continuous Infinite Search Mode: Stream +5 new leads every 2.5 seconds until Stop is clicked
       const firstBatch = generateDynamicLeadsForQuery(query, 5, 0, options);
-      setLeads(firstBatch);
+      updateLeadsAndPersist(firstBatch);
       saveSessionToHistory(query, firstBatch);
 
       let leadCounter = 5;
@@ -307,6 +347,11 @@ export default function Home() {
         const nextBatch = generateDynamicLeadsForQuery(query, 4, leadCounter, options);
         setLeads((prev) => {
           const updated = [...nextBatch, ...prev];
+          try {
+            localStorage.setItem('lfe_active_leads', JSON.stringify(updated));
+          } catch (e) {
+            // ignore
+          }
           saveSessionToHistory(query, updated);
           return updated;
         });
@@ -332,7 +377,7 @@ export default function Home() {
 
       setTimeout(() => {
         const batchLeads = generateDynamicLeadsForQuery(query, targetLimit || 10, 0, options);
-        setLeads(batchLeads);
+        updateLeadsAndPersist(batchLeads);
         saveSessionToHistory(query, batchLeads);
 
         setSearchSteps([
@@ -368,7 +413,8 @@ export default function Home() {
   };
 
   const handleImportSuccess = (importedLeads: any[]) => {
-    setLeads((prev) => [...importedLeads, ...prev]);
+    const updated = [...importedLeads, ...leads];
+    updateLeadsAndPersist(updated);
     saveSessionToHistory('CSV Import Batch', importedLeads);
     setSearchNotice(`Successfully imported & enriched ${importedLeads.length} leads from CSV file!`);
   };
