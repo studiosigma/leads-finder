@@ -396,9 +396,9 @@ export async function POST(req: Request) {
         const hasEmail = lead.email && lead.email !== 'N/A' && lead.email !== '-';
         const hasWeb = lead.website && lead.website !== 'N/A' && lead.website !== '-';
 
-        if (hasPhone) score += 35; // WhatsApp/Phone is #1 Priority!
-        if (hasEmail) score += 20;
-        if (hasWeb) score += 10;
+        if (hasPhone) score += 40; // Priority #1: WhatsApp / Phone
+        if (hasEmail) score += 25; // Priority #2: Email
+        if (hasWeb) score += 15;   // Priority #3: Website
         if (lead.is_corporate) score += 10;
 
         lead.lead_score = Math.min(100, score);
@@ -407,19 +407,21 @@ export async function POST(req: Request) {
       })
     );
 
-    // Apply Advanced Search Precision Filters & WhatsApp Priority Ranking
+    // Apply Advanced Search Precision Filters & 3-Tier Priority Ranking
     const searchOptions = body.options;
     let filteredResults = finalResults;
     if (searchOptions) {
       const reqEmail = searchOptions.requireEmail;
       const reqPhone = searchOptions.requirePhone;
+      const reqWeb = searchOptions.requireWebsite;
 
-      // Allow lead if it has EITHER valid Phone/WhatsApp OR Email (Not strictly requiring both)
-      if (reqEmail || reqPhone) {
+      // Allow lead if it has ANY ONE of the 3 contacts: Phone/WhatsApp OR Email OR Website
+      if (reqEmail || reqPhone || reqWeb) {
         filteredResults = filteredResults.filter(l => {
           const lPhone = l.phone && l.phone !== 'N/A' && l.phone !== '-';
           const lEmail = l.email && l.email !== 'N/A' && l.email !== '-';
-          return lPhone || lEmail;
+          const lWeb = l.website && l.website !== 'N/A' && l.website !== '-';
+          return lPhone || lEmail || lWeb;
         });
       }
 
@@ -432,11 +434,20 @@ export async function POST(req: Request) {
       }
     }
 
-    // Rank WhatsApp/Phone leads at the top first, then by Lead Score
+    // Rank 3-Tier Contact Priority: #1 WhatsApp/Phone -> #2 Email -> #3 Website -> Lead Score
     filteredResults.sort((a, b) => {
       const aPhone = a.phone && a.phone !== 'N/A' && a.phone !== '-';
       const bPhone = b.phone && b.phone !== 'N/A' && b.phone !== '-';
       if (aPhone !== bPhone) return bPhone ? 1 : -1;
+
+      const aEmail = a.email && a.email !== 'N/A' && a.email !== '-';
+      const bEmail = b.email && b.email !== 'N/A' && b.email !== '-';
+      if (aEmail !== bEmail) return bEmail ? 1 : -1;
+
+      const aWeb = a.website && a.website !== 'N/A' && a.website !== '-';
+      const bWeb = b.website && b.website !== 'N/A' && b.website !== '-';
+      if (aWeb !== bWeb) return bWeb ? 1 : -1;
+
       return (b.lead_score || 0) - (a.lead_score || 0);
     });
 
