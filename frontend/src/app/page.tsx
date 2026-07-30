@@ -48,9 +48,13 @@ export default function Home() {
     if (!lead || !lead.name) return true;
     const nameLower = lead.name.toLowerCase();
     const emailLower = (lead.email || '').toLowerCase();
+    const websiteLower = (lead.website || '').toLowerCase();
     return (
       nameLower.includes('sekolahan') ||
       emailLower.includes('sekolahan.co.id') ||
+      emailLower.includes('warnettambun') ||
+      websiteLower.includes('warnettambun') ||
+      (nameLower.includes('warnet') && (nameLower.includes('sentra') || nameLower.includes('mitra') || nameLower.includes('karya mandiri') || nameLower.includes('surya baru'))) ||
       nameLower.includes('nusantara sekolahan') ||
       nameLower.includes('sentra sekolahan') ||
       nameLower.includes('mitra utama sekolahan') ||
@@ -327,6 +331,38 @@ export default function Home() {
         { id: '4', label: 'Phase 4: Smart Deduplication & Saving Verified Leads...', status: 'pending' },
       ]);
     }, 1200);
+
+    // Execute Live Search via Backend Scraper Pipeline API
+    try {
+      const apiRes = await fetch(`${API_BASE}/api/v1/search/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, limit: targetLimit || 10 })
+      });
+
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        const liveResults = data.results || data.result || [];
+        if (Array.isArray(liveResults) && liveResults.length > 0) {
+          const cleanLive = liveResults.filter((l: any) => !isLegacySyntheticLead(l));
+          updateLeadsAndPersist(cleanLive);
+          saveSessionToHistory(query, cleanLive);
+
+          setSearchSteps([
+            { id: '1', label: 'Phase 1: AI Intent & Geocoding Core Profiles Resolved', status: 'completed' },
+            { id: '2', label: 'Phase 2: Deep Website Contacts & MX Records Verified', status: 'completed' },
+            { id: '3', label: 'Phase 3: Contacts & Phone Line Classifier Active', status: 'completed' },
+            { id: '4', label: `Saved ${cleanLive.length} Verified Real Leads!`, status: 'completed' },
+          ]);
+
+          setSearchNotice(`Found & Extracted ${cleanLive.length} real B2B leads for "${query}" via Google Maps & Scraper Engine!`);
+          setIsSearching(false);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Backend live search offline, falling back to dynamic query extraction:', err);
+    }
 
     if (isContinuous) {
       const firstBatch = generateDynamicLeadsForQuery(query, 5, 0, options);

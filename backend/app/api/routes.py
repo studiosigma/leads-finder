@@ -37,6 +37,12 @@ async def start_search(request: SearchRequest):
         "message": "Background scraping task initiated"
     }
 
+@router.post("/search/sync")
+async def sync_search(request: SearchRequest):
+    from app.services.scrapers.tasks import run_search
+    res = run_search(request.query, limit=request.limit)
+    return res
+
 @router.get("/status/{job_id}")
 async def get_status(job_id: str):
     if job_id.startswith("cached-"):

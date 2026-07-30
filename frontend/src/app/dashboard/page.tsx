@@ -37,9 +37,13 @@ export default function DashboardPage() {
     if (!lead || !lead.name) return true;
     const nameLower = lead.name.toLowerCase();
     const emailLower = (lead.email || '').toLowerCase();
+    const websiteLower = (lead.website || '').toLowerCase();
     return (
       nameLower.includes('sekolahan') ||
       emailLower.includes('sekolahan.co.id') ||
+      emailLower.includes('warnettambun') ||
+      websiteLower.includes('warnettambun') ||
+      (nameLower.includes('warnet') && (nameLower.includes('sentra') || nameLower.includes('mitra') || nameLower.includes('karya mandiri') || nameLower.includes('surya baru'))) ||
       nameLower.includes('nusantara sekolahan') ||
       nameLower.includes('sentra sekolahan') ||
       nameLower.includes('mitra utama sekolahan') ||
