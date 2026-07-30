@@ -1,7 +1,11 @@
 import re
 import uuid
+from app.services.pipeline.email_verifier import EmailVerifier
 
 class DataCleaner:
+    def __init__(self):
+        self.verifier = EmailVerifier()
+
     def normalize_phone(self, raw_phone: str):
         if not raw_phone or raw_phone == 'N/A':
             return 'N/A'
@@ -37,7 +41,7 @@ class DataCleaner:
 
     def clean(self, raw_data: list):
         """
-        Membersihkan, menormalisasi, dan menyatukan data hasil scraping.
+        Membersihkan, menormalisasi, menyatukan, dan menguji validitas email data hasil scraping.
         """
         cleaned_data = {}
 
@@ -54,6 +58,9 @@ class DataCleaner:
             phone_norm = self.normalize_phone(item.get('phone'))
             wa_url = self.generate_whatsapp_url(phone_norm, item.get('whatsapp_url'))
 
+            email_val = item.get('email') or 'N/A'
+            email_verification = self.verifier.verify(email_val)
+
             if key not in cleaned_data:
                 cleaned_data[key] = {
                     "id": str(uuid.uuid4()),
@@ -61,13 +68,15 @@ class DataCleaner:
                     "category": (item.get('category') or 'Business').capitalize(),
                     "location": item.get('location') or item.get('address') or 'Indonesia',
                     "website": item.get('website') or 'N/A',
-                    "email": item.get('email') or 'N/A',
+                    "email": email_val,
+                    "email_status": email_verification["status"],
+                    "email_score": email_verification["score"],
                     "phone": phone_norm,
                     "whatsapp_url": wa_url,
                     "linkedin_url": item.get('linkedin_url'),
                     "instagram_url": item.get('instagram_url'),
                     "facebook_url": item.get('facebook_url'),
-                    "status": "READY" if ((item.get('email') and item.get('email') != 'N/A') or (phone_norm and phone_norm != 'N/A') or wa_url) else "FOLLOW UP",
+                    "status": "READY" if ((email_val and email_val != 'N/A') or (phone_norm and phone_norm != 'N/A') or wa_url) else "FOLLOW UP",
                     "sources": [item.get('source')] if item.get('source') else ["Scraper"]
                 }
             else:
@@ -77,6 +86,9 @@ class DataCleaner:
                     existing["website"] = item.get("website")
                 if existing["email"] == "N/A" and item.get("email"):
                     existing["email"] = item.get("email")
+                    updated_verif = self.verifier.verify(item.get("email"))
+                    existing["email_status"] = updated_verif["status"]
+                    existing["email_score"] = updated_verif["score"]
                 if existing["phone"] == "N/A" and phone_norm != 'N/A':
                     existing["phone"] = phone_norm
                     if not existing["whatsapp_url"]:
@@ -101,6 +113,3 @@ class DataCleaner:
                     existing["status"] = "READY"
 
         return list(cleaned_data.values())
-
-
-

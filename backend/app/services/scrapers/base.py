@@ -11,7 +11,10 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.2; rv:122.0) Gecko/20100101 Firefox/122.0",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_2_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.64 Mobile Safari/537.36"
 ]
 
 DOMAIN_LAST_REQUEST = {}
@@ -19,6 +22,7 @@ DOMAIN_LAST_REQUEST = {}
 class BaseScraper(ABC):
     def __init__(self):
         self.proxy_url = os.getenv("PROXY_URL")
+        self.proxy_pool = os.getenv("PROXY_POOL", "").split(",")
 
     def get_headers(self):
         return {
@@ -36,8 +40,16 @@ class BaseScraper(ABC):
 
     @property
     def proxies(self):
-        if self.proxy_url and self.proxy_url != "http://your_proxy_url_here":
+        # 1. Check Proxy Pool list first
+        valid_pool = [p.trim() for p in self.proxy_pool if p and p.startswith("http")]
+        if valid_pool:
+            selected = random.choice(valid_pool)
+            return {"http": selected, "https": selected}
+
+        # 2. Check single Proxy URL
+        if self.proxy_url and self.proxy_url.startswith("http"):
             return {"http": self.proxy_url, "https": self.proxy_url}
+
         return None
 
     def rate_limit_delay(self, url: str, min_delay: float = 0.3, max_delay: float = 0.8):
@@ -60,7 +72,7 @@ class BaseScraper(ABC):
 
         self.rate_limit_delay(url)
 
-        # 1. Try requests library with retries
+        # 1. Try requests library with retries & Proxy Rotation
         try:
             import requests
             import urllib3
@@ -113,5 +125,3 @@ class BaseScraper(ABC):
     def _handle_error(self, e):
         print(f"Scraping error: {e}")
         return []
-
-
