@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Blocks, FileSpreadsheet, Send, CheckCircle2, ArrowRight, Loader2, AlertCircle, Sparkles, MessageCircle, Database, ShieldCheck, Zap } from 'lucide-react';
+import { Blocks, FileSpreadsheet, Send, CheckCircle2, ArrowRight, Loader2, AlertCircle, Sparkles, MessageCircle, Database, ShieldCheck, Zap, XCircle } from 'lucide-react';
 
 export default function IntegrationsPage() {
   const [sheetsUrl, setSheetsUrl] = useState('');
@@ -42,6 +42,11 @@ export default function IntegrationsPage() {
       console.error('Error saving config:', e);
     }
   };
+
+  const isSheetsConnected = Boolean(sheetsUrl.trim() && sheetsUrl.startsWith('http'));
+  const isNotionConnected = Boolean(notionToken.trim() && notionDbId.trim());
+  const isWebhookConnected = Boolean(webhookUrl.trim() && webhookUrl.startsWith('http'));
+  const isWaConnected = Boolean(waGatewayToken.trim());
 
   const handleSyncSheets = async () => {
     const targetUrl = sheetsUrl.trim();
@@ -249,8 +254,13 @@ export default function IntegrationsPage() {
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center font-bold">
                 <FileSpreadsheet size={20} />
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                <CheckCircle2 size={10} /> Active
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                isSheetsConnected
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}>
+                {isSheetsConnected ? <CheckCircle2 size={10} className="text-emerald-600" /> : <XCircle size={10} className="text-slate-400" />}
+                {isSheetsConnected ? 'Active (Connected)' : 'Disconnected'}
               </span>
             </div>
 
@@ -305,8 +315,13 @@ export default function IntegrationsPage() {
               <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 border border-slate-200/60 flex items-center justify-center font-bold">
                 <Blocks size={20} />
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                <CheckCircle2 size={10} /> Active
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                isNotionConnected
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}>
+                {isNotionConnected ? <CheckCircle2 size={10} className="text-emerald-600" /> : <XCircle size={10} className="text-slate-400" />}
+                {isNotionConnected ? 'Active (Connected)' : 'Disconnected'}
               </span>
             </div>
 
@@ -378,8 +393,13 @@ export default function IntegrationsPage() {
               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center justify-center font-bold">
                 <Send size={20} />
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
-                <CheckCircle2 size={10} /> Active
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                isWebhookConnected
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}>
+                {isWebhookConnected ? <CheckCircle2 size={10} className="text-emerald-600" /> : <XCircle size={10} className="text-slate-400" />}
+                {isWebhookConnected ? 'Active (Connected)' : 'Disconnected'}
               </span>
             </div>
 
@@ -434,8 +454,13 @@ export default function IntegrationsPage() {
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center font-bold">
                 <MessageCircle size={20} className="fill-emerald-500 text-emerald-500" />
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                <CheckCircle2 size={10} /> Active
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                isWaConnected
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}>
+                {isWaConnected ? <CheckCircle2 size={10} className="text-emerald-600" /> : <XCircle size={10} className="text-slate-400" />}
+                {isWaConnected ? 'Active (Connected)' : 'Disconnected'}
               </span>
             </div>
 
