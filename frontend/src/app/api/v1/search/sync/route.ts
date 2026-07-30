@@ -392,27 +392,37 @@ export async function POST(req: Request) {
         }
 
         let score = lead.lead_score || 30;
-        if (lead.is_corporate) score += 20;
-        if (lead.website !== 'N/A') score += 20;
-        if (lead.phone !== 'N/A') score += 15;
-        if (lead.email !== 'N/A') score += 15;
+        const hasPhone = lead.phone && lead.phone !== 'N/A' && lead.phone !== '-';
+        const hasEmail = lead.email && lead.email !== 'N/A' && lead.email !== '-';
+        const hasWeb = lead.website && lead.website !== 'N/A' && lead.website !== '-';
+
+        if (hasPhone) score += 35; // WhatsApp/Phone is #1 Priority!
+        if (hasEmail) score += 20;
+        if (hasWeb) score += 10;
+        if (lead.is_corporate) score += 10;
 
         lead.lead_score = Math.min(100, score);
-        lead.email_status = lead.email !== 'N/A' ? 'VALID' : 'UNVERIFIED';
-        lead.whatsapp_url = lead.phone !== 'N/A' ? `https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}` : undefined;
+        lead.email_status = hasEmail ? 'VALID' : 'UNVERIFIED';
+        lead.whatsapp_url = hasPhone ? `https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}` : undefined;
       })
     );
 
-    // Apply Advanced Search Precision Filters (requireEmail, requirePhone, excludeKeywords)
+    // Apply Advanced Search Precision Filters & WhatsApp Priority Ranking
     const searchOptions = body.options;
     let filteredResults = finalResults;
     if (searchOptions) {
-      if (searchOptions.requireEmail) {
-        filteredResults = filteredResults.filter(l => l.email && l.email !== 'N/A' && l.email !== '-');
+      const reqEmail = searchOptions.requireEmail;
+      const reqPhone = searchOptions.requirePhone;
+
+      // Allow lead if it has EITHER valid Phone/WhatsApp OR Email (Not strictly requiring both)
+      if (reqEmail || reqPhone) {
+        filteredResults = filteredResults.filter(l => {
+          const lPhone = l.phone && l.phone !== 'N/A' && l.phone !== '-';
+          const lEmail = l.email && l.email !== 'N/A' && l.email !== '-';
+          return lPhone || lEmail;
+        });
       }
-      if (searchOptions.requirePhone) {
-        filteredResults = filteredResults.filter(l => l.phone && l.phone !== 'N/A' && l.phone !== '-');
-      }
+
       if (searchOptions.excludeKeywords && typeof searchOptions.excludeKeywords === 'string' && searchOptions.excludeKeywords.trim()) {
         const negativeWords = searchOptions.excludeKeywords.toLowerCase().split(',').map((w: string) => w.trim()).filter(Boolean);
         filteredResults = filteredResults.filter(l => {
@@ -421,6 +431,14 @@ export async function POST(req: Request) {
         });
       }
     }
+
+    // Rank WhatsApp/Phone leads at the top first, then by Lead Score
+    filteredResults.sort((a, b) => {
+      const aPhone = a.phone && a.phone !== 'N/A' && a.phone !== '-';
+      const bPhone = b.phone && b.phone !== 'N/A' && b.phone !== '-';
+      if (aPhone !== bPhone) return bPhone ? 1 : -1;
+      return (b.lead_score || 0) - (a.lead_score || 0);
+    });
 
     return NextResponse.json({
       status: 'completed',
