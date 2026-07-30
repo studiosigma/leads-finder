@@ -27,36 +27,34 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. AI Smart Query Expansion Engine
+    // 2. AI Smart Query Intent & Keyword Parser
     const qLower = query.toLowerCase();
-    const searchQueries = [query];
-
-    // Extract location keyword from query (e.g., bekasi, tambun, cibitung, cikarang, bandung, jakarta)
     const locMatch = qLower.match(/(?:di|ke|kabupaten|kota|daerah|kawasan)?\s*([a-z0-9\s]+)$/i);
     const locationKeyword = locMatch ? locMatch[1].trim() : query;
 
-    if (qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur')) {
+    const isIndustrialQuery = qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur') || qLower.includes('gudang');
+
+    const searchQueries = [query];
+    if (isIndustrialQuery) {
       searchQueries.push(`PT ${locationKeyword} industri`);
       searchQueries.push(`Kawasan Industri ${locationKeyword}`);
+      searchQueries.push(`Pabrik PT ${locationKeyword}`);
     } else if (qLower.includes('sekolah') || qLower.includes('pendidikan')) {
       searchQueries.push(`SMA SMK ${locationKeyword}`);
       searchQueries.push(`Universitas ${locationKeyword}`);
     } else if (qLower.includes('rumah sakit') || qLower.includes('klinik')) {
       searchQueries.push(`RS ${locationKeyword}`);
       searchQueries.push(`Klinik Utama ${locationKeyword}`);
-    } else if (qLower.includes('hotel') || qLower.includes('penginapan')) {
-      searchQueries.push(`Hotel Resort ${locationKeyword}`);
-    } else if (qLower.includes('restoran') || qLower.includes('kuliner')) {
-      searchQueries.push(`Restoran Rumah Makan ${locationKeyword}`);
     }
 
-    // 3. Next.js Native Multi-Query Parallel Scraper Engine
+    // 3. Multi-Source Search (OpenStreetMap + Web Directory Scraper)
     const allPlaces: any[] = [];
     const headers = {
-      'User-Agent': 'LeadsFinderEngine/2.4 (https://leadsfinder.local; contact@leadsfinder.local)',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.5',
       'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
     };
 
+    // Source A: OpenStreetMap Places
     for (const qStr of searchQueries) {
       if (allPlaces.length >= limit * 2) break;
       try {
@@ -74,7 +72,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // 4. Smart Name Processing, Categorization & Corporate Prioritization
+    // 4. Processing & Real Corporate Entity Resolution
     const seenNames = new Set<string>();
     const formattedLeads: any[] = [];
 
@@ -84,7 +82,7 @@ export async function POST(req: Request) {
       
       let primaryName = place.namedetails?.official_name || place.namedetails?.brand || place.namedetails?.name || place.name || rawParts[0] || query;
 
-      const genericWords = ['pabrik', 'works', 'factory', 'building', 'industrial', 'toko', 'bengkel', 'sekolah', 'gudang', 'office', 'company', 'pt', 'cv'];
+      const genericWords = ['pabrik', 'works', 'factory', 'building', 'industrial', 'toko', 'bengkel', 'sekolah', 'gudang', 'office', 'company'];
       const isGenericName = genericWords.includes(primaryName.toLowerCase()) || primaryName.length <= 5;
 
       if (isGenericName) {
@@ -105,10 +103,8 @@ export async function POST(req: Request) {
 
       const rawCat = place.type || place.category || 'Business';
       let category = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
-      if (category === 'Industrial' || category === 'Works' || qLower.includes('pabrik') || qLower.includes('manufaktur')) {
+      if (category === 'Industrial' || category === 'Works' || isIndustrialQuery) {
         category = 'Manufaktur & Industry';
-      } else if (qLower.includes('rumah sakit') || qLower.includes('klinik')) {
-        category = 'Rumah Sakit & Kesehatan';
       }
 
       const extra = place.extratags || {};
@@ -116,6 +112,8 @@ export async function POST(req: Request) {
       const email = extra.email || extra['contact:email'] || 'N/A';
       const phone = extra.phone || extra['contact:phone'] || extra['contact:mobile'] || extra['contact:whatsapp'] || 'N/A';
       const waUrl = phone !== 'N/A' ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}` : undefined;
+
+      const isCorporate = primaryName.toUpperCase().includes('PT') || primaryName.toUpperCase().includes('CV') || primaryName.toUpperCase().includes('TBK') || primaryName.toUpperCase().includes('INC') || primaryName.toUpperCase().includes('CORP');
 
       formattedLeads.push({
         id: `osm-${place.place_id || Date.now()}-${i}`,
@@ -132,12 +130,21 @@ export async function POST(req: Request) {
         gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(primaryName + ' ' + locationStr)}`,
         status: 'READY',
         sources: ['Google Maps / OpenStreetMap'],
-        is_corporate: primaryName.toUpperCase().includes('PT') || primaryName.toUpperCase().includes('CV') || primaryName.toUpperCase().includes('TBK')
+        is_corporate: isCorporate,
+        is_generic: isGenericName
       });
     }
 
-    // Sort corporate PT / CV entities first
-    formattedLeads.sort((a, b) => (b.is_corporate ? 1 : 0) - (a.is_corporate ? 1 : 0));
+    // Real Corporate Entity Prioritization:
+    // 1st Priority: Real PT / CV / Tbk Companies
+    // 2nd Priority: Named Buildings & Factories
+    // 3rd Priority: Generic "Pabrik - Jalan..." fallback entries
+    formattedLeads.sort((a, b) => {
+      if (a.is_corporate !== b.is_corporate) return b.is_corporate ? 1 : -1;
+      if (a.is_generic !== b.is_generic) return a.is_generic ? 1 : -1;
+      return 0;
+    });
+
     const finalResults = formattedLeads.slice(0, limit);
 
     return NextResponse.json({
