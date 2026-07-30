@@ -33,35 +33,77 @@ export default function DashboardPage() {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    async function fetchLeads() {
-      try {
-        const response = await fetch(`${API_BASE}/api/v1/leads`);
-        if (response.ok) {
-          const data = await response.json();
-          setLeads(data || []);
+    let combinedLeads: any[] = [];
+
+    // 1. Load active leads from localStorage
+    try {
+      const savedActive = localStorage.getItem('lfe_active_leads');
+      if (savedActive) {
+        const parsed = JSON.parse(savedActive);
+        if (Array.isArray(parsed)) {
+          combinedLeads = [...parsed];
         }
-      } catch (error) {
-        console.error('Error fetching leads:', error);
-      } finally {
-        setLoading(false);
       }
+    } catch (e) {
+      console.error('Error loading active leads:', e);
     }
 
-    // Load Sessions from localStorage
+    // 2. Load all past sessions from localStorage & extract leads from every session
     try {
       const savedSessions = JSON.parse(localStorage.getItem('lfe_scraping_sessions') || '[]');
       setSessions(savedSessions);
+
+      const existingIds = new Set(combinedLeads.map((l) => l.id));
+      savedSessions.forEach((sess: ScrapingSession) => {
+        if (sess.leads && Array.isArray(sess.leads)) {
+          sess.leads.forEach((l: any) => {
+            if (l.id && !existingIds.has(l.id)) {
+              existingIds.add(l.id);
+              combinedLeads.push(l);
+            }
+          });
+        }
+      });
     } catch (e) {
       console.error('Error loading sessions:', e);
     }
 
-    fetchLeads();
+    setLeads(combinedLeads);
+    setLoading(false);
+
+    // 3. Fetch from Backend API without overwriting local storage
+    async function fetchBackendLeads() {
+      try {
+        const response = await fetch(`${API_BASE}/api/v1/leads`);
+        if (response.ok) {
+          const backendData = await response.json();
+          if (Array.isArray(backendData) && backendData.length > 0) {
+            setLeads((prev) => {
+              const prevIds = new Set(prev.map((l) => l.id));
+              const merged = [...prev, ...backendData.filter((b: any) => !prevIds.has(b.id))];
+              localStorage.setItem('lfe_active_leads', JSON.stringify(merged));
+              return merged;
+            });
+          }
+        }
+      } catch (error) {
+        // silent fallback
+      }
+    }
+
+    fetchBackendLeads();
   }, []);
 
   const handleStatusChange = (leadId: string, newStatus: string) => {
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
-    );
+    setLeads((prev) => {
+      const updated = prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l));
+      try {
+        localStorage.setItem('lfe_active_leads', JSON.stringify(updated));
+      } catch (e) {
+        // ignore
+      }
+      return updated;
+    });
   };
 
   const handleDeleteSession = (sessionId: string) => {
@@ -95,7 +137,11 @@ export default function DashboardPage() {
   const webRate = totalLeads > 0 ? Math.round((websitesFound / totalLeads) * 100) : 0;
 
   const handleImportSuccess = (importedLeads: any[]) => {
-    setLeads((prev) => [...importedLeads, ...prev]);
+    setLeads((prev) => {
+      const updated = [...importedLeads, ...prev];
+      localStorage.setItem('lfe_active_leads', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const displayLeads = activeSessionFilter && activeSessionFilter.leads && activeSessionFilter.leads.length > 0
