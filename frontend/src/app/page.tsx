@@ -181,13 +181,23 @@ export default function Home() {
   const fetchOpenStreetMapPlaces = async (queryStr: string, limitCount = 10) => {
     try {
       const encoded = encodeURIComponent(queryStr);
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limitCount}`, {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limitCount * 2}`, {
         headers: { 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8' }
       });
       if (res.ok) {
         const places = await res.json();
         if (Array.isArray(places) && places.length > 0) {
-          return places.map((place: any, i: number) => {
+          // Filter out raw street/road nodes
+          const b2bPlaces = places.filter((place: any) => {
+            if (place.class === 'highway') return false;
+            const name = (place.namedetails?.name || place.name || place.display_name || '').toLowerCase();
+            if (name.startsWith('jalan ') || name.startsWith('jl. ') || name.startsWith('gang ')) return false;
+            return true;
+          });
+
+          const targetPlaces = (b2bPlaces.length > 0 ? b2bPlaces : places).slice(0, limitCount);
+
+          return targetPlaces.map((place: any, i: number) => {
             const rawParts = (place.display_name || queryStr).split(',').map((p: string) => p.trim());
             let primaryName = place.namedetails?.name || place.namedetails?.official_name || place.namedetails?.brand || place.name || rawParts[0] || queryStr;
 
@@ -262,14 +272,33 @@ export default function Home() {
       const apiRes = await fetch(`${API_BASE}/api/v1/search/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: targetLimit || 10 })
+        body: JSON.stringify({ query, limit: targetLimit || 10, options })
       });
 
       if (apiRes.ok) {
         const data = await apiRes.json();
         const liveResults = data.results || data.result || [];
         if (Array.isArray(liveResults) && liveResults.length > 0) {
-          const cleanLive = liveResults.filter((l: any) => !isLegacySyntheticLead(l));
+          let cleanLive = liveResults.filter((l: any) => !isLegacySyntheticLead(l));
+
+          // Apply options precision filters on client if passed
+          if (options) {
+            if (options.requireEmail || options.requirePhone || options.requireWebsite) {
+              cleanLive = cleanLive.filter(l => {
+                const hasP = l.phone && l.phone !== 'N/A' && l.phone !== '-';
+                const hasE = l.email && l.email !== 'N/A' && l.email !== '-';
+                const hasW = l.website && l.website !== 'N/A' && l.website !== '-';
+                return hasP || hasE || hasW;
+              });
+            }
+            if (options.excludeKeywords && options.excludeKeywords.trim()) {
+              const negs = options.excludeKeywords.toLowerCase().split(',').map(w => w.trim()).filter(Boolean);
+              cleanLive = cleanLive.filter(l => {
+                const str = (l.name + ' ' + l.address + ' ' + l.category).toLowerCase();
+                return !negs.some(n => str.includes(n));
+              });
+            }
+          }
           updateLeadsAndPersist(cleanLive);
           saveSessionToHistory(query, cleanLive);
 
