@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const maxDuration = 60;
+
 // Verified Indonesian B2B Corporate Knowledge Registry for high-priority regional intent
 const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
   bekasi: [
@@ -645,9 +647,10 @@ export async function POST(req: Request) {
 
     const finalResults = combinedLeads.slice(0, limit);
 
-    // Fast Web Crawl Enrichment
+    // Fast Web Crawl Enrichment (Enrich top 15 leads to guarantee < 4s response time)
+    const enrichTargets = finalResults.slice(0, 15);
     await Promise.all(
-      finalResults.map(async (lead) => {
+      enrichTargets.map(async (lead) => {
         if (lead.website && lead.website !== 'N/A' && lead.website !== '-') {
           const crawled = await crawlWebsiteForContacts(lead.website);
           if (crawled.email && lead.email === 'N/A') {
