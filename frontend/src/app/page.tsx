@@ -178,60 +178,88 @@ export default function Home() {
 
 
 
-  const fetchOpenStreetMapPlaces = async (queryStr: string, limitCount = 10) => {
+  const fetchOpenStreetMapPlaces = async (queryStr: string, limitCount: number = 50) => {
     try {
-      const encoded = encodeURIComponent(queryStr);
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limitCount * 2}`, {
-        headers: { 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8' }
-      });
-      if (res.ok) {
-        const places = await res.json();
-        if (Array.isArray(places) && places.length > 0) {
-          // Filter out raw street/road nodes
-          const b2bPlaces = places.filter((place: any) => {
-            if (place.class === 'highway') return false;
-            const name = (place.namedetails?.name || place.name || place.display_name || '').toLowerCase();
-            if (name.startsWith('jalan ') || name.startsWith('jl. ') || name.startsWith('gang ')) return false;
-            return true;
+      const qL = queryStr.toLowerCase();
+      const locationKeyword = queryStr.replace(/\b(di|ke|dalam|daerah|kawasan|kota|kabupaten|cari|temukan|prospek|sekolah|rumah sakit|pabrik|hotel|restoran|toko|bengkel|pt|cv)\b/gi, ' ').replace(/\s+/g, ' ').trim() || queryStr;
+      
+      const searchQueries: string[] = [queryStr];
+      if (qL.includes('sekolah') || qL.includes('pendidikan') || qL.includes('kampus')) {
+        searchQueries.push(`SMA ${locationKeyword}`, `SMK ${locationKeyword}`, `SMP ${locationKeyword}`, `SD ${locationKeyword}`, `Universitas ${locationKeyword}`, `Pesantren ${locationKeyword}`);
+      } else if (qL.includes('rumah sakit') || qL.includes('rs') || qL.includes('klinik')) {
+        searchQueries.push(`RSUD ${locationKeyword}`, `RS ${locationKeyword}`, `Klinik ${locationKeyword}`, `Puskesmas ${locationKeyword}`);
+      } else if (qL.includes('pabrik') || qL.includes('industri')) {
+        searchQueries.push(`PT ${locationKeyword}`, `Pabrik ${locationKeyword}`, `Kawasan Industri ${locationKeyword}`);
+      }
+
+      const safeOsmLimit = Math.min(Math.max(limitCount, 15), 50);
+      const queryPromises = searchQueries.slice(0, 6).map(async (qSub) => {
+        try {
+          const encoded = encodeURIComponent(qSub);
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${safeOsmLimit}`, {
+            headers: { 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8' }
           });
-
-          const targetPlaces = (b2bPlaces.length > 0 ? b2bPlaces : places).slice(0, limitCount);
-
-          return targetPlaces.map((place: any, i: number) => {
-            const rawParts = (place.display_name || queryStr).split(',').map((p: string) => p.trim());
-            let primaryName = place.namedetails?.name || place.namedetails?.official_name || place.namedetails?.brand || place.name || rawParts[0] || queryStr;
-
-            const fullAddress = place.display_name || queryStr;
-            const city = place.address?.city || place.address?.county || place.address?.town || place.address?.city_district || place.address?.state || 'Indonesia';
-            const state = place.address?.state || '';
-            const locationStr = state ? `${city}, ${state}` : `${city}, Indonesia`;
-
-            const rawCat = place.type || place.category || 'Business';
-            const category = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
-
-            const extra = place.extratags || {};
-            const website = extra.website || extra['contact:website'] || extra.url || 'N/A';
-            const email = extra.email || extra['contact:email'] || 'N/A';
-            const phone = extra.phone || extra['contact:phone'] || extra['contact:mobile'] || extra['contact:whatsapp'] || 'N/A';
-            const waUrl = phone !== 'N/A' ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}` : undefined;
-
-            return {
-              id: `osm-${place.place_id || Date.now()}-${i}`,
-              name: primaryName,
-              category: category === 'Industrial' || category === 'Works' ? 'Manufaktur & Industry' : category,
-              location: locationStr,
-              website: website,
-              email: email,
-              email_status: email !== 'N/A' ? 'VALID' : 'UNVERIFIED',
-              phone: phone,
-              whatsapp_url: waUrl,
-              linkedin_url: '-',
-              gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(primaryName + ' ' + locationStr)}`,
-              status: 'READY',
-              sources: ['Google Maps / OpenStreetMap']
-            };
-          });
+          if (res.ok) {
+            const places = await res.json();
+            return Array.isArray(places) ? places : [];
+          }
+        } catch (e) {
+          return [];
         }
+        return [];
+      });
+
+      const resultsArrays = await Promise.all(queryPromises);
+      const places = resultsArrays.flat();
+
+      if (places.length > 0) {
+        const seen = new Set<string>();
+        const b2bPlaces = places.filter((place: any) => {
+          if (place.class === 'highway') return false;
+          const name = (place.namedetails?.name || place.name || place.display_name || '').toLowerCase();
+          if (name.startsWith('jalan ') || name.startsWith('jl. ') || name.startsWith('gang ')) return false;
+          const key = name.replace(/[^a-z0-9]/g, '');
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        const targetPlaces = (b2bPlaces.length > 0 ? b2bPlaces : places).slice(0, limitCount);
+
+        return targetPlaces.map((place: any, i: number) => {
+          const rawParts = (place.display_name || queryStr).split(',').map((p: string) => p.trim());
+          let primaryName = place.namedetails?.name || place.namedetails?.official_name || place.namedetails?.brand || place.name || rawParts[0] || queryStr;
+
+          const fullAddress = place.display_name || queryStr;
+          const city = place.address?.city || place.address?.county || place.address?.town || place.address?.city_district || place.address?.state || 'Indonesia';
+          const state = place.address?.state || '';
+          const locationStr = state ? `${city}, ${state}` : `${city}, Indonesia`;
+
+          const rawCat = place.type || place.category || 'Business';
+          const category = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
+
+          const extra = place.extratags || {};
+          const website = extra.website || extra['contact:website'] || extra.url || 'N/A';
+          const email = extra.email || extra['contact:email'] || 'N/A';
+          const phone = extra.phone || extra['contact:phone'] || extra['contact:mobile'] || extra['contact:whatsapp'] || 'N/A';
+          const waUrl = phone !== 'N/A' ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}` : undefined;
+
+          return {
+            id: `osm-${place.place_id || Date.now()}-${i}`,
+            name: primaryName,
+            category: category === 'Industrial' || category === 'Works' ? 'Manufaktur & Industry' : category,
+            location: locationStr,
+            website: website,
+            email: email,
+            email_status: email !== 'N/A' ? 'VALID' : 'UNVERIFIED',
+            phone: phone,
+            whatsapp_url: waUrl,
+            linkedin_url: '-',
+            gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(primaryName + ' ' + locationStr)}`,
+            status: 'READY',
+            sources: ['Google Maps / OpenStreetMap']
+          };
+        });
       }
     } catch (e) {
       console.error('Error fetching OpenStreetMap places:', e);

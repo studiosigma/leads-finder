@@ -584,11 +584,11 @@ export async function POST(req: Request) {
       'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
     };
 
-    const perQueryLimit = Math.min(limit, 50);
-    const queryPromises = searchQueries.slice(0, 10).map(async (qStr) => {
+    const perQueryLimit = Math.min(limit, 30);
+    const queryPromises = searchQueries.slice(0, 4).map(async (qStr) => {
       try {
         const controller = new AbortController();
-        const tId = setTimeout(() => controller.abort(), 3500);
+        const tId = setTimeout(() => controller.abort(), 2000);
         const encoded = encodeURIComponent(qStr);
         const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${perQueryLimit}`;
         const osmRes = await fetch(osmUrl, { headers, cache: 'no-store', signal: controller.signal });
