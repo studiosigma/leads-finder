@@ -448,6 +448,29 @@ export async function POST(req: Request) {
         if (backendRes.ok) {
           const data = await backendRes.json();
           if (Array.isArray(data.results) && data.results.length > 0) {
+            const qL = query.toLowerCase();
+            const isEduc = qL.includes('sekolah') || qL.includes('pendidikan') || qL.includes('kampus') || qL.includes('pesantren') || qL.includes('sma') || qL.includes('smk') || qL.includes('sd') || qL.includes('smp') || qL.includes('universitas');
+            const isHealth = qL.includes('rumah sakit') || qL.includes('rs') || qL.includes('rsud') || qL.includes('klinik') || qL.includes('kesehatan') || qL.includes('apotek');
+            const isIndus = qL.includes('pabrik') || qL.includes('industri') || qL.includes('manufaktur') || qL.includes('gudang');
+
+            if (isEduc) {
+              data.results = data.results.filter((l: any) => {
+                const catStr = (l.name + ' ' + (l.category || '')).toLowerCase();
+                return !catStr.includes('manufacturing') && !catStr.includes('automotive') && !catStr.includes('fmcg') && !catStr.includes('rumah sakit') && !catStr.includes('kesehatan');
+              });
+            } else if (isHealth) {
+              data.results = data.results.filter((l: any) => {
+                const catStr = (l.name + ' ' + (l.category || '')).toLowerCase();
+                return !catStr.includes('manufacturing') && !catStr.includes('automotive') && !catStr.includes('fmcg') && !catStr.includes('pendidikan') && !catStr.includes('sekolah');
+              });
+            } else if (isIndus) {
+              data.results = data.results.filter((l: any) => {
+                const catStr = (l.name + ' ' + (l.category || '')).toLowerCase();
+                return !catStr.includes('pendidikan') && !catStr.includes('sekolah') && !catStr.includes('rumah sakit') && !catStr.includes('klinik');
+              });
+            }
+
+            data.count = data.results.length;
             return NextResponse.json(data);
           }
         }
