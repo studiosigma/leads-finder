@@ -525,6 +525,7 @@ export default function Home() {
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
           counts={filterCounts}
+          page="find_leads"
         />
 
         <div className="flex items-center gap-2 self-end md:self-auto shrink-0">

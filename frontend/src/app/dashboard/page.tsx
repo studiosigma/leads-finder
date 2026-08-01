@@ -12,7 +12,7 @@ import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
 import { AnalyticsCharts } from '@/components/dashboard/analytics-charts';
 import { ScrapingHistoryTable, ScrapingSession } from '@/components/dashboard/scraping-history-table';
-import { KanbanBoard } from '@/components/dashboard/kanban-board';
+import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X, Trash2, Columns } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -215,6 +215,17 @@ export default function DashboardPage() {
 
   const selectedLeadsObjects = leads.filter((l) => selectedIds.includes(l.id));
 
+  const filterCounts = {
+    all: displayLeads.length,
+    newCount: displayLeads.filter((l) => !l.status || l.status === 'READY' || l.status === 'NEW').length,
+    contacted: displayLeads.filter((l) => l.status === 'CONTACTED' || l.status === 'FOLLOW UP').length,
+    qualified: displayLeads.filter((l) => l.status === 'QUALIFIED').length,
+    won: displayLeads.filter((l) => l.status === 'WON' || l.status === 'DEAL').length,
+    hasEmail: displayLeads.filter((l) => l.email && l.email !== 'N/A' && l.email !== '-').length,
+    hasPhone: displayLeads.filter((l) => l.phone && l.phone !== 'N/A' && l.phone !== '-').length,
+    hasWebsite: displayLeads.filter((l) => l.website && l.website !== 'N/A' && l.website !== '-').length,
+  };
+
   if (loading) return <div className="p-10 text-center text-slate-500 font-medium bg-[#f1f5f9] min-h-screen">Loading leads database...</div>;
 
   return (
@@ -319,7 +330,15 @@ export default function DashboardPage() {
       ) : (
         /* Database Controls Toolbar */
         <div className="space-y-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          {/* CRM Pipeline Filter Chips */}
+          <FilterChips
+            activeFilter={statusFilter as FilterChipType}
+            onFilterChange={(f) => setStatusFilter(f)}
+            counts={filterCounts}
+            page="database"
+          />
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <h2 className="text-base font-bold text-slate-800">
               {activeSessionFilter ? `Session Leads: "${activeSessionFilter.query}"` : 'All Collected Leads'} ({filteredLeads.length})
             </h2>

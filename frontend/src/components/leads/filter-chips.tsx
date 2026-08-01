@@ -16,19 +16,24 @@ interface FilterChipsProps {
     hasPhone: number;
     hasWebsite: number;
   };
+  page?: 'find_leads' | 'database';
 }
 
-export const FilterChips = ({ activeFilter, onFilterChange, counts }: FilterChipsProps) => {
-  const chips: { id: FilterChipType; label: string; icon: React.ElementType; count: number; colorClass?: string }[] = [
-    { id: 'ALL', label: 'All Leads', icon: CheckCircle2, count: counts.all },
-    { id: 'NEW', label: '🔵 New Lead', icon: Sparkles, count: counts.newCount },
-    { id: 'CONTACTED', label: '🟡 Contacted', icon: Clock, count: counts.contacted },
-    { id: 'QUALIFIED', label: '🟣 Qualified', icon: UserCheck, count: counts.qualified },
-    { id: 'WON', label: '🟢 Won / Deal', icon: Trophy, count: counts.won },
-    { id: 'HAS_EMAIL', label: 'Has Email', icon: Mail, count: counts.hasEmail },
-    { id: 'HAS_PHONE', label: 'Has Phone', icon: Phone, count: counts.hasPhone },
-    { id: 'HAS_WEBSITE', label: 'Has Website', icon: Globe, count: counts.hasWebsite },
+export const FilterChips = ({ activeFilter, onFilterChange, counts, page = 'find_leads' }: FilterChipsProps) => {
+  const allChips: { id: FilterChipType; label: string; icon: React.ElementType; count: number; category: 'channel' | 'crm' }[] = [
+    { id: 'ALL', label: 'All Leads', icon: CheckCircle2, count: counts.all, category: 'channel' },
+    { id: 'HAS_PHONE', label: 'Has Phone (WA)', icon: Phone, count: counts.hasPhone, category: 'channel' },
+    { id: 'HAS_EMAIL', label: 'Has Email', icon: Mail, count: counts.hasEmail, category: 'channel' },
+    { id: 'HAS_WEBSITE', label: 'Has Website', icon: Globe, count: counts.hasWebsite, category: 'channel' },
+    { id: 'NEW', label: '🔵 New Lead', icon: Sparkles, count: counts.newCount, category: 'crm' },
+    { id: 'CONTACTED', label: '🟡 Contacted', icon: Clock, count: counts.contacted, category: 'crm' },
+    { id: 'QUALIFIED', label: '🟣 Qualified', icon: UserCheck, count: counts.qualified, category: 'crm' },
+    { id: 'WON', label: '🟢 Won / Deal', icon: Trophy, count: counts.won, category: 'crm' },
   ];
+
+  const chips = page === 'find_leads' 
+    ? allChips.filter(c => c.category === 'channel')
+    : allChips;
 
   return (
     <div className="flex flex-wrap items-center gap-2 font-sans">
@@ -40,7 +45,7 @@ export const FilterChips = ({ activeFilter, onFilterChange, counts }: FilterChip
           <button
             key={chip.id}
             onClick={() => onFilterChange(chip.id)}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border ${
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 border cursor-pointer ${
               isActive
                 ? 'bg-[#4a6382] text-white border-[#4a6382] shadow-xs'
                 : 'bg-white border-slate-200/90 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
