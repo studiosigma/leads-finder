@@ -266,8 +266,7 @@ export default function Home() {
     setIsSearching(true);
     setCurrentQuery(query);
     setSearchNotice(null);
-    const isContinuous = !options?.limit || options.limit <= 0;
-    const targetLimit = isContinuous ? null : options.limit;
+    const effectiveLimit = (options?.limit && options.limit > 0) ? options.limit : 999;
 
     setSearchSteps([
       { id: '1', label: `Phase 1: AI Intent Parser & Geocoding Core Directory for "${query}"...`, status: 'active' },
@@ -290,7 +289,7 @@ export default function Home() {
       const apiRes = await fetch(`${API_BASE}/api/v1/search/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: targetLimit || 50, options })
+        body: JSON.stringify({ query, limit: effectiveLimit, options })
       });
 
       if (apiRes.ok) {
@@ -361,7 +360,7 @@ export default function Home() {
     }
 
     // Direct Public OpenStreetMap Directory Fallback (Real places on Vercel / browser)
-    const realOsmLeads = await fetchOpenStreetMapPlaces(query, targetLimit || 50);
+    const realOsmLeads = await fetchOpenStreetMapPlaces(query, effectiveLimit);
     if (realOsmLeads && realOsmLeads.length > 0) {
       updateLeadsAndPersist(realOsmLeads);
       saveSessionToHistory(query, realOsmLeads);

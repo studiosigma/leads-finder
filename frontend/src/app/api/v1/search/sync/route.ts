@@ -433,8 +433,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 50;
-    const limit = Math.min(Math.max(requestLimit, 10), 100);
+    const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 999;
+    const limit = Math.min(Math.max(requestLimit, 1), 999);
 
     // 1. Try forwarding to Python FastAPI backend if BACKEND_URL is configured
     const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL;
@@ -584,12 +584,13 @@ export async function POST(req: Request) {
       'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
     };
 
-    const queryPromises = searchQueries.slice(0, 6).map(async (qStr) => {
+    const perQueryLimit = Math.min(limit, 50);
+    const queryPromises = searchQueries.slice(0, 10).map(async (qStr) => {
       try {
         const controller = new AbortController();
         const tId = setTimeout(() => controller.abort(), 3500);
         const encoded = encodeURIComponent(qStr);
-        const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limit}`;
+        const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${perQueryLimit}`;
         const osmRes = await fetch(osmUrl, { headers, cache: 'no-store', signal: controller.signal });
         clearTimeout(tId);
         if (osmRes.ok) {
