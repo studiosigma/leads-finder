@@ -360,28 +360,31 @@ export async function POST(req: Request) {
       searchQueries.push(`Cafe ${locationKeyword}`);
     }
 
-    const allPlaces: any[] = [];
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.7',
       'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
     };
 
-    for (const qStr of searchQueries) {
-      if (allPlaces.length >= limit * 3) break;
+    const queryPromises = searchQueries.slice(0, 4).map(async (qStr) => {
       try {
+        const controller = new AbortController();
+        const tId = setTimeout(() => controller.abort(), 3500);
         const encoded = encodeURIComponent(qStr);
         const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limit}`;
-        const osmRes = await fetch(osmUrl, { headers, cache: 'no-store' });
+        const osmRes = await fetch(osmUrl, { headers, cache: 'no-store', signal: controller.signal });
+        clearTimeout(tId);
         if (osmRes.ok) {
           const places = await osmRes.json();
-          if (Array.isArray(places)) {
-            allPlaces.push(...places);
-          }
+          return Array.isArray(places) ? places : [];
         }
       } catch (e) {
-        // continue
+        return [];
       }
-    }
+      return [];
+    });
+
+    const fetchedResultsArrays = await Promise.all(queryPromises);
+    const allPlaces = fetchedResultsArrays.flat();
 
     // 4. Processing, Street Node Filtering, Web Crawl Enrichment
     const seenNames = new Set<string>();
