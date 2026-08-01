@@ -425,7 +425,10 @@ async function verifyEmailDeliverability(email: string): Promise<'DELIVERABLE' |
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { query, limit = 10 } = body;
+    const { query } = body;
+
+    const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 50;
+    const limit = Math.min(Math.max(requestLimit, 10), 100);
 
     if (!query || typeof query !== 'string') {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
@@ -451,33 +454,54 @@ export async function POST(req: Request) {
       }
     }
 
+    const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 50;
+    const limit = Math.min(Math.max(requestLimit, 10), 100);
+
     const qLower = query.toLowerCase();
     const isIndustrialQuery = qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur') || qLower.includes('gudang');
+    const isEducQuery = qLower.includes('sekolah') || qLower.includes('pendidikan') || qLower.includes('kampus') || qLower.includes('pesantren') || qLower.includes('sma') || qLower.includes('smk') || qLower.includes('sd') || qLower.includes('smp') || qLower.includes('universitas') || qLower.includes('politeknik') || qLower.includes('bimbel');
+    const isHealthQuery = qLower.includes('rumah sakit') || qLower.includes('rs') || qLower.includes('rsud') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('apotek') || qLower.includes('puskesmas');
 
-    // 2. Check Regional Knowledge Registry Match for High Intent Regional Queries
+    // 2. Check Regional Knowledge Registry Match with Category Relevance Filtering
     const verifiedCorporateResults: any[] = [];
     for (const [regionKey, corpList] of Object.entries(VERIFIED_CORPORATE_REGISTRY)) {
       if (qLower.includes(regionKey)) {
         corpList.forEach((corp, idx) => {
-          verifiedCorporateResults.push({
-            id: `b2b-verified-${idx}`,
-            name: corp.name,
-            category: corp.category,
-            location: corp.location,
-            address: corp.address,
-            website: corp.website,
-            email: corp.email,
-            email_status: corp.email !== 'N/A' ? 'VALID' : 'UNVERIFIED',
-            phone: corp.phone,
-            whatsapp_url: corp.phone !== 'N/A' ? `https://wa.me/${corp.phone.replace(/[^0-9]/g, '')}` : undefined,
-            linkedin_url: corp.linkedin_url,
-            gmaps_url: corp.gmaps_url,
-            status: 'READY',
-            sources: corp.sources,
-            lead_score: 100,
-            is_corporate: true,
-            is_siinas_verified: corp.is_siinas_verified || true
-          });
+          const corpText = (corp.name + ' ' + corp.category).toLowerCase();
+          
+          let isMatch = false;
+          if (isEducQuery) {
+            isMatch = corpText.includes('sekolah') || corpText.includes('pendidikan') || corpText.includes('sma') || corpText.includes('smk') || corpText.includes('universitas') || corpText.includes('unsika') || corpText.includes('perguruan tinggi');
+          } else if (isHealthQuery) {
+            isMatch = corpText.includes('rumah sakit') || corpText.includes('rsud') || corpText.includes('rs ') || corpText.includes('klinik') || corpText.includes('kesehatan');
+          } else if (isIndustrialQuery) {
+            isMatch = corpText.includes('pabrik') || corpText.includes('industri') || corpText.includes('manufaktur') || corpText.includes('manufacturing') || corpText.includes('gudang') || corpText.includes('tbk') || corpText.includes('pt ');
+          } else {
+            // General location search (e.g. "karawang", "tangerang")
+            isMatch = true;
+          }
+
+          if (isMatch) {
+            verifiedCorporateResults.push({
+              id: `b2b-verified-${idx}`,
+              name: corp.name,
+              category: corp.category,
+              location: corp.location,
+              address: corp.address,
+              website: corp.website,
+              email: corp.email,
+              email_status: corp.email !== 'N/A' ? 'VALID' : 'UNVERIFIED',
+              phone: corp.phone,
+              whatsapp_url: corp.phone !== 'N/A' ? `https://wa.me/${corp.phone.replace(/[^0-9]/g, '')}` : undefined,
+              linkedin_url: corp.linkedin_url,
+              gmaps_url: corp.gmaps_url,
+              status: 'READY',
+              sources: corp.sources,
+              lead_score: 100,
+              is_corporate: true,
+              is_siinas_verified: corp.is_siinas_verified || true
+            });
+          }
         });
       }
     }

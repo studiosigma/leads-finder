@@ -290,7 +290,7 @@ export default function Home() {
       const apiRes = await fetch(`${API_BASE}/api/v1/search/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: targetLimit || 10, options })
+        body: JSON.stringify({ query, limit: targetLimit || 50, options })
       });
 
       if (apiRes.ok) {
@@ -338,7 +338,7 @@ export default function Home() {
     }
 
     // Direct Public OpenStreetMap Directory Fallback (Real places on Vercel / browser)
-    const realOsmLeads = await fetchOpenStreetMapPlaces(query, targetLimit || 10);
+    const realOsmLeads = await fetchOpenStreetMapPlaces(query, targetLimit || 50);
     if (realOsmLeads && realOsmLeads.length > 0) {
       updateLeadsAndPersist(realOsmLeads);
       saveSessionToHistory(query, realOsmLeads);
