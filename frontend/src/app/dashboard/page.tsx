@@ -12,6 +12,7 @@ import { AiPitchModal } from '@/components/leads/ai-pitch-modal';
 import { StatTile } from '@/components/dashboard/stat-tile';
 import { AnalyticsCharts } from '@/components/dashboard/analytics-charts';
 import { ScrapingHistoryTable, ScrapingSession } from '@/components/dashboard/scraping-history-table';
+import { KanbanBoard } from '@/components/dashboard/kanban-board';
 import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
 import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X, Trash2, Columns } from 'lucide-react';
 
