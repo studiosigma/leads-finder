@@ -303,10 +303,10 @@ export async function POST(req: Request) {
     const qLower = query.toLowerCase();
     const isIndustrialQuery = qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur') || qLower.includes('gudang');
 
-    // 2. Check B2B Corporate Registry Match for High Intent Regional Queries
+    // 2. Check Regional Knowledge Registry Match for High Intent Regional Queries
     const verifiedCorporateResults: any[] = [];
     for (const [regionKey, corpList] of Object.entries(VERIFIED_CORPORATE_REGISTRY)) {
-      if (qLower.includes(regionKey) && isIndustrialQuery) {
+      if (qLower.includes(regionKey)) {
         corpList.forEach((corp, idx) => {
           verifiedCorporateResults.push({
             id: `b2b-verified-${idx}`,
@@ -332,8 +332,8 @@ export async function POST(req: Request) {
 
     // 3. Smart Multi-Query OpenStreetMap Geocoding Engine
     const cleanQuery = query.replace(/\b(di|ke|dalam|daerah|kawasan|kota|kabupaten|cari|temukan|prospek)\b/gi, ' ').replace(/\s+/g, ' ').trim();
-    const locMatch = qLower.match(/(?:di|ke|kabupaten|kota|daerah|kawasan)?\s*([a-z0-9\s]+)$/i);
-    const locationKeyword = locMatch ? locMatch[1].trim() : query;
+    const rawLoc = qLower.split(/\b(di|ke|daerah|kawasan|kabupaten|kota)\b/i).pop() || query;
+    const locationKeyword = rawLoc.replace(/[^a-z0-9\s]/gi, '').replace(/\b(di|ke|daerah|kawasan|kabupaten|kota)\b/gi, '').trim() || query;
 
     const searchQueries: string[] = Array.from(new Set([query, cleanQuery])).filter(Boolean);
 
