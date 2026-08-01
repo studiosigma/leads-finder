@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ShieldAlert, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap, Copy, Check } from 'lucide-react';
+import { WhatsappPitchModal } from './whatsapp-pitch-modal';
 
 interface Lead {
   id: string;
@@ -48,6 +49,9 @@ export const DataTable = ({
 
   // Optimistic UI State Store for 0ms status latency
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
+
+  // WhatsApp Outreach Studio Modal State
+  const [waModalLead, setWaModalLead] = useState<Lead | null>(null);
 
   // Micro-interaction: Click-to-copy state
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -405,7 +409,16 @@ export const DataTable = ({
 
                   {/* Hover Quick Actions Bar */}
                   <td className="py-3.5 px-4 text-center relative">
-                    <div className="flex items-center justify-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                      {hasValidPhone && (
+                        <button
+                          onClick={() => setWaModalLead(lead)}
+                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-[10px] rounded-lg border border-emerald-200 flex items-center gap-1 transition-all shadow-xs shrink-0 cursor-pointer"
+                          title="Open AI WhatsApp Outreach Studio"
+                        >
+                          <MessageCircle size={11} className="fill-emerald-500 text-emerald-600 shrink-0" /> Pitch WA
+                        </button>
+                      )}
                       {onOpenAiPitchModal && (
                         <button
                           onClick={() => onOpenAiPitchModal(lead)}
@@ -482,6 +495,13 @@ export const DataTable = ({
           </button>
         </div>
       </div>
+
+      {/* AI WhatsApp Pitch Studio Modal */}
+      <WhatsappPitchModal
+        isOpen={!!waModalLead}
+        onClose={() => setWaModalLead(null)}
+        lead={waModalLead}
+      />
     </div>
   );
 };
