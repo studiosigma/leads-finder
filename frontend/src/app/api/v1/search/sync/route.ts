@@ -271,6 +271,45 @@ async function crawlWebsiteForContacts(url: string) {
   return {};
 }
 
+function detectGoogleMapsCategoryTag(name: string, place: any): string {
+  const n = name.toLowerCase();
+  const type = (place.type || place.category || '').toLowerCase();
+  const amenity = (place.address?.amenity || place.extratags?.amenity || '').toLowerCase();
+
+  // Education Sub-Tags
+  if (n.includes('sma n') || n.includes('sma negeri') || n.includes('sma ') || n.includes('sekolah menengah atas')) return 'Sekolah Menengah Atas (SMA)';
+  if (n.includes('smk n') || n.includes('smk negeri') || n.includes('smk ') || n.includes('sekolah menengah kejuruan')) return 'Sekolah Menengah Kejuruan (SMK)';
+  if (n.includes('smp n') || n.includes('smp negeri') || n.includes('smp ')) return 'Sekolah Menengah Pertama (SMP)';
+  if (n.includes('sd n') || n.includes('sd negeri') || n.includes('sd ')) return 'Sekolah Dasar (SD)';
+  if (n.includes('universitas') || n.includes('unsika') || n.includes('ui ') || n.includes('itb ') || n.includes('ugm ') || n.includes('unpad') || n.includes('sekolah tinggi') || n.includes('politeknik') || n.includes('institut')) return 'Perguruan Tinggi & Universitas';
+  if (n.includes('pesantren') || n.includes('ponpes') || n.includes('islamic school')) return 'Pondok Pesantren & Ma\'had';
+  if (n.includes('bimbel') || n.includes('kumon') || n.includes('kursus') || n.includes('les')) return 'Bimbingan Belajar & Kursus';
+  if (type === 'school' || amenity === 'school') return 'Sekolah & Educational Center';
+
+  // Health Sub-Tags
+  if (n.includes('rsud') || n.includes('rumah sakit umum')) return 'Rumah Sakit Umum (RSUD)';
+  if (n.includes('rs ') || n.includes('rumah sakit')) return 'Rumah Sakit & Medical Center';
+  if (n.includes('klinik') || n.includes('puskesmas')) return 'Klinik Kesehatan & Puskesmas';
+  if (n.includes('apotek') || n.includes('pharmacy')) return 'Apotek & Farmasi';
+
+  // Industrial Sub-Tags
+  if (n.includes('pt ') || n.includes('tbk') || n.includes('plant') || n.includes('pabrik') || type === 'industrial' || type === 'works') return 'Manufaktur & Pabrik Industri';
+  if (n.includes('gudang') || n.includes('warehouse') || n.includes('logistik')) return 'Gudang & Pergudangan Logistik';
+
+  // Hospitality Sub-Tags
+  if (n.includes('hotel') || n.includes('resort')) return 'Hotel & Resort';
+  if (n.includes('villa') || n.includes('homestay') || n.includes('penginapan')) return 'Penginapan & Homestay';
+
+  // Food & Beverage Sub-Tags
+  if (n.includes('restoran') || n.includes('rumah makan') || type === 'restaurant') return 'Restoran & Kuliner';
+  if (n.includes('cafe') || n.includes('kafe') || n.includes('coffee') || n.includes('kopi')) return 'Kafe & Coffee Shop';
+
+  // Automotive Sub-Tags
+  if (n.includes('dealer') || n.includes('showroom') || n.includes('bengkel') || n.includes('auto')) return 'Dealer & Otomotif';
+
+  return 'Bisnis & Komersial';
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -435,19 +474,11 @@ export async function POST(req: Request) {
         }
       }
 
-      const nameKey = primaryName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (!nameKey || seenNames.has(nameKey)) continue;
-      seenNames.add(nameKey);
-
       const city = place.address?.city || place.address?.county || place.address?.town || place.address?.city_district || place.address?.state || 'Indonesia';
       const state = place.address?.state || '';
       const locationStr = state ? `${city}, ${state}` : `${city}, Indonesia`;
 
-      const rawCat = place.type || place.category || 'Business';
-      let category = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
-      if (category === 'Industrial' || category === 'Works' || isIndustrialQuery) {
-        category = 'Manufaktur & Industry';
-      }
+      const category = detectGoogleMapsCategoryTag(primaryName, place);
 
       const extra = place.extratags || {};
       let website = extra.website || extra['contact:website'] || extra.url || 'N/A';
