@@ -280,28 +280,44 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Multi-Query OpenStreetMap Geocoding Search
-    const searchQueries = [query];
+    // 3. Smart Multi-Query OpenStreetMap Geocoding Engine
+    const cleanQuery = query.replace(/\b(di|ke|dalam|daerah|kawasan|kota|kabupaten|cari|temukan|prospek)\b/gi, ' ').replace(/\s+/g, ' ').trim();
     const locMatch = qLower.match(/(?:di|ke|kabupaten|kota|daerah|kawasan)?\s*([a-z0-9\s]+)$/i);
     const locationKeyword = locMatch ? locMatch[1].trim() : query;
+
+    const searchQueries: string[] = Array.from(new Set([query, cleanQuery])).filter(Boolean);
 
     if (isIndustrialQuery) {
       searchQueries.push(`Kawasan Industri ${locationKeyword}`);
       searchQueries.push(`PT ${locationKeyword}`);
-    } else if (qLower.includes('sekolah') || qLower.includes('pendidikan')) {
-      searchQueries.push(`SMA SMK ${locationKeyword}`);
-    } else if (qLower.includes('rumah sakit') || qLower.includes('klinik')) {
+      searchQueries.push(`Pabrik ${locationKeyword}`);
+    } else if (qLower.includes('sekolah') || qLower.includes('pendidikan') || qLower.includes('kampus')) {
+      searchQueries.push(`SMA ${locationKeyword}`);
+      searchQueries.push(`SMK ${locationKeyword}`);
+      searchQueries.push(`SMP ${locationKeyword}`);
+      searchQueries.push(`SD ${locationKeyword}`);
+      searchQueries.push(`Universitas ${locationKeyword}`);
+      searchQueries.push(`School ${locationKeyword}`);
+    } else if (qLower.includes('rumah sakit') || qLower.includes('rs') || qLower.includes('klinik') || qLower.includes('kesehatan')) {
       searchQueries.push(`RS ${locationKeyword}`);
+      searchQueries.push(`Rumah Sakit ${locationKeyword}`);
+      searchQueries.push(`Klinik ${locationKeyword}`);
+    } else if (qLower.includes('hotel') || qLower.includes('penginapan') || qLower.includes('resort')) {
+      searchQueries.push(`Hotel ${locationKeyword}`);
+      searchQueries.push(`Resort ${locationKeyword}`);
+    } else if (qLower.includes('restoran') || qLower.includes('kuliner') || qLower.includes('cafe')) {
+      searchQueries.push(`Restoran ${locationKeyword}`);
+      searchQueries.push(`Cafe ${locationKeyword}`);
     }
 
     const allPlaces: any[] = [];
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.6',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.7',
       'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
     };
 
     for (const qStr of searchQueries) {
-      if (allPlaces.length >= limit * 2) break;
+      if (allPlaces.length >= limit * 3) break;
       try {
         const encoded = encodeURIComponent(qStr);
         const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limit}`;
