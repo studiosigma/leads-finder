@@ -162,6 +162,54 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
       linkedin_url: "https://www.linkedin.com/company/nestle-s-a-",
       gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Nestle+Indonesia+Karawang",
       sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    },
+    {
+      name: "UNSIKA - Universitas Singaperbangsa Karawang",
+      category: "Pendidikan & Perguruan Tinggi — Telukjambe",
+      location: "Telukjambe Timur, Karawang, Jawa Barat",
+      address: "Jl. HS. Ronggo Waluyo, Pacing, Telukjambe Timur, Karawang, Jawa Barat 41361",
+      website: "https://www.unsika.ac.id",
+      email: "info@unsika.ac.id",
+      phone: "+62267641177",
+      linkedin_url: "https://www.linkedin.com/school/universitas-singaperbangsa-karawang/",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=UNSIKA+Universitas+Singaperbangsa+Karawang",
+      sources: ["Verifikator Direktori Pendidikan", "Google Maps"]
+    },
+    {
+      name: "SMA Negeri 1 Karawang",
+      category: "Pendidikan & Sekolah Menengah — Karawang Barat",
+      location: "Karawang Barat, Karawang, Jawa Barat",
+      address: "Jl. Ahmad Yani No. 22, Nagasari, Karawang Barat, Karawang, Jawa Barat 41312",
+      website: "https://www.sman1karawang.sch.id",
+      email: "info@sman1karawang.sch.id",
+      phone: "+62267402514",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=SMA+Negeri+1+Karawang",
+      sources: ["Verifikator Direktori Pendidikan", "Google Maps"]
+    },
+    {
+      name: "SMK Negeri 1 Karawang",
+      category: "Pendidikan & Kejuruan — Karawang Barat",
+      location: "Karawang Barat, Karawang, Jawa Barat",
+      address: "Jl. Pangkal Perjuangan, By Pass, Karawang Barat, Karawang, Jawa Barat 41316",
+      website: "https://www.smkn1karawang.sch.id",
+      email: "smkn1karawang@yahoo.com",
+      phone: "+62267401651",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=SMK+Negeri+1+Karawang",
+      sources: ["Verifikator Direktori Pendidikan", "Google Maps"]
+    },
+    {
+      name: "RSUD Kabupaten Karawang",
+      category: "Kesehatan & Rumah Sakit — Telukjambe",
+      location: "Telukjambe Timur, Karawang, Jawa Barat",
+      address: "Jl. Galuh Mas Raya No. 1, Sukaharja, Telukjambe Timur, Karawang, Jawa Barat 41361",
+      website: "https://rsud.karawangkab.go.id",
+      email: "rsudkarawang@yahoo.com",
+      phone: "+62267640115",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=RSUD+Kabupaten+Karawang",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
     }
   ]
 };
@@ -321,7 +369,7 @@ export async function POST(req: Request) {
       try {
         const encoded = encodeURIComponent(qStr);
         const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&extratags=1&namedetails=1&limit=${limit}`;
-        const osmRes = await fetch(osmUrl, { headers, next: { revalidate: 3600 } });
+        const osmRes = await fetch(osmUrl, { headers, cache: 'no-store' });
         if (osmRes.ok) {
           const places = await osmRes.json();
           if (Array.isArray(places)) {
