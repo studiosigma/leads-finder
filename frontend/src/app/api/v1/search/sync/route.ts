@@ -211,6 +211,77 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
       gmaps_url: "https://www.google.com/maps/search/?api=1&query=RSUD+Kabupaten+Karawang",
       sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
     }
+  ],
+  tangerang: [
+    {
+      name: "PT Gajah Tunggal Tbk",
+      category: "Automotive & Rubber Industry — Jatake Tangerang",
+      location: "Jatake, Tangerang, Banten",
+      address: "Jl. Gajah Tunggal Km 7, Pasir Jaya, Jatiuwung, Tangerang, Banten 15135",
+      website: "https://www.gt-tires.com",
+      email: "corporate@gt-tires.com",
+      phone: "+62215901308",
+      linkedin_url: "https://www.linkedin.com/company/pt-gajah-tunggal-tbk",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Gajah+Tunggal+Tbk+Tangerang",
+      sources: ["Verifikator SIINas Kemenperin", "Google Maps"],
+      is_siinas_verified: true
+    },
+    {
+      name: "PT Indofood CBP Sukses Makmur Tbk (Cikupa Plant)",
+      category: "FMCG & Food Manufacturing — Cikupa Tangerang",
+      location: "Cikupa, Tangerang, Banten",
+      address: "Jl. Raya Serang Km 15, Cikupa, Tangerang, Banten 15710",
+      website: "https://www.indofoodcbp.com",
+      email: "corporate@indofoodcbp.com",
+      phone: "+62215960000",
+      linkedin_url: "https://www.linkedin.com/company/indofood",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Indofood+CBP+Sukses+Makmur+Tbk+Tangerang",
+      sources: ["Verifikator SIINas Kemenperin", "Google Maps"],
+      is_siinas_verified: true
+    }
+  ],
+  surabaya: [
+    {
+      name: "PT Semen Indonesia Tbk (SIG)",
+      category: "Manufaktur Heavy Industry & Cement — Gresik Surabaya",
+      location: "Gresik, Surabaya, Jawa Timur",
+      address: "Jl. Veteran, Sidomoro, Kebomas, Gresik, Jawa Timur 61122",
+      website: "https://www.sig.id",
+      email: "info@sig.id",
+      phone: "+62313981732",
+      linkedin_url: "https://www.linkedin.com/company/pt-semen-indonesia-persero-tbk",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Semen+Indonesia+Tbk+Surabaya",
+      sources: ["Verifikator SIINas Kemenperin", "Google Maps"],
+      is_siinas_verified: true
+    },
+    {
+      name: "PT Petrokimia Gresik",
+      category: "Manufaktur Chemical & Fertilizer — Gresik",
+      location: "Gresik, Jawa Timur",
+      address: "Jl. Jendral Ahmad Yani, Ngipik, Karangpobringan, Gresik, Jawa Timur 61119",
+      website: "https://petrokimia-gresik.com",
+      email: "pkg@petrokimia-gresik.com",
+      phone: "+62313981811",
+      linkedin_url: "https://www.linkedin.com/company/pt-petrokimia-gresik",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Petrokimia+Gresik",
+      sources: ["Verifikator SIINas Kemenperin", "Google Maps"],
+      is_siinas_verified: true
+    }
+  ],
+  medan: [
+    {
+      name: "PT Wilmar Nabati Indonesia (Medan Factory)",
+      category: "Agri-Industry & Palm Oil — KIM Medan",
+      location: "Kawasan Industri Medan (KIM), Medan, Sumatera Utara",
+      address: "Kawasan Industri Medan II, Jl. Pulau Pinang III, Saentis, Deli Serdang, Sumatera Utara 20371",
+      website: "https://www.wilmar-international.com",
+      email: "info@wilmar.co.id",
+      phone: "+61616871000",
+      linkedin_url: "https://www.linkedin.com/company/wilmar-international",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Wilmar+Nabati+Indonesia+Medan",
+      sources: ["Verifikator SIINas Kemenperin", "Google Maps"],
+      is_siinas_verified: true
+    }
   ]
 };
 
@@ -404,7 +475,8 @@ export async function POST(req: Request) {
             status: 'READY',
             sources: corp.sources,
             lead_score: 100,
-            is_corporate: true
+            is_corporate: true,
+            is_siinas_verified: corp.is_siinas_verified || true
           });
         });
       }

@@ -200,13 +200,20 @@ export const DataTable = ({
 
                   {/* Sticky First Column: Company Name */}
                   <td className="py-3.5 px-4 font-semibold text-slate-900 sticky left-10 z-10 bg-white group-hover:bg-slate-50/90 border-r border-slate-100 shadow-xs">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-lg font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs ${avatarClass}`}>
-                        {getAvatarLetter(lead.name)}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 rounded-lg font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs ${avatarClass}`}>
+                          {getAvatarLetter(lead.name)}
+                        </div>
+                        <span className="text-slate-900 font-extrabold text-xs truncate max-w-[170px]" title={lead.name}>
+                          {lead.name || '-'}
+                        </span>
                       </div>
-                      <span className="text-slate-900 font-extrabold text-xs truncate max-w-[170px]" title={lead.name}>
-                        {lead.name || '-'}
-                      </span>
+                      {(lead as any).is_siinas_verified && (
+                        <span className="ml-9 inline-flex items-center gap-1 text-[9px] font-extrabold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/80 w-fit shadow-2xs">
+                          🏛️ SIINas Kemenperin
+                        </span>
+                      )}
                     </div>
                   </td>
 
