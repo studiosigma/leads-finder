@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ShieldAlert, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap, Copy, Check } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ShieldAlert, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap, Copy, Check, Table } from 'lucide-react';
 import { WhatsappPitchModal } from './whatsapp-pitch-modal';
+import { GoogleSheetsModal } from './google-sheets-modal';
 
 interface Lead {
   id: string;
@@ -52,6 +53,33 @@ export const DataTable = ({
 
   // WhatsApp Outreach Studio Modal State
   const [waModalLead, setWaModalLead] = useState<Lead | null>(null);
+
+  // Google Sheets Integration State
+  const [isGsheetsModalOpen, setIsGsheetsModalOpen] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+
+  const handleSyncToGoogleSheets = async (targetLeads: Lead[]) => {
+    const webhookUrl = localStorage.getItem('leads_finder_gsheet_webhook');
+    if (!webhookUrl) {
+      setIsGsheetsModalOpen(true);
+      return;
+    }
+
+    setSyncStatus('syncing');
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetLeads)
+      });
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } catch (e) {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
 
   // Micro-interaction: Click-to-copy state
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -135,8 +163,56 @@ export const DataTable = ({
     return 'bg-blue-100 text-blue-800 border-blue-300 font-bold';
   };
 
+  const selectedLeads = leads.filter((l) => selectedIds.includes(l.id));
+
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs font-sans space-y-0 relative">
+      {/* Top Google Sheets Sync Action Bar */}
+      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          {selectedIds.length > 0 ? (
+            <button
+              onClick={() => handleSyncToGoogleSheets(selectedLeads)}
+              disabled={syncStatus === 'syncing'}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            >
+              <Table size={14} /> Sync {selectedIds.length} Selected to Google Sheets
+            </button>
+          ) : (
+            <button
+              onClick={() => handleSyncToGoogleSheets(leads)}
+              disabled={syncStatus === 'syncing' || leads.length === 0}
+              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              <Table size={14} className="text-emerald-600" /> Sync All ({leads.length}) to Google Sheets
+            </button>
+          )}
+
+          {syncStatus === 'syncing' && (
+            <span className="text-emerald-700 font-bold text-xs animate-pulse flex items-center gap-1">
+              ⏳ Syncing data ke Google Sheets...
+            </span>
+          )}
+          {syncStatus === 'success' && (
+            <span className="text-emerald-700 font-extrabold text-xs flex items-center gap-1 bg-emerald-100 px-2 py-0.5 rounded">
+              ✅ Berhasil Ter-sync ke Google Sheets!
+            </span>
+          )}
+          {syncStatus === 'error' && (
+            <span className="text-rose-700 font-extrabold text-xs flex items-center gap-1 bg-rose-100 px-2 py-0.5 rounded">
+              ❌ Gagal Sync (Periksa URL Webhook)
+            </span>
+          )}
+        </div>
+
+        <button
+          onClick={() => setIsGsheetsModalOpen(true)}
+          className="text-slate-600 hover:text-slate-900 font-bold text-xs flex items-center gap-1.5 hover:underline cursor-pointer"
+        >
+          ⚙️ Setting Webhook Google Sheets
+        </button>
+      </div>
+
       <div className="overflow-x-auto max-h-[70vh]">
         <table className="w-full text-left text-xs border-collapse">
           {/* Sticky Table Header */}
@@ -508,6 +584,12 @@ export const DataTable = ({
         isOpen={!!waModalLead}
         onClose={() => setWaModalLead(null)}
         lead={waModalLead}
+      />
+
+      {/* Google Sheets Sync Setting Modal */}
+      <GoogleSheetsModal
+        isOpen={isGsheetsModalOpen}
+        onClose={() => setIsGsheetsModalOpen(false)}
       />
     </div>
   );

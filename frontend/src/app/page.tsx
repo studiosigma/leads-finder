@@ -239,6 +239,24 @@ export default function Home() {
     return [];
   };
 
+  const autoPushToGoogleSheets = async (leadBatch: any[]) => {
+    try {
+      const isAuto = localStorage.getItem('leads_finder_gsheet_autosync') === 'true';
+      const webhookUrl = localStorage.getItem('leads_finder_gsheet_webhook');
+      if (isAuto && webhookUrl && leadBatch.length > 0) {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(leadBatch)
+        });
+        console.log('[Google Sheets Auto-Sync] Pushed', leadBatch.length, 'leads to Google Sheets Webhook');
+      }
+    } catch (e) {
+      console.warn('[Google Sheets Auto-Sync] Auto-push error:', e);
+    }
+  };
+
   const handleSearch = async (query: string, options?: SearchOptions) => {
     if (streamIntervalRef.current) {
       clearInterval(streamIntervalRef.current);
@@ -301,6 +319,7 @@ export default function Home() {
           }
           updateLeadsAndPersist(cleanLive);
           saveSessionToHistory(query, cleanLive);
+          autoPushToGoogleSheets(cleanLive);
 
           setSearchSteps([
             { id: '1', label: 'Phase 1: AI Intent & Geocoding Core Profiles Resolved', status: 'completed' },
@@ -323,6 +342,7 @@ export default function Home() {
     if (realOsmLeads && realOsmLeads.length > 0) {
       updateLeadsAndPersist(realOsmLeads);
       saveSessionToHistory(query, realOsmLeads);
+      autoPushToGoogleSheets(realOsmLeads);
 
       setSearchSteps([
         { id: '1', label: 'Phase 1: AI Intent & Geocoding Core Profiles Resolved', status: 'completed' },
