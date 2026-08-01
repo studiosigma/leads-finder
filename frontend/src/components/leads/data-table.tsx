@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap, Copy, Check } from 'lucide-react';
+import { Mail, Phone, Globe, MapPin, Send, MessageCircle, MoreHorizontal, Sparkles, CheckCircle2, ShieldCheck, ShieldAlert, ExternalLink, Linkedin, Shield, Trophy, ChevronLeft, ChevronRight, Zap, Copy, Check } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -292,9 +292,19 @@ export const DataTable = ({
                           </button>
                         </div>
 
-                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/80 w-fit">
-                          <ShieldCheck size={11} className="text-emerald-600 shrink-0" /> MX Verified ({lead.email_score || 98}% Score)
-                        </span>
+                        {lead.email_status === 'DELIVERABLE' || lead.email_status === 'VALID' ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/80 w-fit">
+                            <ShieldCheck size={11} className="text-emerald-600 shrink-0" /> 🟩 DELIVERABLE (Zero Bounce)
+                          </span>
+                        ) : lead.email_status === 'CATCH_ALL' ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 w-fit">
+                            <ShieldAlert size={11} className="text-amber-600 shrink-0" /> 🟨 CATCH-ALL (Risky)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/80 w-fit">
+                            <ShieldCheck size={11} className="text-slate-500 shrink-0" /> MX Active
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="text-slate-400 font-bold">-</span>
