@@ -436,9 +436,9 @@ export async function POST(req: Request) {
     const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 999;
     const limit = Math.min(Math.max(requestLimit, 1), 999);
 
-    // 1. Try forwarding to Python FastAPI backend if BACKEND_URL is configured
-    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL;
-    if (BACKEND_URL && !BACKEND_URL.includes('localhost')) {
+    // 1. Try forwarding to Python FastAPI backend ONLY if dedicated external BACKEND_URL is configured (not pointing to vercel.app self)
+    const BACKEND_URL = process.env.PYTHON_BACKEND_URL || process.env.BACKEND_URL;
+    if (BACKEND_URL && !BACKEND_URL.includes('localhost') && !BACKEND_URL.includes('vercel.app')) {
       try {
         const backendRes = await fetch(`${BACKEND_URL}/api/v1/search/sync`, {
           method: 'POST',
