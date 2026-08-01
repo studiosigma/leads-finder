@@ -427,12 +427,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { query } = body;
 
-    const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 50;
-    const limit = Math.min(Math.max(requestLimit, 10), 100);
-
     if (!query || typeof query !== 'string') {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
+
+    const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 50;
+    const limit = Math.min(Math.max(requestLimit, 10), 100);
 
     // 1. Try forwarding to Python FastAPI backend if BACKEND_URL is configured
     const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL;
@@ -453,9 +453,6 @@ export async function POST(req: Request) {
         console.warn('[Next.js API Search Route] External backend unreachable, switching to serverless engine:', e);
       }
     }
-
-    const requestLimit = body.limit ? parseInt(String(body.limit), 10) : 50;
-    const limit = Math.min(Math.max(requestLimit, 10), 100);
 
     const qLower = query.toLowerCase();
     const isIndustrialQuery = qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur') || qLower.includes('gudang');

@@ -299,6 +299,29 @@ export default function Home() {
         if (Array.isArray(liveResults) && liveResults.length > 0) {
           let cleanLive = liveResults.filter((l: any) => !isLegacySyntheticLead(l));
 
+          // Strict Category Intent Filtering
+          const qL = query.toLowerCase();
+          const isEduc = qL.includes('sekolah') || qL.includes('pendidikan') || qL.includes('kampus') || qL.includes('pesantren') || qL.includes('sma') || qL.includes('smk') || qL.includes('sd') || qL.includes('smp') || qL.includes('universitas');
+          const isHealth = qL.includes('rumah sakit') || qL.includes('rs') || qL.includes('rsud') || qL.includes('klinik') || qL.includes('kesehatan') || qL.includes('apotek');
+          const isIndus = qL.includes('pabrik') || qL.includes('industri') || qL.includes('manufaktur') || qL.includes('gudang');
+
+          if (isEduc) {
+            cleanLive = cleanLive.filter(l => {
+              const catStr = (l.name + ' ' + l.category).toLowerCase();
+              return !catStr.includes('manufacturing') && !catStr.includes('automotive') && !catStr.includes('fmcg') && !catStr.includes('rumah sakit') && !catStr.includes('kesehatan');
+            });
+          } else if (isHealth) {
+            cleanLive = cleanLive.filter(l => {
+              const catStr = (l.name + ' ' + l.category).toLowerCase();
+              return !catStr.includes('manufacturing') && !catStr.includes('automotive') && !catStr.includes('fmcg') && !catStr.includes('pendidikan') && !catStr.includes('sekolah');
+            });
+          } else if (isIndus) {
+            cleanLive = cleanLive.filter(l => {
+              const catStr = (l.name + ' ' + l.category).toLowerCase();
+              return !catStr.includes('pendidikan') && !catStr.includes('sekolah') && !catStr.includes('rumah sakit') && !catStr.includes('klinik');
+            });
+          }
+
           // Apply options precision filters on client if passed
           if (options) {
             if (options.requireEmail || options.requirePhone || options.requireWebsite) {
