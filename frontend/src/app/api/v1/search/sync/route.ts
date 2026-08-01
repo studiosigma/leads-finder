@@ -330,34 +330,55 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Smart Multi-Query OpenStreetMap Geocoding Engine
+    // 3. AI Multi-Query Category Intent Engine (Comprehensive B2B Expansion)
     const cleanQuery = query.replace(/\b(di|ke|dalam|daerah|kawasan|kota|kabupaten|cari|temukan|prospek)\b/gi, ' ').replace(/\s+/g, ' ').trim();
     const rawLoc = qLower.split(/\b(di|ke|daerah|kawasan|kabupaten|kota)\b/i).pop() || query;
     const locationKeyword = rawLoc.replace(/[^a-z0-9\s]/gi, '').replace(/\b(di|ke|daerah|kawasan|kabupaten|kota)\b/gi, '').trim() || query;
 
     const searchQueries: string[] = Array.from(new Set([query, cleanQuery])).filter(Boolean);
 
-    if (isIndustrialQuery) {
-      searchQueries.push(`Kawasan Industri ${locationKeyword}`);
-      searchQueries.push(`PT ${locationKeyword}`);
-      searchQueries.push(`Pabrik ${locationKeyword}`);
-    } else if (qLower.includes('sekolah') || qLower.includes('pendidikan') || qLower.includes('kampus')) {
+    if (qLower.includes('sekolah') || qLower.includes('pendidikan') || qLower.includes('kampus') || qLower.includes('pesantren') || qLower.includes('les') || qLower.includes('kursus')) {
       searchQueries.push(`SMA ${locationKeyword}`);
       searchQueries.push(`SMK ${locationKeyword}`);
       searchQueries.push(`SMP ${locationKeyword}`);
       searchQueries.push(`SD ${locationKeyword}`);
       searchQueries.push(`Universitas ${locationKeyword}`);
+      searchQueries.push(`Sekolah Tinggi ${locationKeyword}`);
+      searchQueries.push(`Politeknik ${locationKeyword}`);
+      searchQueries.push(`Pesantren ${locationKeyword}`);
+      searchQueries.push(`Bimbel ${locationKeyword}`);
       searchQueries.push(`School ${locationKeyword}`);
-    } else if (qLower.includes('rumah sakit') || qLower.includes('rs') || qLower.includes('klinik') || qLower.includes('kesehatan')) {
+    } else if (qLower.includes('rumah sakit') || qLower.includes('rs') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('apotek') || qLower.includes('medis')) {
+      searchQueries.push(`RSUD ${locationKeyword}`);
       searchQueries.push(`RS ${locationKeyword}`);
       searchQueries.push(`Rumah Sakit ${locationKeyword}`);
       searchQueries.push(`Klinik ${locationKeyword}`);
-    } else if (qLower.includes('hotel') || qLower.includes('penginapan') || qLower.includes('resort')) {
+      searchQueries.push(`Puskesmas ${locationKeyword}`);
+      searchQueries.push(`Apotek ${locationKeyword}`);
+    } else if (isIndustrialQuery) {
+      searchQueries.push(`Kawasan Industri ${locationKeyword}`);
+      searchQueries.push(`PT ${locationKeyword}`);
+      searchQueries.push(`Pabrik ${locationKeyword}`);
+      searchQueries.push(`Gudang ${locationKeyword}`);
+      searchQueries.push(`Distributor ${locationKeyword}`);
+    } else if (qLower.includes('hotel') || qLower.includes('penginapan') || qLower.includes('resort') || qLower.includes('villa') || qLower.includes('homestay')) {
       searchQueries.push(`Hotel ${locationKeyword}`);
       searchQueries.push(`Resort ${locationKeyword}`);
-    } else if (qLower.includes('restoran') || qLower.includes('kuliner') || qLower.includes('cafe')) {
+      searchQueries.push(`Villa ${locationKeyword}`);
+      searchQueries.push(`Penginapan ${locationKeyword}`);
+    } else if (qLower.includes('restoran') || qLower.includes('kuliner') || qLower.includes('cafe') || qLower.includes('kafe') || qLower.includes('rumah makan') || qLower.includes('catering')) {
       searchQueries.push(`Restoran ${locationKeyword}`);
+      searchQueries.push(`Rumah Makan ${locationKeyword}`);
       searchQueries.push(`Cafe ${locationKeyword}`);
+      searchQueries.push(`Catering ${locationKeyword}`);
+    } else if (qLower.includes('bengkel') || qLower.includes('dealer') || qLower.includes('otomotif') || qLower.includes('showroom')) {
+      searchQueries.push(`Dealer ${locationKeyword}`);
+      searchQueries.push(`Showroom ${locationKeyword}`);
+      searchQueries.push(`Bengkel ${locationKeyword}`);
+    } else if (qLower.includes('toko') || qLower.includes('supermarket') || qLower.includes('minimarket') || qLower.includes('grosir')) {
+      searchQueries.push(`Supermarket ${locationKeyword}`);
+      searchQueries.push(`Grosir ${locationKeyword}`);
+      searchQueries.push(`Toko ${locationKeyword}`);
     }
 
     const headers = {
@@ -365,7 +386,7 @@ export async function POST(req: Request) {
       'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
     };
 
-    const queryPromises = searchQueries.slice(0, 4).map(async (qStr) => {
+    const queryPromises = searchQueries.slice(0, 6).map(async (qStr) => {
       try {
         const controller = new AbortController();
         const tId = setTimeout(() => controller.abort(), 3500);
