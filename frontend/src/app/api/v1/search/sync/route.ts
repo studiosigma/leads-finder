@@ -836,7 +836,7 @@ function enrichHospitalDetails(lead: any) {
 
   if (isHealth) {
     const cleanSlug = nameLower
-      .replace(/rumah|sakit|umum|daerah|swasta|pusat|klinik|rsud|rs|karawang|cikarang|bekasi|jakarta|bandung|bogor|depok|tangerang/g, '')
+      .replace(/\b(rumah|sakit|umum|daerah|swasta|pusat|klinik|rsud|rs|karawang|cikarang|bekasi|jakarta|bandung|bogor|depok|tangerang)\b/gi, '')
       .replace(/[^a-z0-9]/g, '')
       .trim();
 
