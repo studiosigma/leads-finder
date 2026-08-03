@@ -683,7 +683,7 @@ async function searchGoogleMapsPlacesPrimary(queryStr: string) {
 function enrichSchoolDetails(lead: any) {
   const nameLower = lead.name.toLowerCase();
   const locLower = (lead.location || '').toLowerCase();
-  const isSchool = nameLower.includes('sekolah') || nameLower.includes('sma') || nameLower.includes('smk') || nameLower.includes('smp') || nameLower.includes('sd') || lead.category?.toLowerCase().includes('sekolah') || lead.category?.toLowerCase().includes('pendidikan');
+  const isSchool = /\bsekolah\b|\bsma\b|\bsmk\b|\bsmp\b|\bsd\b|\bmadrasah\b|\bpesantren\b/i.test(nameLower) || lead.category?.toLowerCase().includes('sekolah') || lead.category?.toLowerCase().includes('pendidikan');
 
   if (isSchool) {
     // 1. If website is missing, set official Kemdikbud Dapodik School Portal link
