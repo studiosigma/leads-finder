@@ -1313,23 +1313,24 @@ export async function POST(req: Request) {
     let filteredCombinedLeads = combinedLeads.filter(lead => {
       const itemText = (lead.name + ' ' + (lead.category || '')).toLowerCase();
       if (isHotelQuery) {
-        // Exclude health, hospitals, and schools from hotel search results
-        if (/\b(rumah sakit|rsud|rs|klinik|puskesmas|sekolah|sma|smk|sd)\b/i.test(itemText) && !/\b(hotel|resort|villa|inn|suites|cottage|homestay|lodge|stay|penginapan)\b/i.test(itemText)) {
+        const isAccommodation = /\b(hotel|resort|villa|inn|suites|cottage|homestay|lodge|stay|penginapan|bintang|guest\s*house|ibis|hilton|intercontinental|marriott|aston|hyatt|novotel|mercure|santika|amaris|horison)\b/i.test(itemText);
+        const isNonHotelCategory = /\b(rumah sakit|rsud|rs|klinik|puskesmas|sekolah|sma|smk|sd|manufaktur|pabrik|fmcg|automotive|steel|factory)\b/i.test(itemText);
+        if (isNonHotelCategory || !isAccommodation) {
           return false;
         }
       } else if (isHealthQuery) {
-        // Exclude hotels, resorts, and schools from hospital search results
-        if (/\b(hotel|resort|villa|homestay|sekolah|sma|smk|sd)\b/i.test(itemText) && !/\b(rumah sakit|rsud|rs|klinik|puskesmas|faskes)\b/i.test(itemText)) {
+        const isHealth = /\b(rumah sakit|rsud|rs|klinik|puskesmas|faskes|kesehatan|medika|hospital)\b/i.test(itemText);
+        if (!isHealth) {
           return false;
         }
       } else if (isEducQuery) {
-        // Exclude health and hotels from school search results
-        if (/\b(rumah sakit|rsud|rs|klinik|hotel|resort|villa)\b/i.test(itemText) && !/\b(sekolah|sma|smk|sd|smp|universitas|kampus|pesantren|bimbel)\b/i.test(itemText)) {
+        const isEduc = /\b(sekolah|sma|smk|sd|smp|universitas|kampus|pesantren|bimbel|akademi|politeknik|institut)\b/i.test(itemText);
+        if (!isEduc) {
           return false;
         }
       } else if (isIndustrialQuery) {
-        // Exclude hotels, health, and schools from factory search results
-        if (/\b(hotel|resort|villa|rumah sakit|rsud|klinik|sekolah|sma|smk)\b/i.test(itemText) && !/\b(pabrik|industri|manufaktur|gudang|factory|manufacturing)\b/i.test(itemText)) {
+        const isIndus = /\b(pabrik|industri|manufaktur|gudang|factory|manufacturing|textile|tekstil|plant|tbk|pt)\b/i.test(itemText);
+        if (!isIndus) {
           return false;
         }
       }
