@@ -1093,9 +1093,10 @@ export async function POST(req: Request) {
     }
 
     const qLower = query.toLowerCase();
-    const isIndustrialQuery = qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur') || qLower.includes('gudang');
-    const isEducQuery = qLower.includes('sekolah') || qLower.includes('pendidikan') || qLower.includes('kampus') || qLower.includes('pesantren') || qLower.includes('sma') || qLower.includes('smk') || qLower.includes('sd') || qLower.includes('smp') || qLower.includes('universitas') || qLower.includes('politeknik') || qLower.includes('bimbel');
-    const isHealthQuery = qLower.includes('rumah sakit') || qLower.includes('rs') || qLower.includes('rsud') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('apotek') || qLower.includes('puskesmas');
+    const isHotelQuery = /\b(hotel|resort|villa|inn|suites|cottage|homestay|lodge|stay|penginapan)\b/i.test(qLower);
+    const isIndustrialQuery = /\b(pabrik|industri|manufaktur|gudang|factory|manufacturing|textile|tekstil)\b/i.test(qLower);
+    const isEducQuery = /\b(sekolah|pendidikan|kampus|pesantren|sma|smk|sd|smp|universitas|politeknik|bimbel|perguruan tinggi)\b/i.test(qLower);
+    const isHealthQuery = /\b(rumah sakit|rsud|rs|klinik|kesehatan|apotek|puskesmas|faskes)\b/i.test(qLower) && !isHotelQuery;
 
     // 2. Check Regional Knowledge Registry Match with Category Relevance Filtering
     const verifiedCorporateResults: any[] = [];
@@ -1105,15 +1106,18 @@ export async function POST(req: Request) {
           const corpText = (corp.name + ' ' + corp.category).toLowerCase();
           
           let isMatch = false;
-          if (isEducQuery) {
+          if (isHotelQuery) {
+            isMatch = corpText.includes('hotel') || corpText.includes('resort') || corpText.includes('villa') || corpText.includes('penginapan') || corpText.includes('inn') || corpText.includes('suites');
+          } else if (isEducQuery) {
             isMatch = corpText.includes('sekolah') || corpText.includes('pendidikan') || corpText.includes('sma') || corpText.includes('smk') || corpText.includes('universitas') || corpText.includes('unsika') || corpText.includes('perguruan tinggi');
           } else if (isHealthQuery) {
             isMatch = corpText.includes('rumah sakit') || corpText.includes('rsud') || corpText.includes('rs ') || corpText.includes('klinik') || corpText.includes('kesehatan');
           } else if (isIndustrialQuery) {
             isMatch = corpText.includes('pabrik') || corpText.includes('industri') || corpText.includes('manufaktur') || corpText.includes('manufacturing') || corpText.includes('gudang') || corpText.includes('tbk') || corpText.includes('pt ');
           } else {
-            // General location search (e.g. "karawang", "tangerang")
-            isMatch = true;
+            // Match specific search keywords for general queries
+            const keywords = qLower.replace(/\b(di|ke|dari|kota|kabupaten|daerah)\b/g, '').trim().split(/\s+/).filter(w => w.length >= 3);
+            isMatch = keywords.some(kw => corpText.includes(kw));
           }
 
           if (isMatch) {
@@ -1305,15 +1309,42 @@ export async function POST(req: Request) {
     // Merge Verified Corporate Entities + Dynamic Places
     const combinedLeads = [...gmapsPrimaryLeads, ...verifiedCorporateResults, ...dynamicLeads];
 
-    // Run 100% Coverage Synthesizers on ALL combinedLeads
-    combinedLeads.forEach(lead => {
+    // Strict Niche Category Isolation Safeguard: Ensure irrelevant industries are never mixed into search results
+    let filteredCombinedLeads = combinedLeads.filter(lead => {
+      const itemText = (lead.name + ' ' + (lead.category || '')).toLowerCase();
+      if (isHotelQuery) {
+        // Exclude health, hospitals, and schools from hotel search results
+        if (/\b(rumah sakit|rsud|rs|klinik|puskesmas|sekolah|sma|smk|sd)\b/i.test(itemText) && !/\b(hotel|resort|villa|inn|suites|cottage|homestay|lodge|stay|penginapan)\b/i.test(itemText)) {
+          return false;
+        }
+      } else if (isHealthQuery) {
+        // Exclude hotels, resorts, and schools from hospital search results
+        if (/\b(hotel|resort|villa|homestay|sekolah|sma|smk|sd)\b/i.test(itemText) && !/\b(rumah sakit|rsud|rs|klinik|puskesmas|faskes)\b/i.test(itemText)) {
+          return false;
+        }
+      } else if (isEducQuery) {
+        // Exclude health and hotels from school search results
+        if (/\b(rumah sakit|rsud|rs|klinik|hotel|resort|villa)\b/i.test(itemText) && !/\b(sekolah|sma|smk|sd|smp|universitas|kampus|pesantren|bimbel)\b/i.test(itemText)) {
+          return false;
+        }
+      } else if (isIndustrialQuery) {
+        // Exclude hotels, health, and schools from factory search results
+        if (/\b(hotel|resort|villa|rumah sakit|rsud|klinik|sekolah|sma|smk)\b/i.test(itemText) && !/\b(pabrik|industri|manufaktur|gudang|factory|manufacturing)\b/i.test(itemText)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // Run 100% Coverage Synthesizers on filteredCombinedLeads
+    filteredCombinedLeads.forEach(lead => {
       enrichSchoolDetails(lead);
       enrichHospitalDetails(lead);
       enrichHotelDetails(lead);
       enrichFactoryDetails(lead);
     });
 
-    const finalResults = combinedLeads.slice(0, limit);
+    const finalResults = filteredCombinedLeads.slice(0, limit);
 
     // Fast Web Crawl Enrichment (Enrich top 30 leads)
     const enrichTargets = finalResults.slice(0, Math.min(30, finalResults.length));
