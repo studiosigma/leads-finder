@@ -456,6 +456,52 @@ async function discoverWebsiteAndPhone(name: string, location: string) {
   return result;
 }
 
+// Google Maps & Search Place Card DOM Scraper Engine
+async function scrapeGooglePlaceDom(name: string, location: string) {
+  const result: { website?: string; phone?: string } = {};
+  try {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' ' + location)}&hl=id&gl=id`;
+    const controller = new AbortController();
+    const tId = setTimeout(() => controller.abort(), 2500);
+
+    const gRes = await fetch(searchUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderDOMEngine/3.0',
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+      }
+    });
+    clearTimeout(tId);
+
+    if (gRes.ok) {
+      const html = await gRes.text();
+
+      // 1. Extract Phone Number from Google Place Card DOM
+      // Match patterns: href="tel:0811-997-848", aria-label="Telepon: 0811997848", or 08xx-xxxx-xxxx
+      const telMatch = html.match(/href=["']tel:([^"']+)["']/i) ||
+                        html.match(/aria-label=["'](?:Telepon|Phone):\s*([^"']+)["']/i) ||
+                        html.match(/(?:08[0-9]{2}[-\s]?[0-9]{3,4}[-\s]?[0-9]{3,4}|0[2-9][0-9]{1,3}[-\s]?[0-9]{5,8})/);
+      
+      if (telMatch) {
+        const rawNum = telMatch[1] || telMatch[0];
+        const cleanNum = rawNum.replace(/[^\d+]/g, '');
+        if (cleanNum.length >= 9 && cleanNum.length <= 15) {
+          result.phone = cleanNum.startsWith('+62') ? cleanNum : cleanNum.startsWith('0') ? cleanNum : `+62${cleanNum}`;
+        }
+      }
+
+      // 2. Extract Official Website URL from Google Place Card DOM
+      const webMatch = html.match(/href=["'](https?:\/\/(?:www\.)?[a-zA-Z0-9-]+\.(?:sch\.id|ac\.id|co\.id|go\.id|or\.id|com|id|net|org)[^"']*)["']/i);
+      if (webMatch && !webMatch[1].includes('google.com') && !webMatch[1].includes('schema.org') && !webMatch[1].includes('wikipedia')) {
+        result.website = webMatch[1];
+      }
+    }
+  } catch (e) {
+    // Ignore timeout
+  }
+  return result;
+}
+
 function detectGoogleMapsCategoryTag(name: string, place: any): string {
   const n = name.toLowerCase();
   const type = (place.type || place.category || '').toLowerCase();
@@ -825,7 +871,20 @@ function inferDecisionMakerInfo(name: string, category: string) {
     const enrichTargets = finalResults.slice(0, 15);
     await Promise.all(
       enrichTargets.map(async (lead) => {
-        // Deep Fallback: If phone or website is missing, discover via deep search & candidate domains
+        // 1. Primary DOM Scraper: Extract phone & website directly from Google Maps Place Card DOM
+        if (!lead.website || lead.website === 'N/A' || lead.website === '-' || !lead.phone || lead.phone === 'N/A' || lead.phone === '-') {
+          const domData = await scrapeGooglePlaceDom(lead.name, lead.location);
+          if (domData.phone && (lead.phone === 'N/A' || lead.phone === '-')) {
+            lead.phone = domData.phone;
+            lead.sources.push('Google Maps Place DOM');
+          }
+          if (domData.website && (lead.website === 'N/A' || lead.website === '-')) {
+            lead.website = domData.website;
+            lead.sources.push('Google Maps Place DOM');
+          }
+        }
+
+        // 2. Secondary Deep Search Fallback
         if (!lead.website || lead.website === 'N/A' || lead.website === '-' || !lead.phone || lead.phone === 'N/A' || lead.phone === '-') {
           const discovered = await discoverWebsiteAndPhone(lead.name, lead.location);
           if (discovered.website && (lead.website === 'N/A' || lead.website === '-')) {
