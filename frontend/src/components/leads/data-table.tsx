@@ -294,6 +294,17 @@ export const DataTable = ({
                           🏛️ SIINas Kemenperin
                         </span>
                       )}
+                      {(lead.category?.toLowerCase().includes('school') || lead.category?.toLowerCase().includes('pendidikan') || lead.name.toLowerCase().includes('sma') || lead.name.toLowerCase().includes('smk') || lead.name.toLowerCase().includes('smp') || lead.name.toLowerCase().includes('sd')) && (
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(`site:sekolah.data.kemdikbud.go.id ${lead.name}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-9 inline-flex items-center gap-1 text-[9px] font-extrabold text-amber-800 bg-amber-50 hover:bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200/90 w-fit transition-all shadow-2xs"
+                          title="Cari Profil Dapodik / Kemdikbud Data Sekolah"
+                        >
+                          🎓 Portal Kemdikbud / Dapodik
+                        </a>
+                      )}
                     </div>
                   </td>
 
@@ -383,7 +394,15 @@ export const DataTable = ({
                         <Globe size={12} className="text-slate-400" /> Link
                       </a>
                     ) : (
-                      <span className="text-slate-400 font-bold">-</span>
+                      <a
+                        href={`https://www.google.com/search?q=${encodeURIComponent(`website resmi ${lead.name} ${lead.location}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded border border-slate-200 transition-all"
+                        title="Auto Search Website Resmi di Google"
+                      >
+                        <Globe size={10} className="text-slate-400" /> 🔍 Cari Web
+                      </a>
                     )}
                   </td>
 
@@ -448,7 +467,15 @@ export const DataTable = ({
                         )}
                       </div>
                     ) : (
-                      <span className="text-slate-400 font-bold">-</span>
+                      <a
+                        href={`https://www.google.com/search?q=${encodeURIComponent(`email resmi contact ${lead.name} ${lead.location}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded border border-slate-200 transition-all"
+                        title="Auto Search Email di Google"
+                      >
+                        <Mail size={10} className="text-slate-400" /> 🔍 Cari Email
+                      </a>
                     )}
                   </td>
 
@@ -507,7 +534,15 @@ export const DataTable = ({
                         })()}
                       </div>
                     ) : (
-                      <span className="text-slate-400 font-bold">-</span>
+                      <a
+                        href={`https://www.google.com/search?q=${encodeURIComponent(`nomor telepon whatsapp ${lead.name} ${lead.location}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-2 py-0.5 rounded border border-slate-200 transition-all"
+                        title="Auto Search Telepon & WA di Google"
+                      >
+                        <Phone size={10} className="text-slate-400" /> 🔍 Cari Telp/WA
+                      </a>
                     )}
                   </td>
 
@@ -518,12 +553,20 @@ export const DataTable = ({
                         href={lead.linkedin_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline flex items-center gap-1 font-semibold text-[11px]"
+                        className="text-blue-700 hover:text-blue-900 font-bold flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 hover:bg-blue-100 transition-colors w-fit text-[11px]"
                       >
-                        <Linkedin size={13} className="fill-blue-600 text-blue-600" /> LinkedIn
+                        <Linkedin size={11} className="fill-blue-700 text-blue-700 shrink-0" /> Profile
                       </a>
                     ) : (
-                      <span className="text-slate-400 font-bold text-center block">-</span>
+                      <a
+                        href={`https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(lead.name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 transition-all"
+                        title="Cari Perusahaan di LinkedIn"
+                      >
+                        <Linkedin size={10} className="fill-blue-700 text-blue-700" /> 🔍 LinkedIn
+                      </a>
                     )}
                   </td>
 
