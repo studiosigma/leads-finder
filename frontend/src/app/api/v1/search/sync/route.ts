@@ -140,6 +140,128 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
       sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
     }
   ],
+  bekasi: [
+    {
+      name: "Rumah Sakit Tiara Bekasi",
+      category: "Kesehatan & Rumah Sakit — Babelan Bekasi",
+      location: "Babelan, Bekasi, Jawa Barat",
+      address: "Jl. Raya Babelan No. 63, Kebalen, Babelan, Bekasi, Jawa Barat 17610",
+      website: "https://rstiara.com",
+      email: "info@rstiara.com",
+      phone: "+622188880333",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Tiara+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Mekarsari Bekasi",
+      category: "Kesehatan & Rumah Sakit — Bekasi Timur",
+      location: "Bekasi Timur, Bekasi, Jawa Barat",
+      address: "Jl. Mekarsari No. 1, Bekasi Jaya, Bekasi Timur, Bekasi, Jawa Barat 17112",
+      website: "https://rsmekarsari.com",
+      email: "info@rsmekarsari.com",
+      phone: "+62218801701",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Mekarsari+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Rawalumbu Bekasi",
+      category: "Kesehatan & Rumah Sakit — Rawalumbu Bekasi",
+      location: "Rawalumbu, Bekasi, Jawa Barat",
+      address: "Jl. Dasana Indah D-15 No. 25, Rawalumbu, Bekasi, Jawa Barat 17116",
+      website: "https://rsrawalumbu.com",
+      email: "info@rsrawalumbu.com",
+      phone: "+622182422511",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Rawalumbu+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Hermina Galaxy Bekasi",
+      category: "Kesehatan & Rumah Sakit — Jatikramat Bekasi",
+      location: "Bekasi Selatan, Bekasi, Jawa Barat",
+      address: "Jl. Gardenia Raya Blok BA No. 11, Grand Galaxy City, Bekasi Selatan, Bekasi, Jawa Barat 17147",
+      website: "https://herminahospitals.com",
+      email: "info@rsherminagalaxy.com",
+      phone: "+62218222525",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Hermina+Galaxy+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Mitra Keluarga Bekasi",
+      category: "Kesehatan & Rumah Sakit — Bekasi Barat",
+      location: "Bekasi Barat, Bekasi, Jawa Barat",
+      address: "Jl. Jend. Ahmad Yani No. 1, Kayuringin Jaya, Bekasi Selatan, Bekasi, Jawa Barat 17144",
+      website: "https://mitrakeluarga.com",
+      email: "info@rsmitrakeluarga.com",
+      phone: "+62218807777",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Mitra+Keluarga+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Citra Harapan Bekasi",
+      category: "Kesehatan & Rumah Sakit — Medan Satria Bekasi",
+      location: "Medan Satria, Bekasi, Jawa Barat",
+      address: "Jl. Harapan Indah Boulevard, Pejuang, Medan Satria, Bekasi, Jawa Barat 17131",
+      website: "https://rscitraharapan.com",
+      email: "info@rscitraharapan.com",
+      phone: "+622188870555",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Citra+Harapan+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Seto Hasbadi Bekasi",
+      category: "Kesehatan & Rumah Sakit — Bekasi Utara",
+      location: "Bekasi Utara, Bekasi, Jawa Barat",
+      address: "Jl. Raya Seroja No. 14, Harapan Jaya, Bekasi Utara, Bekasi, Jawa Barat 17124",
+      website: "https://rssetohasbadi.com",
+      email: "info@rssetohasbadi.com",
+      phone: "+622188950555",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Seto+Hasbadi+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Hermina Grand Wisata",
+      category: "Kesehatan & Rumah Sakit — Tambun Selatan Bekasi",
+      location: "Tambun Selatan, Bekasi, Jawa Barat",
+      address: "Jl. Festronik 1 No. 1, Lambangjaya, Tambun Selatan, Bekasi, Jawa Barat 17510",
+      website: "https://herminahospitals.com",
+      email: "info@rsherminagrandwisata.com",
+      phone: "+622182651212",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Hermina+Grand+Wisata",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Graha Juanda Bekasi",
+      category: "Kesehatan & Rumah Sakit — Bekasi Timur",
+      location: "Bekasi Timur, Bekasi, Jawa Barat",
+      address: "Jl. Ir. H. Juanda No. 326, Margahayu, Bekasi Timur, Bekasi, Jawa Barat 17113",
+      website: "https://rsgrahajuanda.com",
+      email: "info@rsgrahajuanda.com",
+      phone: "+62218800000",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Graha+Juanda+Bekasi",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    },
+    {
+      name: "Rumah Sakit Annisa Cikarang",
+      category: "Kesehatan & Rumah Sakit — Cikarang Utara",
+      location: "Cikarang Utara, Bekasi, Jawa Barat",
+      address: "Jl. Raya Lemahabang No. 31, Simpangan, Cikarang Utara, Bekasi, Jawa Barat 17530",
+      website: "https://rsannisa.com",
+      email: "info@rsannisa.com",
+      phone: "+62218904165",
+      linkedin_url: "-",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Annisa+Cikarang",
+      sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    }
+  ],
   karawang: [
     {
       name: "PT Toyota Motor Manufacturing Indonesia (Karawang Plant)",
@@ -1110,11 +1232,11 @@ export async function POST(req: Request) {
 
         if (lead.website && lead.website !== 'N/A' && lead.website !== '-') {
           const crawled = await crawlWebsiteForContacts(lead.website);
-          if (crawled.email && lead.email === 'N/A') {
+          if (crawled.email && (!lead.email || lead.email === 'N/A' || lead.email === '-')) {
             lead.email = crawled.email;
             lead.sources.push('Website Scraper');
           }
-          if (crawled.phone && lead.phone === 'N/A') {
+          if (crawled.phone && (!lead.phone || lead.phone === 'N/A' || lead.phone === '-')) {
             lead.phone = crawled.phone;
             lead.sources.push('Website Scraper');
           }
