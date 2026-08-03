@@ -1247,6 +1247,12 @@ export async function POST(req: Request) {
     // Merge Verified Corporate Entities + Dynamic Places
     const combinedLeads = [...gmapsPrimaryLeads, ...verifiedCorporateResults, ...dynamicLeads];
 
+    // Run 100% Coverage Synthesizers on ALL combinedLeads
+    combinedLeads.forEach(lead => {
+      enrichSchoolDetails(lead);
+      enrichHospitalDetails(lead);
+    });
+
     const finalResults = combinedLeads.slice(0, limit);
 
     // Run 100% Coverage Synthesizer on ALL returned results
