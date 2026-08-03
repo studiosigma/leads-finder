@@ -1126,9 +1126,21 @@ export async function POST(req: Request) {
     const fetchedResultsArrays = await Promise.all(queryPromises);
     const allPlaces = fetchedResultsArrays.flat();
 
-    // 4. Processing, Street Node Filtering, Web Crawl Enrichment
+    // 1. First-Priority Google Maps Places Direct Engine
+    const gmapsPrimaryLeads = await searchGoogleMapsPlacesPrimary(query);
+
     const seenNames = new Set<string>();
-    verifiedCorporateResults.forEach(item => seenNames.add(item.name.toLowerCase().replace(/[^a-z0-9]/g, '')));
+    const getCleanKey = (n: string) => n.toLowerCase().replace(/sekolah|rumah|sakit|rsud|rs|bekasi|karawang|cikarang|tangerang|jakarta|pabrik|pt|cv|tbk/g, '').replace(/[^a-z0-9]/g, '');
+
+    gmapsPrimaryLeads.forEach(item => {
+      const k = getCleanKey(item.name);
+      if (k) seenNames.add(k);
+    });
+
+    verifiedCorporateResults.forEach(item => {
+      const k = getCleanKey(item.name);
+      if (k) seenNames.add(k);
+    });
 
     const dynamicLeads: any[] = [];
 
@@ -1138,6 +1150,10 @@ export async function POST(req: Request) {
       
       let primaryName = place.namedetails?.official_name || place.namedetails?.brand || place.namedetails?.name || place.name || rawParts[0] || query;
       const lowerName = primaryName.toLowerCase();
+      const cleanK = getCleanKey(primaryName);
+
+      if (cleanK && seenNames.has(cleanK)) continue;
+      if (cleanK) seenNames.add(cleanK);
 
       // STRICT FILTER: Eliminate raw street/road nodes (e.g. "Jalan KH. Rahiman II", "Jalan Raya Gabus Pabrik")
       const isRoadNode = lowerName.startsWith('jalan ') || lowerName.startsWith('jl. ') || lowerName.startsWith('gang ') || lowerName.startsWith('gg. ') || place.class === 'highway' || place.type === 'residential' || place.type === 'primary' || place.type === 'secondary';
@@ -1191,15 +1207,18 @@ export async function POST(req: Request) {
     }
 
     // Merge Verified Corporate Entities + Dynamic Places
-    // 1. First-Priority Google Maps Places Direct Engine
-    const gmapsPrimaryLeads = await searchGoogleMapsPlacesPrimary(query);
-
     const combinedLeads = [...gmapsPrimaryLeads, ...verifiedCorporateResults, ...dynamicLeads];
 
     const finalResults = combinedLeads.slice(0, limit);
 
-    // Fast Web Crawl Enrichment (Enrich top 15 leads to guarantee < 4s response time)
-    const enrichTargets = finalResults.slice(0, 15);
+    // Run 100% Coverage Synthesizer on ALL returned results
+    finalResults.forEach(lead => {
+      enrichSchoolDetails(lead);
+      enrichHospitalDetails(lead);
+    });
+
+    // Fast Web Crawl Enrichment (Enrich top 30 leads)
+    const enrichTargets = finalResults.slice(0, Math.min(30, finalResults.length));
     await Promise.all(
       enrichTargets.map(async (lead) => {
         // 1. Primary DOM Scraper: Extract phone & website directly from Google Maps Place Card DOM
