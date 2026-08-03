@@ -55,38 +55,54 @@ export default function AiPitchPage() {
     fetchLeads();
   }, []);
 
-  const updatePitchForLead = (lead: any, tone: string, offer: string) => {
+  const [seqStep, setSeqStep] = useState<'step1' | 'step2' | 'step3'>('step1');
+
+  const updatePitchForLead = (lead: any, tone: string, offer: string, step: string = 'step1') => {
     if (!lead) return;
-    const generated = generatePitchContent(lead, tone, offer);
+    const generated = generatePitchContent(lead, tone, offer, step);
     setSubject(generated.subject);
     setEmailBody(generated.email);
     setWaScript(generated.wa);
   };
 
-  const generatePitchContent = (lead: any, tone: string, offer: string) => {
+  const generatePitchContent = (lead: any, tone: string, offer: string, step: string = 'step1') => {
     const offerText = offer.trim() ? offer.trim() : 'Layanan Solusi B2B Growth & Efisiensi Operasional';
     const category = lead.category || 'Bisnis';
     const location = lead.location || 'Indonesia';
     const leadName = lead.name || 'Perusahaan';
 
-    if (tone === 'formal') {
+    if (step === 'step2') {
       return {
-        subject: `Proposal Kemitraan Strategis: ${leadName} x ${offerText}`,
-        email: `Kepada Yth. Manajemen & Tim Direksi\n${leadName}\nDi Tempat\n\nDengan hormat,\n\nSehubungan dengan pesatnya perkembangan sektor ${category} di wilayah ${location}, kami dari tim profesional ingin mengajukan penawaran kemitraan terkait ${offerText}.\n\nKami telah berpengalaman membantu perusahaan terkemuka dalam meningkatkan efisiensi dan ROI operasional. Boleh kami kirimkan ringkasan proposal 1 halaman atau menjadwalkan diskusi singkat selama 10 menit minggu ini?\n\nHormat kami,\n[Nama Anda]\n[Jabatan Anda]\n[Nama Perusahaan Anda]`,
-        wa: `Selamat siang Bapak/Ibu Manajemen ${leadName}.\n\nPerkenalkan saya [Nama Anda]. Kami bergerak di bidang ${offerText} khusus sektor ${category}. Boleh kami kirimkan profil ringkas penawaran kami via WhatsApp ini?\n\nTerima kasih!`
+        subject: `Follow-Up #1: Solusi Efisiensi ${offerText} untuk ${leadName}`,
+        email: `Halo Manajemen ${leadName},\n\nMenindaklanjuti pesan kami sebelumnya mengenai ${offerText} untuk ${leadName}.\n\nKami paham tim Anda sangat sibuk di sektor ${category}. Kami menyertakan studi kasus singkat bagaimana mitra kami di ${location} menghemat 30% waktu operasional dengan solusi ini.\n\nBoleh kami minta waktu 5 menit minggu ini untuk demo singkat?\n\nSalam hangat,\n[Nama Anda]`,
+        wa: `Halo Bapak/Ibu Manajemen ${leadName}! 👋\n\nIzin follow-up singkat mengenai penawaran ${offerText} yang kami kirimkan kemarin. Boleh kami kirimkan file PDF studi kasusnya untuk pertimbangan tim ${leadName}? Terima kasih!`
       };
-    } else if (tone === 'casual') {
+    } else if (step === 'step3') {
       return {
-        subject: `Peluang Kolaborasi Singkat untuk ${leadName}`,
-        email: `Halo Tim ${leadName},\n\nSalam kenal! Kami sangat mengagumi kiprah ${leadName} di industri ${category} area ${location}.\n\nKami memiliki solusi ${offerText} yang dapat membantu tim Anda berkembang lebih cepat dan efisien. Apakah ada waktu luang sekitar 5 menit minggu ini untuk ngobrol santai?\n\nSalam hangat,\n[Nama Anda]`,
-        wa: `Halo Kak! Salam kenal dari tim kami. Kami mengamati perkembangan ${leadName} di ${category}. Kami punya solusi ${offerText} yang cocok banget untuk skala bisnis Anda. Boleh diskusi santai sebentar?`
+        subject: `Pesan Terakhir / Closing Check: ${offerText} di ${leadName}`,
+        email: `Halo Tim ${leadName},\n\nIni pesan terakhir kami untuk memastikan apakah jadwal diskusi mengenai ${offerText} masih relevan dengan agenda ${leadName} bulan ini?\n\nJika saat ini belum menjadi prioritas, tidak masalah! Kami siap membantu kapan saja tim Anda membutuhkan pendampingan di sektor ${category}.\n\nSalam sukses,\n[Nama Anda]`,
+        wa: `Halo Kak/Bapak/Ibu di ${leadName}! 🙏\n\nSekadar memastikan apakah slot konsultasi gratis ${offerText} masih ingin dimanfaatkan oleh ${leadName} bulan ini? Jika sedang padat, kabari kami kapan saja Anda senggang ya. Terima kasih!`
       };
     } else {
-      return {
-        subject: `Kerjasama Penawaran ${offerText} untuk ${leadName}`,
-        email: `Halo Manajemen ${leadName},\n\nKami mengamati posisi kuat ${leadName} dalam sektor ${category} di ${location}.\n\nSistem ${offerText} kami terbukti mampu membantu meningkatkan produktivitas hingga 40% dan menghemat biaya operasional. Apakah Bapak/Ibu bersedia berdiskusi singkat 5 menit untuk melihat potensi penerapannya di ${leadName}?\n\nTerima kasih dan salam sukses,\n[Nama Anda]\nB2B Business Lead`,
-        wa: `Halo Bapak/Ibu Manajemen ${leadName},\n\nKami ingin berbagi solusi penawaran ${offerText} khusus untuk sektor ${category}. Sudah banyak mitra kami di ${location} mengalami peningkatan efisiensi hingga 40%.\n\nBoleh kami kirimkan materi presentasi singkatnya?`
-      };
+      if (tone === 'formal') {
+        return {
+          subject: `Proposal Kemitraan Strategis: ${leadName} x ${offerText}`,
+          email: `Kepada Yth. Manajemen & Tim Direksi\n${leadName}\nDi Tempat\n\nDengan hormat,\n\nSehubungan dengan pesatnya perkembangan sektor ${category} di wilayah ${location}, kami dari tim profesional ingin mengajukan penawaran kemitraan terkait ${offerText}.\n\nKami telah berpengalaman membantu perusahaan terkemuka dalam meningkatkan efisiensi dan ROI operasional. Boleh kami kirimkan ringkasan proposal 1 halaman atau menjadwalkan diskusi singkat selama 10 menit minggu ini?\n\nHormat kami,\n[Nama Anda]\n[Jabatan Anda]\n[Nama Perusahaan Anda]`,
+          wa: `Selamat siang Bapak/Ibu Manajemen ${leadName}.\n\nPerkenalkan saya [Nama Anda]. Kami bergerak di bidang ${offerText} khusus sektor ${category}. Boleh kami kirimkan profil ringkas penawaran kami via WhatsApp ini?\n\nTerima kasih!`
+        };
+      } else if (tone === 'casual') {
+        return {
+          subject: `Peluang Kolaborasi Singkat untuk ${leadName}`,
+          email: `Halo Tim ${leadName},\n\nSalam kenal! Kami sangat mengagumi kiprah ${leadName} di industri ${category} area ${location}.\n\nKami memiliki solusi ${offerText} yang dapat membantu tim Anda berkembang lebih cepat dan efisien. Apakah ada waktu luang sekitar 5 menit minggu ini untuk ngobrol santai?\n\nSalam hangat,\n[Nama Anda]`,
+          wa: `Halo Kak! Salam kenal dari tim kami. Kami mengamati perkembangan ${leadName} di ${category}. Kami punya solusi ${offerText} yang cocok banget untuk skala bisnis Anda. Boleh diskusi santai sebentar?`
+        };
+      } else {
+        return {
+          subject: `Kerjasama Penawaran ${offerText} untuk ${leadName}`,
+          email: `Halo Manajemen ${leadName},\n\nKami mengamati posisi kuat ${leadName} dalam sektor ${category} di ${location}.\n\nSistem ${offerText} kami terbukti mampu membantu meningkatkan produktivitas hingga 40% dan menghemat biaya operasional. Apakah Bapak/Ibu bersedia berdiskusi singkat 5 menit untuk melihat potensi penerapannya di ${leadName}?\n\nTerima kasih dan salam sukses,\n[Nama Anda]\nB2B Business Lead`,
+          wa: `Halo Bapak/Ibu Manajemen ${leadName},\n\nKami ingin berbagi solusi penawaran ${offerText} khusus untuk sektor ${category}. Sudah banyak mitra kami di ${location} mengalami peningkatan efisiensi hingga 40%.\n\nBoleh kami kirimkan materi presentasi singkatnya?`
+        };
+      }
     }
   };
 
@@ -301,6 +317,58 @@ export default function AiPitchPage() {
                 onChange={(e) => setMyOffer(e.target.value)}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
               />
+            </div>
+
+            {/* Multi-Step Follow-Up Sequence Selector */}
+            <div className="space-y-2 pt-3 border-t border-slate-100">
+              <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>🔄 Multi-Step Outreach Sequence:</span>
+                <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">Auto AI</span>
+              </label>
+
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSeqStep('step1');
+                    updatePitchForLead(selectedLead, pitchTone, myOffer, 'step1');
+                  }}
+                  className={`py-2 px-1 rounded-xl text-[11px] font-bold border text-center transition-all ${
+                    seqStep === 'step1' ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <div>Tahap 1</div>
+                  <div className="text-[9px] opacity-80">Initial Pitch</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSeqStep('step2');
+                    updatePitchForLead(selectedLead, pitchTone, myOffer, 'step2');
+                  }}
+                  className={`py-2 px-1 rounded-xl text-[11px] font-bold border text-center transition-all ${
+                    seqStep === 'step2' ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <div>Tahap 2</div>
+                  <div className="text-[9px] opacity-80">Follow-Up (H+3)</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSeqStep('step3');
+                    updatePitchForLead(selectedLead, pitchTone, myOffer, 'step3');
+                  }}
+                  className={`py-2 px-1 rounded-xl text-[11px] font-bold border text-center transition-all ${
+                    seqStep === 'step3' ? 'bg-purple-600 text-white border-purple-600 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <div>Tahap 3</div>
+                  <div className="text-[9px] opacity-80">Closing (H+7)</div>
+                </button>
+              </div>
             </div>
 
             <button

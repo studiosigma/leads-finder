@@ -14,7 +14,8 @@ import { AnalyticsCharts } from '@/components/dashboard/analytics-charts';
 import { ScrapingHistoryTable, ScrapingSession } from '@/components/dashboard/scraping-history-table';
 import { KanbanBoard } from '@/components/dashboard/kanban-board';
 import { FilterChips, FilterChipType } from '@/components/leads/filter-chips';
-import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X, Trash2, Columns } from 'lucide-react';
+import LeadsMapView from '@/components/dashboard/leads-map-view';
+import { Search, Filter, Download, LayoutGrid, Table, Database, SearchX, MapPin, Upload, Search as SearchIcon, Clock, Sparkles, PieChart, BarChart3, X, Trash2, Columns, FileSpreadsheet } from 'lucide-react';
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -33,6 +34,38 @@ export default function DashboardPage() {
   const [activeSessionFilter, setActiveSessionFilter] = useState<ScrapingSession | null>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+
+  const handleExportCSV = () => {
+    if (leads.length === 0) return;
+    const headers = ['Company Name', 'Category', 'Location', 'Address', 'Website', 'Email', 'Email Status', 'Phone', 'LinkedIn', 'Decision Maker Title'];
+    const csvRows = [headers.join(',')];
+
+    leads.forEach(l => {
+      const row = [
+        `"${(l.name || '').replace(/"/g, '""')}"`,
+        `"${(l.category || '').replace(/"/g, '""')}"`,
+        `"${(l.location || '').replace(/"/g, '""')}"`,
+        `"${(l.address || '').replace(/"/g, '""')}"`,
+        `"${(l.website || '').replace(/"/g, '""')}"`,
+        `"${(l.email || '').replace(/"/g, '""')}"`,
+        `"${(l.email_status || '').replace(/"/g, '""')}"`,
+        `"${(l.phone || '').replace(/"/g, '""')}"`,
+        `"${(l.linkedin_url || '').replace(/"/g, '""')}"`,
+        `"${(l.decision_maker_title || '').replace(/"/g, '""')}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = '\uFEFF' + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `leads_finder_export_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const isLegacySyntheticLead = (lead: any) => {
     if (!lead || !lead.name) return true;
@@ -260,14 +293,12 @@ export default function DashboardPage() {
             <Upload size={14} /> Import CSV & Enrich
           </button>
           
-          <a
-            href={`${API_BASE}/api/v1/export/csv`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={handleExportCSV}
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#4a6382] hover:bg-[#3b5175] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
           >
-            <Download size={14} /> Export CSV
-          </a>
+            <Download size={14} /> Export CSV / Excel
+          </button>
         </div>
       </div>
 
