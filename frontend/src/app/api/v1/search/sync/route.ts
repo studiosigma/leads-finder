@@ -704,6 +704,18 @@ async function scrapeGooglePlaceDom(name: string, location: string) {
   return result;
 }
 
+function formatIndonesianPhone(phone: string | null | undefined): string {
+  if (!phone || phone === 'N/A' || phone === '-') return 'N/A';
+  let clean = phone.replace(/[^0-9]/g, '');
+  if (!clean) return 'N/A';
+  if (clean.startsWith('0')) {
+    clean = '62' + clean.slice(1);
+  } else if (!clean.startsWith('62')) {
+    clean = '62' + clean;
+  }
+  return clean;
+}
+
 function inferDecisionMakerInfo(name: string, category: string) {
   const nameUpper = name.toUpperCase();
   const catLower = (category || '').toLowerCase();
@@ -1340,6 +1352,11 @@ export async function POST(req: Request) {
       if (aWeb !== bWeb) return bWeb ? 1 : -1;
 
       return (b.lead_score || 0) - (a.lead_score || 0);
+    });
+
+    // Format all phone numbers to Indonesian standard format: 62xxxxxxxxxxxx
+    filteredResults.forEach(l => {
+      l.phone = formatIndonesianPhone(l.phone);
     });
 
     return NextResponse.json({
