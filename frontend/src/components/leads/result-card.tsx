@@ -20,6 +20,7 @@ interface Lead {
   decision_maker_name?: string;
   decision_maker_title?: string;
   decision_maker_linkedin?: string;
+  lead_score?: number;
   status: 'READY' | 'FOLLOW UP' | string;
   sources?: string[];
 }
@@ -27,6 +28,10 @@ interface Lead {
 export const ResultCard = ({ lead }: { lead: Lead }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAiPitchOpen, setIsAiPitchOpen] = useState(false);
+
+  const score = lead.lead_score ?? 60;
+  const isHot = score >= 80;
+  const isWarm = score >= 50 && score < 80;
 
   const formatWebsiteUrl = (url: string) => {
     if (!url || url === 'N/A') return '#';
@@ -39,14 +44,23 @@ export const ResultCard = ({ lead }: { lead: Lead }) => {
       <div className="bg-white border border-zinc-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition-all duration-200 group flex flex-col justify-between">
         {/* Header */}
         <div>
-          <div className="flex justify-between items-start mb-3">
+          <div className="flex justify-between items-start mb-3 gap-2">
             <h3 className="text-base font-bold text-zinc-900 group-hover:text-blue-600 transition-colors line-clamp-1">
               {lead.name}
             </h3>
-            <div className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider shrink-0 ${
-              lead.status === 'READY' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-            }`}>
-              {lead.status}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${
+                isHot ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+                isWarm ? 'bg-amber-50 text-amber-800 border-amber-300' :
+                'bg-slate-100 text-slate-700 border-slate-300'
+              }`}>
+                🎯 {score}
+              </span>
+              <div className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
+                lead.status === 'READY' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+              }`}>
+                {lead.status}
+              </div>
             </div>
           </div>
 

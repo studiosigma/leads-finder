@@ -21,6 +21,7 @@ interface Lead {
   decision_maker_name?: string;
   decision_maker_title?: string;
   decision_maker_linkedin?: string;
+  lead_score?: number;
   status: string;
   sources?: string[];
 }
@@ -230,6 +231,7 @@ export const DataTable = ({
               <th className="py-3.5 px-4 min-w-[210px] sticky left-10 z-30 bg-slate-50 border-r border-slate-200/60">
                 Company Name
               </th>
+              <th className="py-3.5 px-4 min-w-[130px]">🎯 Quality Score</th>
               <th className="py-3.5 px-4 min-w-[170px]">Executive Contact</th>
               <th className="py-3.5 px-4">Category</th>
               <th className="py-3.5 px-4 min-w-[140px]">Location</th>
@@ -291,6 +293,29 @@ export const DataTable = ({
                         </span>
                       )}
                     </div>
+                  </td>
+
+                  {/* 🎯 AI Lead Quality Index Score */}
+                  <td className="py-3.5 px-4">
+                    {(() => {
+                      const score = lead.lead_score ?? 60;
+                      const isHot = score >= 80;
+                      const isWarm = score >= 50 && score < 80;
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black border shadow-2xs ${
+                            isHot ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+                            isWarm ? 'bg-amber-50 text-amber-800 border-amber-300' :
+                            'bg-slate-100 text-slate-700 border-slate-300'
+                          }`}>
+                            <span>🎯 {score}/100</span>
+                            <span className="text-[9px] uppercase font-extrabold opacity-90 px-1 py-0.2 rounded bg-white/60">
+                              {isHot ? 'HOT' : isWarm ? 'WARM' : 'COLD'}
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   {/* Executive Contact (Decision Maker) */}
