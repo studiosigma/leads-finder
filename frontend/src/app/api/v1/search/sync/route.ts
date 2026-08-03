@@ -100,47 +100,7 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
       linkedin_url: "https://www.linkedin.com/company/mattel-inc",
       gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Mattel+Indonesia+Cikarang",
       sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
-    }
-  ],
-  cikarang: [
-    {
-      name: "PT Gunung Raja Paksi Tbk",
-      category: "Manufaktur Steel Industry — Cikarang",
-      location: "Cikarang, Bekasi, Jawa Barat",
-      address: "Jl. Perjuangan No. 8, Sukadanau, Cikarang Barat, Kab Bekasi, Jawa Barat 17530",
-      website: "https://www.gunungrajapaksi.com",
-      email: "corsec@gunungrajapaksi.com",
-      phone: "+622189838454",
-      linkedin_url: "https://www.linkedin.com/company/pt-gunung-raja-paksi-tbk",
-      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Gunung+Raja+Paksi+Tbk+Cikarang",
-      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
     },
-    {
-      name: "PT Unilever Indonesia Tbk (Cikarang Plant)",
-      category: "Consumer Goods — Jababeka",
-      location: "Kawasan Industri Jababeka, Cikarang, Bekasi, Jawa Barat",
-      address: "Jl. Jababeka V Blok U No. 14-16, Cikarang Utara, Bekasi, Jawa Barat 17530",
-      website: "https://www.unilever.co.id",
-      email: "media.indonesia@unilever.com",
-      phone: "+622189980000",
-      linkedin_url: "https://www.linkedin.com/company/unilever",
-      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Unilever+Indonesia+Tbk+Cikarang",
-      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
-    },
-    {
-      name: "PT Hankook Tire Indonesia",
-      category: "Automotive & Rubber Industry — Delta Silicon",
-      location: "Kawasan Industri Delta Silicon, Cikarang, Bekasi, Jawa Barat",
-      address: "Jl. Inti II Blok C4 No. 1, Cikarang Selatan, Bekasi, Jawa Barat 17550",
-      website: "https://www.hankooktire.com",
-      email: "sales.id@hankooktire.com",
-      phone: "+622189971000",
-      linkedin_url: "https://www.linkedin.com/company/hankook-tire",
-      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Hankook+Tire+Indonesia+Cikarang",
-      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
-    }
-  ],
-  bekasi: [
     {
       name: "Rumah Sakit Tiara Bekasi",
       category: "Kesehatan & Rumah Sakit — Babelan Bekasi",
@@ -260,6 +220,44 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
       linkedin_url: "-",
       gmaps_url: "https://www.google.com/maps/search/?api=1&query=Rumah+Sakit+Annisa+Cikarang",
       sources: ["Verifikator Direktori Kesehatan", "Google Maps"]
+    }
+  ],
+  cikarang: [
+    {
+      name: "PT Gunung Raja Paksi Tbk",
+      category: "Manufaktur Steel Industry — Cikarang",
+      location: "Cikarang, Bekasi, Jawa Barat",
+      address: "Jl. Perjuangan No. 8, Sukadanau, Cikarang Barat, Kab Bekasi, Jawa Barat 17530",
+      website: "https://www.gunungrajapaksi.com",
+      email: "corsec@gunungrajapaksi.com",
+      phone: "+622189838454",
+      linkedin_url: "https://www.linkedin.com/company/pt-gunung-raja-paksi-tbk",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Gunung+Raja+Paksi+Tbk+Cikarang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    },
+    {
+      name: "PT Unilever Indonesia Tbk (Cikarang Plant)",
+      category: "Consumer Goods — Jababeka",
+      location: "Kawasan Industri Jababeka, Cikarang, Bekasi, Jawa Barat",
+      address: "Jl. Jababeka V Blok U No. 14-16, Cikarang Utara, Bekasi, Jawa Barat 17530",
+      website: "https://www.unilever.co.id",
+      email: "media.indonesia@unilever.com",
+      phone: "+622189980000",
+      linkedin_url: "https://www.linkedin.com/company/unilever",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Unilever+Indonesia+Tbk+Cikarang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
+    },
+    {
+      name: "PT Hankook Tire Indonesia",
+      category: "Automotive & Rubber Industry — Delta Silicon",
+      location: "Kawasan Industri Delta Silicon, Cikarang, Bekasi, Jawa Barat",
+      address: "Jl. Inti II Blok C4 No. 1, Cikarang Selatan, Bekasi, Jawa Barat 17550",
+      website: "https://www.hankooktire.com",
+      email: "sales.id@hankooktire.com",
+      phone: "+622189971000",
+      linkedin_url: "https://www.linkedin.com/company/hankook-tire",
+      gmaps_url: "https://www.google.com/maps/search/?api=1&query=PT+Hankook+Tire+Indonesia+Cikarang",
+      sources: ["Verifikator Direktori B2B Industri", "Google Maps"]
     }
   ],
   karawang: [
