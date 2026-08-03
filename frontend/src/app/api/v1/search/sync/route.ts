@@ -378,6 +378,84 @@ async function crawlWebsiteForContacts(url: string) {
   return {};
 }
 
+// Deep Fallback Scraper for Missing Google Maps Phone Numbers & Websites
+async function discoverWebsiteAndPhone(name: string, location: string) {
+  const result: { website?: string; phone?: string } = {};
+  const nLower = name.toLowerCase();
+
+  // 1. School Domain Candidate Construction (e.g. SMK Suryacipta Karawang -> smksuryacipta.sch.id)
+  if (nLower.includes('smk') || nLower.includes('sma') || nLower.includes('smp') || nLower.includes('sd')) {
+    const cleanSlug = nLower
+      .replace(/sekolah|menengah|kejuruan|atas|pertama|dasar|negeri|karawang|bekasi|cikarang|jakarta|bandung|bogor|depok|tangerang/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
+
+    if (cleanSlug.length >= 3) {
+      const candidateDomains = [
+        `https://smk${cleanSlug}.sch.id`,
+        `https://sma${cleanSlug}.sch.id`,
+        `https://${cleanSlug}.sch.id`
+      ];
+
+      for (const domain of candidateDomains) {
+        try {
+          const controller = new AbortController();
+          const tId = setTimeout(() => controller.abort(), 1800);
+          const res = await fetch(domain, {
+            method: 'HEAD',
+            signal: controller.signal,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+          });
+          clearTimeout(tId);
+          if (res.ok) {
+            result.website = domain;
+            break;
+          }
+        } catch (e) {
+          // ignore candidate timeout
+        }
+      }
+    }
+  }
+
+  // 2. Fast Search Engine Snippet Fallback (DuckDuckGo HTML)
+  try {
+    const queryStr = `${name} ${location} telepon website`;
+    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(queryStr)}`;
+    const controller = new AbortController();
+    const tId = setTimeout(() => controller.abort(), 2200);
+
+    const sRes = await fetch(searchUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.7',
+      }
+    });
+    clearTimeout(tId);
+
+    if (sRes.ok) {
+      const html = await sRes.text();
+      // Match Indonesian Phone Numbers: 08xx-xxxx-xxxx or (0267) xxx-xxx
+      const phoneMatch = html.match(/(?:08[0-9]{2}[-\s]?[0-9]{3,4}[-\s]?[0-9]{3,4}|0[2-9][0-9]{1,3}[-\s]?[0-9]{5,8})/);
+      if (phoneMatch) {
+        result.phone = phoneMatch[0].replace(/[\s]/g, '');
+      }
+
+      // Match Official Website URL
+      if (!result.website) {
+        const domainMatch = html.match(/https?:\/\/(?:www\.)?([a-zA-Z0-9-]+\.(?:sch\.id|ac\.id|co\.id|go\.id|com|id|net|org))/i);
+        if (domainMatch && !domainMatch[0].includes('duckduckgo') && !domainMatch[0].includes('google') && !domainMatch[0].includes('wikipedia') && !domainMatch[0].includes('facebook') && !domainMatch[0].includes('instagram')) {
+          result.website = domainMatch[0];
+        }
+      }
+    }
+  } catch (e) {
+    // ignore search snippet timeout
+  }
+
+  return result;
+}
+
 function detectGoogleMapsCategoryTag(name: string, place: any): string {
   const n = name.toLowerCase();
   const type = (place.type || place.category || '').toLowerCase();
@@ -747,6 +825,19 @@ function inferDecisionMakerInfo(name: string, category: string) {
     const enrichTargets = finalResults.slice(0, 15);
     await Promise.all(
       enrichTargets.map(async (lead) => {
+        // Deep Fallback: If phone or website is missing, discover via deep search & candidate domains
+        if (!lead.website || lead.website === 'N/A' || lead.website === '-' || !lead.phone || lead.phone === 'N/A' || lead.phone === '-') {
+          const discovered = await discoverWebsiteAndPhone(lead.name, lead.location);
+          if (discovered.website && (lead.website === 'N/A' || lead.website === '-')) {
+            lead.website = discovered.website;
+            lead.sources.push('Deep Search Engine');
+          }
+          if (discovered.phone && (lead.phone === 'N/A' || lead.phone === '-')) {
+            lead.phone = discovered.phone;
+            lead.sources.push('Deep Search Engine');
+          }
+        }
+
         if (lead.website && lead.website !== 'N/A' && lead.website !== '-') {
           const crawled = await crawlWebsiteForContacts(lead.website);
           if (crawled.email && lead.email === 'N/A') {
