@@ -21,6 +21,7 @@ interface Lead {
   decision_maker_title?: string;
   decision_maker_linkedin?: string;
   lead_score?: number;
+  tech_stack?: string[];
   status: 'READY' | 'FOLLOW UP' | string;
   sources?: string[];
 }
@@ -94,6 +95,21 @@ export const ResultCard = ({ lead }: { lead: Lead }) => {
               </a>
             )}
           </div>
+
+          {/* ⚡ Tech Stack Badges */}
+          {lead.tech_stack && lead.tech_stack.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-1">
+              <span className="text-[9px] font-extrabold text-slate-400 mr-1">⚡ TECH:</span>
+              {lead.tech_stack.map((tech, idx) => (
+                <span
+                  key={idx}
+                  className="text-[9px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/80"
+                >
+                  {tech}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Info Grid */}
           <div className="space-y-2 text-xs text-zinc-600">

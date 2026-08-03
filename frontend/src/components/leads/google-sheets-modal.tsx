@@ -19,7 +19,7 @@ const APPS_SCRIPT_TEMPLATE = `function doPost(e) {
     sheet.appendRow([
       "Timestamp", "Nama Perusahaan", "Kategori", "Lokasi", 
       "WhatsApp / Telepon", "Email", "Status Deliverability", "Website", 
-      "Decision Maker", "Jabatan", "Lead Score", "SIINas Verified"
+      "Tech Stack", "Decision Maker", "Jabatan", "Lead Score", "SIINas Verified"
     ]);
   }
 
@@ -33,6 +33,7 @@ const APPS_SCRIPT_TEMPLATE = `function doPost(e) {
       l.email || "-",
       l.email_status || "UNVERIFIED",
       l.website || "-",
+      Array.isArray(l.tech_stack) ? l.tech_stack.join(", ") : (l.tech_stack || "-"),
       l.decision_maker_name || "-",
       l.decision_maker_title || "-",
       l.lead_score || 0,

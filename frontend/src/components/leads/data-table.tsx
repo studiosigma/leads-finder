@@ -22,6 +22,7 @@ interface Lead {
   decision_maker_title?: string;
   decision_maker_linkedin?: string;
   lead_score?: number;
+  tech_stack?: string[];
   status: string;
   sources?: string[];
 }
@@ -236,6 +237,7 @@ export const DataTable = ({
               <th className="py-3.5 px-4">Category</th>
               <th className="py-3.5 px-4 min-w-[140px]">Location</th>
               <th className="py-3.5 px-4">Website</th>
+              <th className="py-3.5 px-4 min-w-[150px]">⚡ Tech Stack</th>
               <th className="py-3.5 px-4 min-w-[170px]">MX Verified Email</th>
               <th className="py-3.5 px-4 min-w-[190px]">Phone / WA Classifier</th>
               <th className="py-3.5 px-4">LinkedIn</th>
@@ -382,6 +384,24 @@ export const DataTable = ({
                       </a>
                     ) : (
                       <span className="text-slate-400 font-bold">-</span>
+                    )}
+                  </td>
+
+                  {/* ⚡ Tech Stack Badges */}
+                  <td className="py-3.5 px-4">
+                    {lead.tech_stack && lead.tech_stack.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 max-w-[170px]">
+                        {lead.tech_stack.map((t, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[9px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/80 shrink-0"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 text-[10px] font-medium">-</span>
                     )}
                   </td>
 

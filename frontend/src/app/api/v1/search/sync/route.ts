@@ -287,6 +287,37 @@ const VERIFIED_CORPORATE_REGISTRY: Record<string, any[]> = {
   ]
 };
 
+function detectTechStack(html: string): string[] {
+  const techs: string[] = [];
+  const hLower = html.toLowerCase();
+
+  // CMS & Frameworks
+  if (hLower.includes('wp-content') || hLower.includes('wp-includes')) techs.push('WordPress');
+  if (hLower.includes('shopify') || hLower.includes('cdn.shopify.com')) techs.push('Shopify');
+  if (hLower.includes('woocommerce')) techs.push('WooCommerce');
+  if (hLower.includes('__next') || hLower.includes('_next/static')) techs.push('Next.js');
+  if (hLower.includes('laravel') || hLower.includes('xsrf-token')) techs.push('Laravel');
+  if (hLower.includes('react') || hLower.includes('reactdom')) techs.push('React');
+  if (hLower.includes('wix.com') || hLower.includes('wixpress')) techs.push('Wix');
+  if (hLower.includes('elementor')) techs.push('Elementor');
+
+  // CDN & Security
+  if (hLower.includes('cloudflare')) techs.push('Cloudflare');
+
+  // Analytics & Ad Pixels
+  if (hLower.includes('google-analytics') || hLower.includes('gtag') || hLower.includes('ga4') || hLower.includes('googletagmanager')) techs.push('GA4 / GTM');
+  if (hLower.includes('fbq(') || hLower.includes('connect.facebook.net') || hLower.includes('facebook-domain-verification')) techs.push('Meta Pixel');
+  if (hLower.includes('analytics.tiktok.com') || hLower.includes('ttq.load')) techs.push('TikTok Pixel');
+
+  // Chat Widgets
+  if (hLower.includes('api.whatsapp.com') || hLower.includes('wa.me') || hLower.includes('whatsapp')) techs.push('WA Widget');
+  if (hLower.includes('tawk.to') || hLower.includes('tawk')) techs.push('Tawk.to');
+  if (hLower.includes('zendesk')) techs.push('Zendesk');
+  if (hLower.includes('crisp.chat')) techs.push('Crisp');
+
+  return Array.from(new Set(techs));
+}
+
 // Fast serverless website scraper helper with Deep Decision Maker & Purchasing Contact Mining
 async function crawlWebsiteForContacts(url: string) {
   if (!url || url === 'N/A' || url === '-') return {};
@@ -328,6 +359,8 @@ async function crawlWebsiteForContacts(url: string) {
         dmTitle = dmMatch[2].trim();
       }
 
+      const techStack = detectTechStack(html);
+
       return {
         email: purchasingEmail || marketingEmail || validEmails[0] || null,
         purchasing_email: purchasingEmail || null,
@@ -335,7 +368,8 @@ async function crawlWebsiteForContacts(url: string) {
         phone: validPhones[0] || null,
         linkedin_url: linkedinMatch ? linkedinMatch[1] : null,
         decision_maker_name: dmName,
-        decision_maker_title: dmTitle
+        decision_maker_title: dmTitle,
+        tech_stack: techStack
       };
     }
   } catch (e) {
@@ -735,6 +769,9 @@ function inferDecisionMakerInfo(name: string, category: string) {
           }
           if (crawled.marketing_email) {
             lead.marketing_email = crawled.marketing_email;
+          }
+          if (crawled.tech_stack && crawled.tech_stack.length > 0) {
+            lead.tech_stack = crawled.tech_stack;
           }
         }
 
