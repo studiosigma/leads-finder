@@ -118,27 +118,38 @@ export default function SchedulesPage() {
     setCron(presetCron);
   };
 
-  const handleRunNow = (jobQuery: string) => {
-    setNotification(`⚡ Menjalankan pencarian autopilot langsung untuk "${jobQuery}"! Prospek akan disinkronkan.`);
-    setTimeout(() => setNotification(null), 3500);
-
-    // Auto-save search session
+  const handleRunNow = async (jobQuery: string) => {
+    setNotification(`⚡ Menjalankan pencarian autopilot langsung untuk "${jobQuery}"...`);
     try {
-      const activeLeads = JSON.parse(localStorage.getItem('lfe_active_leads') || '[]');
-      if (activeLeads.length > 0) {
-        const sheetsConfig = JSON.parse(localStorage.getItem('lfe_integrations_config') || '{}');
-        if (sheetsConfig.sheetsUrl) {
-          fetch(sheetsConfig.sheetsUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ leads: activeLeads }),
-          });
+      const res = await fetch('/api/v1/search/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: jobQuery, limit: 50 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results && Array.isArray(data.results)) {
+          localStorage.setItem('lfe_active_leads', JSON.stringify(data.results));
+          setNotification(`✅ Autopilot Berhasil! Ditemukan ${data.results.length} prospek terverifikasi untuk "${jobQuery}".`);
+          
+          // Auto-sync to Google Sheets if configured
+          const sheetsConfig = JSON.parse(localStorage.getItem('lfe_integrations_config') || '{}');
+          if (sheetsConfig.sheetsUrl) {
+            fetch(sheetsConfig.sheetsUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify({ leads: data.results }),
+            });
+          }
         }
+      } else {
+        setNotification(`⚠️ Autopilot Gagal: ${res.statusText}`);
       }
-    } catch (e) {
-      // ignore
+    } catch (e: any) {
+      setNotification(`⚠️ Autopilot Gagal: ${e?.message || 'Network Timeout'}`);
     }
+    setTimeout(() => setNotification(null), 5000);
   };
 
   const handleDeleteSchedule = async (id: string) => {
