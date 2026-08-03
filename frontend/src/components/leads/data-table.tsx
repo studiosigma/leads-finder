@@ -35,6 +35,7 @@ interface DataTableProps {
   onOpenWebhookModal: (lead: Lead) => void;
   onOpenAiPitchModal?: (lead: Lead) => void;
   onStatusChange?: (id: string, newStatus: string) => void;
+  showCrmStage?: boolean;
 }
 
 export const DataTable = ({
@@ -45,6 +46,7 @@ export const DataTable = ({
   onOpenWebhookModal,
   onOpenAiPitchModal,
   onStatusChange,
+  showCrmStage = false,
 }: DataTableProps) => {
   // Big Data Virtualization / Windowing Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -241,7 +243,7 @@ export const DataTable = ({
               <th className="py-3.5 px-4 min-w-[170px]">MX Verified Email</th>
               <th className="py-3.5 px-4 min-w-[190px]">Phone / WA Classifier</th>
               <th className="py-3.5 px-4">LinkedIn</th>
-              <th className="py-3.5 px-4 min-w-[140px]">CRM Pipeline Stage</th>
+              {showCrmStage && <th className="py-3.5 px-4 min-w-[140px]">CRM Pipeline Stage</th>}
               <th className="py-3.5 px-4 text-center min-w-[100px]">Quick Actions</th>
             </tr>
           </thead>
@@ -571,21 +573,23 @@ export const DataTable = ({
                   </td>
 
                   {/* CRM Pipeline Stage Inline Dropdown Editing */}
-                  <td className="py-3.5 px-4">
-                    <select
-                      value={activeStatus}
-                      onChange={(e) => handleStatusUpdateOptimistic(lead.id, e.target.value)}
-                      className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border focus:outline-none cursor-pointer transition-all shadow-xs ${getStatusBadgeStyle(
-                        activeStatus
-                      )}`}
-                    >
-                      <option value="READY">🔵 New Lead</option>
-                      <option value="CONTACTED">🟡 Contacted</option>
-                      <option value="QUALIFIED">🟣 Qualified</option>
-                      <option value="WON">🟢 Won / Deal</option>
-                      <option value="LOST">🔴 Lost / Rejected</option>
-                    </select>
-                  </td>
+                  {showCrmStage && (
+                    <td className="py-3.5 px-4">
+                      <select
+                        value={activeStatus}
+                        onChange={(e) => handleStatusUpdateOptimistic(lead.id, e.target.value)}
+                        className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border focus:outline-none cursor-pointer transition-all shadow-xs ${getStatusBadgeStyle(
+                          activeStatus
+                        )}`}
+                      >
+                        <option value="READY">🔵 New Lead</option>
+                        <option value="CONTACTED">🟡 Contacted</option>
+                        <option value="QUALIFIED">🟣 Qualified</option>
+                        <option value="WON">🟢 Won / Deal</option>
+                        <option value="LOST">🔴 Lost / Rejected</option>
+                      </select>
+                    </td>
+                  )}
 
                   {/* Hover Quick Actions Bar */}
                   <td className="py-3.5 px-4 text-center relative">
