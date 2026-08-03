@@ -234,12 +234,9 @@ export const DataTable = ({
               <th className="py-3.5 px-4 min-w-[210px] sticky left-10 z-30 bg-slate-50 border-r border-slate-200/60">
                 Company Name
               </th>
-              <th className="py-3.5 px-4 min-w-[130px]">🎯 Quality Score</th>
-              <th className="py-3.5 px-4 min-w-[170px]">Executive Contact</th>
               <th className="py-3.5 px-4">Category</th>
               <th className="py-3.5 px-4 min-w-[140px]">Location</th>
               <th className="py-3.5 px-4">Website</th>
-              <th className="py-3.5 px-4 min-w-[150px]">⚡ Tech Stack</th>
               <th className="py-3.5 px-4 min-w-[170px]">MX Verified Email</th>
               <th className="py-3.5 px-4 min-w-[190px]">Phone / WA Classifier</th>
               <th className="py-3.5 px-4">LinkedIn</th>
@@ -310,54 +307,6 @@ export const DataTable = ({
                     </div>
                   </td>
 
-                  {/* 🎯 AI Lead Quality Index Score */}
-                  <td className="py-3.5 px-4">
-                    {(() => {
-                      const score = lead.lead_score ?? 60;
-                      const isHot = score >= 80;
-                      const isWarm = score >= 50 && score < 80;
-                      return (
-                        <div className="flex items-center gap-1.5">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black border shadow-2xs ${
-                            isHot ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
-                            isWarm ? 'bg-amber-50 text-amber-800 border-amber-300' :
-                            'bg-slate-100 text-slate-700 border-slate-300'
-                          }`}>
-                            <span>🎯 {score}/100</span>
-                            <span className="text-[9px] uppercase font-extrabold opacity-90 px-1 py-0.2 rounded bg-white/60">
-                              {isHot ? 'HOT' : isWarm ? 'WARM' : 'COLD'}
-                            </span>
-                          </span>
-                        </div>
-                      );
-                    })()}
-                  </td>
-
-                  {/* Executive Contact (Decision Maker) */}
-                  <td className="py-3.5 px-4 text-slate-700">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-extrabold text-[#3b5175] bg-slate-100 px-2 py-0.5 rounded border border-slate-200/90 w-fit flex items-center gap-1 shadow-2xs">
-                        👔 {lead.decision_maker_title || 'Owner / Direktur / GM'}
-                      </span>
-                      {lead.decision_maker_name && (
-                        <span className="font-bold text-slate-800 text-[11px] truncate max-w-[150px]">
-                          👤 {lead.decision_maker_name}
-                        </span>
-                      )}
-                      {lead.decision_maker_linkedin && (
-                        <a
-                          href={lead.decision_maker_linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 transition-all w-fit"
-                          title={`Cari Profil LinkedIn ${lead.decision_maker_title} di ${lead.name}`}
-                        >
-                          <Linkedin size={10} className="fill-blue-700 text-blue-700" /> Search LinkedIn
-                        </a>
-                      )}
-                    </div>
-                  </td>
-
                   {/* Category */}
                   <td className="py-3.5 px-4 text-slate-600">
                     <span className="inline-block bg-slate-100 text-slate-700 font-semibold px-2.5 py-1 rounded-lg text-[11px] border border-slate-200/60">
@@ -405,24 +354,6 @@ export const DataTable = ({
                       >
                         <Globe size={10} className="text-slate-400" /> 🔍 Cari Web
                       </a>
-                    )}
-                  </td>
-
-                  {/* ⚡ Tech Stack Badges */}
-                  <td className="py-3.5 px-4">
-                    {lead.tech_stack && lead.tech_stack.length > 0 ? (
-                      <div className="flex flex-wrap gap-1 max-w-[170px]">
-                        {lead.tech_stack.map((t, idx) => (
-                          <span
-                            key={idx}
-                            className="text-[9px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/80 shrink-0"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 text-[10px] font-medium">-</span>
                     )}
                   </td>
 

@@ -49,19 +49,10 @@ export const ResultCard = ({ lead }: { lead: Lead }) => {
             <h3 className="text-base font-bold text-zinc-900 group-hover:text-blue-600 transition-colors line-clamp-1">
               {lead.name}
             </h3>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${
-                isHot ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
-                isWarm ? 'bg-amber-50 text-amber-800 border-amber-300' :
-                'bg-slate-100 text-slate-700 border-slate-300'
-              }`}>
-                🎯 {score}
-              </span>
-              <div className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
-                lead.status === 'READY' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-              }`}>
-                {lead.status}
-              </div>
+            <div className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider shrink-0 ${
+              lead.status === 'READY' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {lead.status}
             </div>
           </div>
 
@@ -70,46 +61,6 @@ export const ResultCard = ({ lead }: { lead: Lead }) => {
             <span>•</span>
             <span className="flex items-center gap-1"><MapPin size={12} /> {lead.location}</span>
           </div>
-
-          {/* Executive Decision Maker Target Badge */}
-          <div className="mb-3 p-2 bg-slate-50 border border-slate-200/80 rounded-lg flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 overflow-hidden">
-              <span className="text-[10px] font-extrabold text-[#3b5175] bg-white px-2 py-0.5 rounded border border-slate-200 shrink-0">
-                👔 {lead.decision_maker_title || 'Owner / Direktur / GM'}
-              </span>
-              {lead.decision_maker_name && (
-                <span className="font-bold text-slate-800 text-[11px] truncate">
-                  {lead.decision_maker_name}
-                </span>
-              )}
-            </div>
-            {lead.decision_maker_linkedin && (
-              <a
-                href={lead.decision_maker_linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 transition-all shrink-0 ml-1"
-                title={`Search LinkedIn for ${lead.decision_maker_title}`}
-              >
-                <Linkedin size={10} className="fill-blue-700 text-blue-700" /> in Search
-              </a>
-            )}
-          </div>
-
-          {/* ⚡ Tech Stack Badges */}
-          {lead.tech_stack && lead.tech_stack.length > 0 && (
-            <div className="mb-3 flex flex-wrap items-center gap-1">
-              <span className="text-[9px] font-extrabold text-slate-400 mr-1">⚡ TECH:</span>
-              {lead.tech_stack.map((tech, idx) => (
-                <span
-                  key={idx}
-                  className="text-[9px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/80"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          )}
 
           {/* Info Grid */}
           <div className="space-y-2 text-xs text-zinc-600">
