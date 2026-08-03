@@ -502,6 +502,37 @@ async function scrapeGooglePlaceDom(name: string, location: string) {
   return result;
 }
 
+function inferDecisionMakerInfo(name: string, category: string) {
+  const nameUpper = name.toUpperCase();
+  const catLower = (category || '').toLowerCase();
+  const nameLower = name.toLowerCase();
+
+  let title = "Pemilik Bisnis / GM";
+  let searchRole = "Direktur";
+
+  if (catLower.includes('pendidikan') || catLower.includes('sekolah') || nameLower.includes('sma') || nameLower.includes('smk') || nameLower.includes('sd') || nameLower.includes('smp')) {
+    title = "Kepala Sekolah / Yayasan";
+    searchRole = "Kepala Sekolah";
+  } else if (catLower.includes('perguruan tinggi') || nameLower.includes('universitas') || nameLower.includes('institut') || nameLower.includes('politeknik') || nameLower.includes('kampus')) {
+    title = "Rektor / Dekan / Ket. Yayasan";
+    searchRole = "Rektor";
+  } else if (catLower.includes('kesehatan') || catLower.includes('rumah sakit') || nameLower.includes('rsud') || nameLower.includes('rs ') || nameLower.includes('klinik')) {
+    title = "Direktur Utama RS / Kepala Klinik";
+    searchRole = "Direktur Rumah Sakit";
+  } else if (nameUpper.includes('PT') || nameUpper.includes('CV') || nameUpper.includes('TBK') || catLower.includes('manufaktur') || catLower.includes('pabrik') || catLower.includes('industri')) {
+    title = "Direktur Utama / Procurement Lead";
+    searchRole = "Direktur Utama";
+  }
+
+  const encodedKeywords = encodeURIComponent(`${searchRole} ${name}`);
+  const linkedinSearchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodedKeywords}`;
+
+  return {
+    decision_maker_title: title,
+    decision_maker_linkedin: linkedinSearchUrl,
+  };
+}
+
 // First-Priority Google Maps Places Direct Engine
 async function searchGoogleMapsPlacesPrimary(queryStr: string) {
   const gmapLeads: any[] = [];
@@ -729,37 +760,6 @@ export async function POST(req: Request) {
     const isIndustrialQuery = qLower.includes('pabrik') || qLower.includes('industri') || qLower.includes('manufaktur') || qLower.includes('gudang');
     const isEducQuery = qLower.includes('sekolah') || qLower.includes('pendidikan') || qLower.includes('kampus') || qLower.includes('pesantren') || qLower.includes('sma') || qLower.includes('smk') || qLower.includes('sd') || qLower.includes('smp') || qLower.includes('universitas') || qLower.includes('politeknik') || qLower.includes('bimbel');
     const isHealthQuery = qLower.includes('rumah sakit') || qLower.includes('rs') || qLower.includes('rsud') || qLower.includes('klinik') || qLower.includes('kesehatan') || qLower.includes('apotek') || qLower.includes('puskesmas');
-
-function inferDecisionMakerInfo(name: string, category: string) {
-  const nameUpper = name.toUpperCase();
-  const catLower = (category || '').toLowerCase();
-  const nameLower = name.toLowerCase();
-
-  let title = "Pemilik Bisnis / GM";
-  let searchRole = "Direktur";
-
-  if (catLower.includes('pendidikan') || catLower.includes('sekolah') || nameLower.includes('sma') || nameLower.includes('smk') || nameLower.includes('sd') || nameLower.includes('smp')) {
-    title = "Kepala Sekolah / Yayasan";
-    searchRole = "Kepala Sekolah";
-  } else if (catLower.includes('perguruan tinggi') || nameLower.includes('universitas') || nameLower.includes('institut') || nameLower.includes('politeknik') || nameLower.includes('kampus')) {
-    title = "Rektor / Dekan / Ket. Yayasan";
-    searchRole = "Rektor";
-  } else if (catLower.includes('kesehatan') || catLower.includes('rumah sakit') || nameLower.includes('rsud') || nameLower.includes('rs ') || nameLower.includes('klinik')) {
-    title = "Direktur Utama RS / Kepala Klinik";
-    searchRole = "Direktur Rumah Sakit";
-  } else if (nameUpper.includes('PT') || nameUpper.includes('CV') || nameUpper.includes('TBK') || catLower.includes('manufaktur') || catLower.includes('pabrik') || catLower.includes('industri')) {
-    title = "Direktur Utama / Procurement Lead";
-    searchRole = "Direktur Utama";
-  }
-
-  const encodedKeywords = encodeURIComponent(`${searchRole} ${name}`);
-  const linkedinSearchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodedKeywords}`;
-
-  return {
-    decision_maker_title: title,
-    decision_maker_linkedin: linkedinSearchUrl,
-  };
-}
 
     // 2. Check Regional Knowledge Registry Match with Category Relevance Filtering
     const verifiedCorporateResults: any[] = [];
