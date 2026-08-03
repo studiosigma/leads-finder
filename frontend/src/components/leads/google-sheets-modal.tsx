@@ -55,10 +55,12 @@ export const GoogleSheetsModal = ({ isOpen, onClose }: GoogleSheetsModalProps) =
   const [testMessage, setTestMessage] = useState('');
 
   useEffect(() => {
-    const savedUrl = localStorage.getItem('leads_finder_gsheet_webhook') || '';
-    const savedAuto = localStorage.getItem('leads_finder_gsheet_autosync') === 'true';
-    setWebhookUrl(savedUrl);
-    setAutoSync(savedAuto);
+    if (isOpen) {
+      const savedUrl = localStorage.getItem('leads_finder_gsheet_webhook') || '';
+      const savedAuto = localStorage.getItem('leads_finder_gsheet_autosync') === 'true';
+      setWebhookUrl(prev => prev !== savedUrl ? savedUrl : prev);
+      setAutoSync(prev => prev !== savedAuto ? savedAuto : prev);
+    }
   }, [isOpen]);
 
   const handleSave = () => {

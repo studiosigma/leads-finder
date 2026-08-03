@@ -41,21 +41,20 @@ const PITCH_TEMPLATES = [
 ];
 
 export const WhatsappPitchModal = ({ isOpen, onClose, lead }: WhatsappPitchModalProps) => {
-  if (!isOpen || !lead) return null;
-
   const [selectedTemplateId, setSelectedTemplateId] = useState('b2b-supply');
   const [copied, setCopied] = useState(false);
+  const [customMessage, setCustomMessage] = useState('');
+
+  if (!isOpen || !lead) return null;
 
   const contactName = lead.decision_maker_name || `Bpk/Ibu Pimpinan ${lead.name}`;
   const rawTemplate = PITCH_TEMPLATES.find(t => t.id === selectedTemplateId)?.template || PITCH_TEMPLATES[0].template;
 
-  const formattedMessage = rawTemplate
+  const formattedMessage = (customMessage || rawTemplate)
     .replace(/\{company\}/g, lead.name)
     .replace(/\{location\}/g, lead.location || 'Indonesia')
     .replace(/\{category\}/g, lead.category || 'Bisnis')
     .replace(/\{contact\}/g, contactName);
-
-  const [customMessage, setCustomMessage] = useState(formattedMessage);
 
   // Sync custom message when template changes
   const handleTemplateSelect = (id: string) => {

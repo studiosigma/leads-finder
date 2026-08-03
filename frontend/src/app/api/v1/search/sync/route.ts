@@ -418,33 +418,31 @@ async function discoverWebsiteAndPhone(name: string, location: string) {
     }
   }
 
-  // 2. Fast Search Engine Snippet Fallback (DuckDuckGo HTML)
+  // 2. Fast Search Engine Snippet Fallback (Google Maps Place Card DOM)
   try {
-    const queryStr = `${name} ${location} telepon website`;
-    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(queryStr)}`;
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' ' + location)}&hl=id&gl=id`;
     const controller = new AbortController();
-    const tId = setTimeout(() => controller.abort(), 2200);
+    const tId = setTimeout(() => controller.abort(), 1500);
 
     const sRes = await fetch(searchUrl, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 LeadsFinderEngine/2.7',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36 LeadsFinderEngine/3.5',
+        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
       }
     });
     clearTimeout(tId);
 
     if (sRes.ok) {
       const html = await sRes.text();
-      // Match Indonesian Phone Numbers: 08xx-xxxx-xxxx or (0267) xxx-xxx
       const phoneMatch = html.match(/(?:08[0-9]{2}[-\s]?[0-9]{3,4}[-\s]?[0-9]{3,4}|0[2-9][0-9]{1,3}[-\s]?[0-9]{5,8})/);
       if (phoneMatch) {
         result.phone = phoneMatch[0].replace(/[\s]/g, '');
       }
 
-      // Match Official Website URL
       if (!result.website) {
         const domainMatch = html.match(/https?:\/\/(?:www\.)?([a-zA-Z0-9-]+\.(?:sch\.id|ac\.id|co\.id|go\.id|com|id|net|org))/i);
-        if (domainMatch && !domainMatch[0].includes('duckduckgo') && !domainMatch[0].includes('google') && !domainMatch[0].includes('wikipedia') && !domainMatch[0].includes('facebook') && !domainMatch[0].includes('instagram')) {
+        if (domainMatch && !domainMatch[0].includes('google') && !domainMatch[0].includes('wikipedia')) {
           result.website = domainMatch[0];
         }
       }
