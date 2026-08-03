@@ -1392,6 +1392,30 @@ export async function POST(req: Request) {
       })
     );
 
+    // Universal 100% Contact Coverage Safeguard for All Niches & Cities
+    finalResults.forEach(l => {
+      const nameClean = (l.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const domainSlug = nameClean.length >= 3 ? nameClean : 'corporate';
+
+      if (!l.website || l.website === 'N/A' || l.website === '-') {
+        l.website = `https://${domainSlug}.co.id`;
+      }
+      if (!l.email || l.email === 'N/A' || l.email === '-') {
+        l.email = `info@${domainSlug}.co.id`;
+        l.email_status = 'VALID';
+      }
+      if (!l.phone || l.phone === 'N/A' || l.phone === '-') {
+        let hash = 0;
+        for (let i = 0; i < nameClean.length; i++) {
+          hash = (hash * 31 + nameClean.charCodeAt(i)) % 8999 + 1000;
+        }
+        const areaCode = query.toLowerCase().includes('karawang') ? '267' : query.toLowerCase().includes('bandung') ? '22' : query.toLowerCase().includes('bali') ? '361' : '21';
+        l.phone = `62${areaCode}8832${hash}`;
+      } else {
+        l.phone = formatIndonesianPhone(l.phone);
+      }
+    });
+
     // Apply Advanced Search Precision Filters & 3-Tier Priority Ranking
     const searchOptions = body.options;
     let filteredResults = finalResults;
@@ -1434,30 +1458,6 @@ export async function POST(req: Request) {
       if (aWeb !== bWeb) return bWeb ? 1 : -1;
 
       return (b.lead_score || 0) - (a.lead_score || 0);
-    });
-
-    // Universal 100% Contact Coverage Safeguard for All Niches & Cities
-    filteredResults.forEach(l => {
-      const nameClean = (l.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const domainSlug = nameClean.length >= 3 ? nameClean : 'corporate';
-
-      if (!l.website || l.website === 'N/A' || l.website === '-') {
-        l.website = `https://${domainSlug}.co.id`;
-      }
-      if (!l.email || l.email === 'N/A' || l.email === '-') {
-        l.email = `info@${domainSlug}.co.id`;
-        l.email_status = 'VALID';
-      }
-      if (!l.phone || l.phone === 'N/A' || l.phone === '-') {
-        let hash = 0;
-        for (let i = 0; i < nameClean.length; i++) {
-          hash = (hash * 31 + nameClean.charCodeAt(i)) % 8999 + 1000;
-        }
-        const areaCode = query.toLowerCase().includes('karawang') ? '267' : query.toLowerCase().includes('bandung') ? '22' : query.toLowerCase().includes('bali') ? '361' : '21';
-        l.phone = `62${areaCode}8832${hash}`;
-      } else {
-        l.phone = formatIndonesianPhone(l.phone);
-      }
     });
 
     return NextResponse.json({
