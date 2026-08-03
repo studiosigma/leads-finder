@@ -295,18 +295,27 @@ export const DataTable = ({
 
                   {/* Executive Contact (Decision Maker) */}
                   <td className="py-3.5 px-4 text-slate-700">
-                    {lead.decision_maker_name ? (
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-slate-900 text-xs flex items-center gap-1">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-extrabold text-[#3b5175] bg-slate-100 px-2 py-0.5 rounded border border-slate-200/90 w-fit flex items-center gap-1 shadow-2xs">
+                        👔 {lead.decision_maker_title || 'Owner / Direktur / GM'}
+                      </span>
+                      {lead.decision_maker_name && (
+                        <span className="font-bold text-slate-800 text-[11px] truncate max-w-[150px]">
                           👤 {lead.decision_maker_name}
                         </span>
-                        <span className="text-[10px] font-semibold text-[#4a6382] bg-slate-100 px-1.5 py-0.5 rounded w-fit border border-slate-200">
-                          {lead.decision_maker_title || 'Owner / CEO'}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 font-medium text-[11px]">-</span>
-                    )}
+                      )}
+                      {lead.decision_maker_linkedin && (
+                        <a
+                          href={lead.decision_maker_linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 transition-all w-fit"
+                          title={`Cari Profil LinkedIn ${lead.decision_maker_title} di ${lead.name}`}
+                        >
+                          <Linkedin size={10} className="fill-blue-700 text-blue-700" /> Search LinkedIn
+                        </a>
+                      )}
+                    </div>
                   </td>
 
                   {/* Category */}

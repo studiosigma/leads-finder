@@ -244,6 +244,29 @@ export default function Home() {
           const phone = extra.phone || extra['contact:phone'] || extra['contact:mobile'] || extra['contact:whatsapp'] || 'N/A';
           const waUrl = phone !== 'N/A' ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}` : undefined;
 
+          const catStr = (category || '').toLowerCase();
+          const nameLower = primaryName.toLowerCase();
+          const nameUpper = primaryName.toUpperCase();
+
+          let dmTitle = "Pemilik Bisnis / GM";
+          let searchRole = "Direktur";
+
+          if (catStr.includes('pendidikan') || catStr.includes('sekolah') || nameLower.includes('sma') || nameLower.includes('smk') || nameLower.includes('sd') || nameLower.includes('smp')) {
+            dmTitle = "Kepala Sekolah / Yayasan";
+            searchRole = "Kepala Sekolah";
+          } else if (catStr.includes('perguruan tinggi') || nameLower.includes('universitas') || nameLower.includes('institut') || nameLower.includes('politeknik') || nameLower.includes('kampus')) {
+            dmTitle = "Rektor / Dekan / Ket. Yayasan";
+            searchRole = "Rektor";
+          } else if (catStr.includes('kesehatan') || catStr.includes('rumah sakit') || nameLower.includes('rsud') || nameLower.includes('rs ') || nameLower.includes('klinik')) {
+            dmTitle = "Direktur Utama RS / Kepala Klinik";
+            searchRole = "Direktur Rumah Sakit";
+          } else if (nameUpper.includes('PT') || nameUpper.includes('CV') || nameUpper.includes('TBK') || catStr.includes('manufaktur') || catStr.includes('pabrik') || catStr.includes('industri')) {
+            dmTitle = "Direktur Utama / Procurement Lead";
+            searchRole = "Direktur Utama";
+          }
+
+          const linkedinSearchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(`${searchRole} ${primaryName}`)}`;
+
           return {
             id: `osm-${place.place_id || Date.now()}-${i}`,
             name: primaryName,
@@ -255,6 +278,8 @@ export default function Home() {
             phone: phone,
             whatsapp_url: waUrl,
             linkedin_url: '-',
+            decision_maker_title: dmTitle,
+            decision_maker_linkedin: linkedinSearchUrl,
             gmaps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(primaryName + ' ' + locationStr)}`,
             status: 'READY',
             sources: ['Google Maps / OpenStreetMap']

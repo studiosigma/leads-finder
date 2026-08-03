@@ -17,6 +17,9 @@ interface Lead {
   linkedin_url?: string;
   instagram_url?: string;
   facebook_url?: string;
+  decision_maker_name?: string;
+  decision_maker_title?: string;
+  decision_maker_linkedin?: string;
   status: 'READY' | 'FOLLOW UP' | string;
   sources?: string[];
 }
@@ -47,10 +50,35 @@ export const ResultCard = ({ lead }: { lead: Lead }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 text-xs text-zinc-500">
+          <div className="flex items-center gap-2 mb-3 text-xs text-zinc-500">
             <span className="bg-zinc-100 px-2 py-0.5 rounded text-zinc-600 font-medium">{lead.category}</span>
             <span>•</span>
             <span className="flex items-center gap-1"><MapPin size={12} /> {lead.location}</span>
+          </div>
+
+          {/* Executive Decision Maker Target Badge */}
+          <div className="mb-3 p-2 bg-slate-50 border border-slate-200/80 rounded-lg flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 overflow-hidden">
+              <span className="text-[10px] font-extrabold text-[#3b5175] bg-white px-2 py-0.5 rounded border border-slate-200 shrink-0">
+                👔 {lead.decision_maker_title || 'Owner / Direktur / GM'}
+              </span>
+              {lead.decision_maker_name && (
+                <span className="font-bold text-slate-800 text-[11px] truncate">
+                  {lead.decision_maker_name}
+                </span>
+              )}
+            </div>
+            {lead.decision_maker_linkedin && (
+              <a
+                href={lead.decision_maker_linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 transition-all shrink-0 ml-1"
+                title={`Search LinkedIn for ${lead.decision_maker_title}`}
+              >
+                <Linkedin size={10} className="fill-blue-700 text-blue-700" /> in Search
+              </a>
+            )}
           </div>
 
           {/* Info Grid */}
